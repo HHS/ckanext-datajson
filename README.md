@@ -96,5 +96,6 @@ Credit / Copying
 Written by the HealthData.gov team.
 
 As a work of the United States Government the files in this repository 
-are in the public domain.
-
+are in the U.S. public domain. Additionally, we waive copyright and
+neighboring rights worldwide through the Creative Commons CC0 Public
+Domain Dedication <http://creativecommons.org/publicdomain/zero/1.0/>.
