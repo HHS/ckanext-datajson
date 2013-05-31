@@ -15,7 +15,8 @@ class DataJsonPlugin(p.SingletonPlugin):
         return m
     
     def after_map(self, m):
-        m.connect('datajson', '/data.json', controller='ckanext.datajson.plugin:DataJsonController', action='index')
+        path = config.get("ckanext.datajson.path", "/data.json")
+        m.connect('datajson', path, controller='ckanext.datajson.plugin:DataJsonController', action='index')
         return m
 
 class DataJsonController(BaseController):
