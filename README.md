@@ -8,8 +8,11 @@ This module assumes metadata is stored in CKAN in the way we do it
 on http://hub.healthdata.gov. If you're storing metadata under different
 key names, you'll have to revise ckanext/datajson/plugin.py accordingly.
 
-To install, put this module in your Python path, or install with
-``python setup.py install''.
+To install, activate your CKAN virtualenv and then install the module
+in develop mode, which just puts the directory in your Python path.
+
+	. path/to/pyenv/bin/activate
+	python setup.py develop
 
 Then in your CKAN .ini file, add ``datajson'' to your ckan.plugins line:
 
