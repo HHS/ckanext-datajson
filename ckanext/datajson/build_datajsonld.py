@@ -1,9 +1,10 @@
 import collections
-from ckan.lib.base import config
 
 def dataset_to_jsonld(dataset):
+    from plugin import DataJsonPlugin
+	
     ret = collections.OrderedDict([
-       ("@id", config.get("ckan.site_url") + "/dataset/" + dataset["identifier"]),
+       ("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
        ("@type", "dcat:Dataset"),
     ])
     
@@ -16,8 +17,9 @@ def dataset_to_jsonld(dataset):
     return ret
         
 def distribution_to_jsonld(distribution):
+    from plugin import DataJsonPlugin
     ret = collections.OrderedDict([
-       ("@id", config.get("ckan.site_url") + "/resource/" + distribution["identifier"]),
+       ("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
        ("@type", "dcat:Distribution"),
     ])
     apply_jsonld_metadata_mapping(distribution, ret)
