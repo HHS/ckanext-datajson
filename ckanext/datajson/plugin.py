@@ -3,10 +3,13 @@ import ckan.plugins as p
 from ckan.lib.base import BaseController, render, config
 from webhelpers.html import literal
 from pylons import c, request, response
-import json, collections
+import collections, json, re
 
 import ckan.model
 from ckan.logic.action.get import current_package_list_with_resources
+
+from build_datajson import make_datajson_entry
+from build_datajsonld import dataset_to_jsonld
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IRoutes, inherit=True)
@@ -16,12 +19,13 @@ class DataJsonPlugin(p.SingletonPlugin):
     
     def after_map(self, m):
         path = config.get("ckanext.datajson.path", "/data.json")
-        m.connect('datajson', path, controller='ckanext.datajson.plugin:DataJsonController', action='index')
+        ld_path = config.get("ckanext.datajsonld.path", re.sub(r"\.json$", ".jsonld", path))
+        m.connect('datajson', path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
+        m.connect('datajsonld', ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
         return m
 
 class DataJsonController(BaseController):
-
-    def index(self):
+    def generate_output(self, format):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
         
@@ -31,84 +35,36 @@ class DataJsonController(BaseController):
         
         # output
         data = make_json()
+        
+        if format == 'json-ld':
+            # Convert this to JSON-LD.
+            data = collections.OrderedDict([
+                ("@context", collections.OrderedDict([
+                    ("rdfs", "http://www.w3.org/2000/01/rdf-schema#"),
+                    ("dcterms", "http://purl.org/dc/terms/"),
+                    ("dcat", "http://www.w3.org/ns/dcat#"),
+                    ("foaf", "http://xmlns.com/foaf/0.1/"),
+                    ])
+                ),
+                ("@id", config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))),
+                ("@type", "dcat:Catalog"),
+                ("dcterms:title", config.get("ckan.site_title", "Catalog")),
+                ("rdfs:label", config.get("ckan.site_title", "Catalog")),
+                ("foaf:homepage", config.get("ckan.site_url")),
+                ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
+            ])
+            
         return literal(json.dumps(data))
+
+    def generate_json(self):
+        return self.generate_output('json')
+        
+    def generate_jsonld(self):
+        return self.generate_output('json-ld')
 
 def make_json():
     # Build the data.json file.
     packages = current_package_list_with_resources( { "model": ckan.model}, {})
-    return [make_entry(p) for p in packages]
+    return [make_datajson_entry(p) for p in packages]
     
-def make_entry(package):
-    # Build one dataset entry of the data.json file.
-    temporal = ""
-    if extra(package, "Coverage Period Fiscal Year Start"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start")
-    else:
-        temporal = extra(package, "Coverage Period Start", "Unknown")
-    temporal += " to "
-    if extra(package, "Coverage Period Fiscal Year End"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year End")
-    else:
-        temporal = extra(package, "Coverage Period End", "Unknown")
-    
-    return collections.OrderedDict([
-        ("title", package["title"]),
-        ("description", package["notes"]),
-        ("keyword", ",".join(t["display_name"] for t in package["tags"])),
-        ("modified", extra(package, "Date Updated")),
-        ("publisher", package["author"]),
-        # person
-        # mbox
-        ("identifier", package["id"]),
-        ("accessLevel", "Public"),
-        ("dataDictionary", extra(package, "Data Dictionary")),
-        ("accessURL", get_primary_resource(package).get("url", None)),
-        ("webService", get_api_resource(package).get("url", None)),
-        ("format", get_primary_resource(package).get("format", None)),
-        ("license", extra(package, "License Agreement")),
-        ("spatial", extra(package, "Geographic Scope")),
-        ("temporal", temporal),
-        ("issued", extra(package, "Date Released")),
-        # accrualPeriodicity (frequency of publishing, not the collection frequency)
-        # language
-        ("granularity", "/".join(x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if x != None)),
-        ("dataQuality", True),
-        ("theme", extra(package, "Subject Area 1")),
-        ("references", extra(package, "Technical Documentation")),
-        # size
-        ("landingPage", package["url"]),
-        # feed
-        # systemOfRecords
-        ("distribution",
-            [
-                {
-                    "accessURL" if r["format"].lower() not in ("api", "query tool") else "webService": r["url"],
-                    "format": r["format"],
-                    # language
-                    # size
-                }
-                 for r in package["resources"]
-            ]),
-    ])
-    
-def extra(package, key, default=None):
-    # Retrieves the value of an extras field.
-    for extra in package["extras"]:
-        if extra["key"] == key:
-            return eval(extra["value"]) # why is everything quoted??
-    return default
-
-def get_best_resource(package, acceptable_formats):
-    resources = list(r for r in package["resources"] if r["format"].lower() in acceptable_formats)
-    if len(resources) == 0: return { }
-    resources.sort(key = lambda r : acceptable_formats.index(r["format"].lower()))
-    return resources[0]
-
-def get_primary_resource(package):
-    # Return info about a "primary" resource. Select a good one.
-    return get_best_resource(package, ("csv", "xls", "xml", "text", "zip", "rdf"))
-    
-def get_api_resource(package):
-    # Return info about an API resource.
-    return get_best_resource(package, ("api", "query tool"))
 

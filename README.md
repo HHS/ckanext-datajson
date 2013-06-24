@@ -4,6 +4,8 @@ ckanext-datajson
 A CKAN extension to generate the /data.json file required by the
 U.S. Project Open Data guidelines (http://project-open-data.github.io/).
 
+It also generates a data.jsonls file in JSON-LD format.
+
 This module assumes metadata is stored in CKAN in the way we do it
 on http://hub.healthdata.gov. If you're storing metadata under different
 key names, you'll have to revise ckanext/datajson/plugin.py accordingly.
@@ -34,6 +36,8 @@ before
 Then restart your server and check out:
 
 	http://yourdomain.com/data.json
+	   and
+	http://yourdomain.com/data.jsonld
 
 Caching The Response
 --------------------
@@ -89,6 +93,23 @@ And then restart Apache. Wait for the cron job to run once, then check if
 /data.json loads (and it should be fast!). Also double check that 
 http://yourdomain.com/internal/data.json gives a 403 forbidden error when
 accessed from some other location.
+
+Options
+-------
+
+You can customize the URL that generates the data.json output:
+
+	ckanext.datajson.path = /data.json
+	ckanext.datajsonld.path = /data.jsonld
+	ckanext.datajsonld.id = http://www.youragency.gov/data.json
+	
+If ckanext.datajsonld.path is omitted, it defaults to replacing ".json" in your
+ckanext.datajson.path path with ".jsonld", so it probably won't need to be
+specified.
+
+The option ckanext.datajsonld.id is the @id value used to identify the data
+catalog itself. If not given, it defaults to ckan.site_url.
+
 
 Credit / Copying
 ----------------
