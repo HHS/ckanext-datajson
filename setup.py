@@ -25,8 +25,7 @@ setup(
 	entry_points=\
 	"""
         [ckan.plugins]
-	# Add plugins here, eg
-	# myplugin=ckanext.datajson:PluginClass
 	datajson=ckanext.datajson:DataJsonPlugin
+	datajson_harvest=ckanext.datajson:DataJsonHarvester
 	""",
 )
