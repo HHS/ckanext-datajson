@@ -14,14 +14,12 @@ from ckanext.harvest.harvesters.base import HarvesterBase
 import uuid
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger("harvester")
 
 class DataJsonHarvester(HarvesterBase):
     '''
     A Harvester for /data.json files.
     '''
-
-    context = { "user": "harvest", "ignore_auth": True }
 
     def info(self):
         return {
@@ -38,8 +36,15 @@ class DataJsonHarvester(HarvesterBase):
 
         return config
 
+    def context(self):
+        # Reusing the dict across calls to action methods can be dangerous, so
+        # create a new dict every time we need it.
+        return { "user": "harvest", "ignore_auth": True }
 
     def gather_stage(self, harvest_job):
+        # The gather stage scans a remote resource (in our case, the /data.json file) for
+        # a list of datasets to import.
+        
         log.debug('In datajson harvester gather_stage (%s)' % harvest_job.source.url)
 
         source = json.load(urllib2.urlopen(harvest_job.source.url))
@@ -47,11 +52,12 @@ class DataJsonHarvester(HarvesterBase):
 
         # Loop through the packages we've already imported from this source
         # and go into their extra fields to get their source_datajson_identifier,
-        # which corresponds to the /data.json 'identifier' field. Make a mapping.
+        # which corresponds to the /data.json 'identifier' field. Make a mapping
+        # so we know how to update existing records.
         existing_datasets = { }
         for hobj in model.Session.query(HarvestObject).filter_by(source=harvest_job.source, current=True):
             try:
-                pkg = get_action('package_show')(self.context, { "id": hobj.package_id })
+                pkg = get_action('package_show')(self.context(), { "id": hobj.package_id })
             except:
                 # reference is broken
                 continue
@@ -60,7 +66,7 @@ class DataJsonHarvester(HarvesterBase):
                     existing_datasets[extra["value"]] = hobj.package_id
                     
         # If we've lost an association to the HarvestSource, scan all packages in the database.
-        if True:
+        if False:
             for pkg in model.Session.query(Package):
                 if pkg.extras.get("source_datajson_url") == harvest_job.source.url \
                     and pkg.extras.get("source_datajson_identifier"):
@@ -76,13 +82,19 @@ class DataJsonHarvester(HarvesterBase):
             # dataset metdata inside it for later.
             
             # Get the package_id of this resource if we've already imported
-            # it into our system.
+            # it into our system. Otherwise, assign a brand new GUID to the
+            # HarvestObject. I'm not sure what the point is of that.
             
-            pkg_id = existing_datasets.get(dataset["identifier"], uuid.uuid4().hex)
-            seen_datasets.add(pkg_id)
-            
+            if dataset['identifier'] in existing_datasets:
+                pkg_id = existing_datasets[dataset["identifier"]]
+                seen_datasets.add(pkg_id)
+            else:
+                pkg_id = uuid.uuid4().hex
+
+            # Create a new HarvestObject and store in it the GUID of the
+            # existing dataset (if it exists here already) and the dataset's
+            # metadata from the /data.json file.
             obj = HarvestObject(
-                # reuse an existing package ID if we've already imported it
                 guid=pkg_id,
                 job=harvest_job,
                 content=json.dumps(dataset))
@@ -92,7 +104,7 @@ class DataJsonHarvester(HarvesterBase):
         # Remove packages no longer in the /data.json file.
         for id in existing_datasets.values():
             if id not in seen_datasets:
-                print "deleting", id
+                log.warn('deleting package %s because it is no longer in %s' % (id, harvest_job.source.url))
                 Session.query(Package).filter(Package.id == id)
             
         return object_ids
@@ -103,13 +115,16 @@ class DataJsonHarvester(HarvesterBase):
         return True
 
     def import_stage(self, harvest_object):
+        # The import stage actually creates the dataset.
+        
         log.debug('In datajson import_stage')
 
+        # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
         
+        # Assemble basic information about the dataset.
         pkg = {
             "name": self.make_package_name(dataset["title"], harvest_object.guid),
-            "title": dataset["title"],
             "extras": [{
                 "key": "source_datajson_url",
                 "value": harvest_object.source.url,
@@ -119,25 +134,46 @@ class DataJsonHarvester(HarvesterBase):
                 "value": dataset["identifier"],
                 }]
         }
+        from parse_datajson import parse_datajson_entry
+        parse_datajson_entry(dataset, pkg)
     
-        # Try to update an existing package with the ID set in harvest_object.guid.
-        if model.Session.query(Package).filter_by(id=harvest_object.guid).first():
-            # This ID is a package.
-            print "updating", pkg["name"]
-            pkg["id"] = harvest_object.guid
-            pkg = get_action('package_update')(self.context, pkg)
+        # Try to update an existing package with the ID set in harvest_object.guid. If that GUID
+        # corresponds with an existing package, get its current metadata.
+        try:
+            existing_pkg = get_action('package_show')(self.context(), { "id": harvest_object.guid })
+        except NotFound:
+            existing_pkg = None
+      
+        if existing_pkg:
+            # Update the existing metadata with the new information.
+            
+            # But before doing that, try to avoid replacing existing resources with new resources
+            # my assigning resource IDs where they match up.
+            for res in pkg.get("resources", []):
+                for existing_res in existing_pkg.get("resources", []):
+                    if res["url"] == existing_res["url"]:
+                        res["id"] = existing_res["id"]
+            
+            existing_pkg.update(pkg) # preserve other fields that we're not setting, but clobber extras
+            pkg = existing_pkg
+            
+            log.warn('updating package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
+            pkg = get_action('package_update')(self.context(), pkg)
         else:
             # It doesn't exist yet. Create a new one.
-            print "creating", pkg["name"]
-            pkg = get_action('package_create')(self.context, pkg)
-            print "\t", pkg["id"], pkg["name"]
-        
-        # Flag the other objects linking to this package as not current anymore
+            try:
+                pkg = get_action('package_create')(self.context(), pkg)
+                log.warn('created package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
+            except:
+                log.error('failed to create package %s from %s' % (pkg["name"], harvest_object.source.url))
+                raise
+
+        # Flag the other HarvestObjects linking to this package as not current anymore
         for ob in model.Session.query(HarvestObject).filter_by(package_id=pkg["id"]):
             ob.current = False
             ob.save()
 
-        # Flag this as the current harvest object
+        # Flag this HarvestObject as the current harvest object
         harvest_object.package_id = pkg['id']
         harvest_object.current = True
         harvest_object.save()
