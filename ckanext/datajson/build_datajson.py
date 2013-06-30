@@ -47,7 +47,7 @@ def extra(package, key, default=None):
     # Retrieves the value of an extras field.
     for extra in package["extras"]:
         if extra["key"] == key:
-            return eval(extra["value"]) # why is everything quoted??
+            return extra["value"]
     return default
 
 def get_best_resource(package, acceptable_formats):

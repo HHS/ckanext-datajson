@@ -1,12 +1,10 @@
 import ckan.plugins as p
 
 from ckan.lib.base import BaseController
-from webhelpers.html import literal
 from pylons import response
 import collections, json, re
 
 import ckan.model
-from ckan.logic.action.get import current_package_list_with_resources
 
 from build_datajson import make_datajson_entry
 from build_datajsonld import dataset_to_jsonld
@@ -63,7 +61,7 @@ class DataJsonController(BaseController):
                 ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
             ])
             
-        return literal(json.dumps(data))
+        return p.toolkit.literal(json.dumps(data))
 
     def generate_json(self):
         return self.generate_output('json')
