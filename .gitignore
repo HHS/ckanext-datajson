@@ -1,1 +1,3 @@
 **.pyc
+build
+ckanext_datajson.egg-info
