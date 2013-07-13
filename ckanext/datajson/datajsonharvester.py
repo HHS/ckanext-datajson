@@ -11,10 +11,12 @@ from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError,
                                     HarvestObjectError
 from ckanext.harvest.harvesters.base import HarvesterBase
 
-import uuid
+import uuid, datetime, hashlib
 
 import logging
 log = logging.getLogger("harvester")
+
+HARVESTER_VERSION = "0.9a"
 
 class DataJsonHarvester(HarvesterBase):
     '''
@@ -61,16 +63,9 @@ class DataJsonHarvester(HarvesterBase):
             except:
                 # reference is broken
                 continue
-            for extra in pkg["extras"]:
-                if extra["key"] == "source_datajson_identifier":
-                    existing_datasets[extra["value"]] = hobj.package_id
-                    
-        # If we've lost an association to the HarvestSource, scan all packages in the database.
-        if False:
-            for pkg in model.Session.query(Package):
-                if pkg.extras.get("source_datajson_url") == harvest_job.source.url \
-                    and pkg.extras.get("source_datajson_identifier"):
-                        existing_datasets[pkg.extras["source_datajson_identifier"]] = pkg.id
+            sid = self.find_extra(pkg, "source_datajson_identifier")
+            if sid:
+                existing_datasets[sid] = pkg
                     
         # Create HarvestObjects for any records in the /data.json file.
             
@@ -86,8 +81,17 @@ class DataJsonHarvester(HarvesterBase):
             # HarvestObject. I'm not sure what the point is of that.
             
             if dataset['identifier'] in existing_datasets:
-                pkg_id = existing_datasets[dataset["identifier"]]
-                seen_datasets.add(pkg_id)
+                pkg = existing_datasets[dataset["identifier"]]
+                pkg_id = pkg["id"]
+                seen_datasets.add(dataset['identifier'])
+                
+                # We store a hash of the dict associated with this dataset
+                # in the package so we can avoid updating datasets that
+                # don't look like they've changed.
+                if pkg.get("state") == "active" \
+                    and self.find_extra(pkg, "source_datajson_hash") == self.make_upstream_content_hash(dataset) \
+                    and self.find_extra(pkg, "harvest_harvester_version") == HARVESTER_VERSION:
+                    continue
             else:
                 pkg_id = uuid.uuid4().hex
 
@@ -97,15 +101,18 @@ class DataJsonHarvester(HarvesterBase):
             obj = HarvestObject(
                 guid=pkg_id,
                 job=harvest_job,
-                content=json.dumps(dataset))
+                content=json.dumps(dataset, sort_keys=True)) # use sort_keys to preserve field order so hashes of this string are constant from run to run
             obj.save()
             object_ids.append(obj.id)
             
         # Remove packages no longer in the /data.json file.
-        for id in existing_datasets.values():
-            if id not in seen_datasets:
-                log.warn('deleting package %s because it is no longer in %s' % (id, harvest_job.source.url))
-                Session.query(Package).filter(Package.id == id)
+        for upstreamid, pkg in existing_datasets.items():
+            if upstreamid in seen_datasets: continue # was just updated
+            if pkg.get("state") == "deleted": continue # already deleted
+            pkg["state"] = "deleted"
+            pkg["name"] = self.make_package_name(pkg["title"], pkg["id"], True) # try to prevent name clash by giving it a "deleted-" name
+            log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
+            get_action('package_update')(self.context(), pkg)
             
         return object_ids
 
@@ -124,7 +131,8 @@ class DataJsonHarvester(HarvesterBase):
         
         # Assemble basic information about the dataset.
         pkg = {
-            "name": self.make_package_name(dataset["title"], harvest_object.guid),
+            "name": self.make_package_name(dataset["title"], harvest_object.guid, False),
+            "state": "active", # in case was previously deleted
             "extras": [{
                 "key": "source_datajson_url",
                 "value": harvest_object.source.url,
@@ -132,6 +140,18 @@ class DataJsonHarvester(HarvesterBase):
                 {
                 "key": "source_datajson_identifier",
                 "value": dataset["identifier"],
+                },
+                {
+                "key": "source_datajson_hash",
+                "value": self.make_upstream_content_hash(dataset),
+                },
+                {
+                "key": "harvest_harvester_version",
+                "value": HARVESTER_VERSION,
+                },
+                {
+                "key": "harvest_last_updated",
+                "value": datetime.datetime.utcnow().isoformat(),
                 }]
         }
         from parse_datajson import parse_datajson_entry
@@ -179,8 +199,17 @@ class DataJsonHarvester(HarvesterBase):
         harvest_object.save()
 
         return True
+        
+    def make_upstream_content_hash(self, datasetdict):
+        return hashlib.sha1(json.dumps(datasetdict, sort_keys=True)).hexdigest()
+        
+    def find_extra(self, pkg, key):
+        for extra in pkg["extras"]:
+            if extra["key"] == key:
+                return extra["value"]
+        return None
 
-    def make_package_name(self, title, exclude_existing_package):
+    def make_package_name(self, title, exclude_existing_package, for_deletion):
         '''
         Creates a URL friendly name from a title
 
@@ -188,11 +217,12 @@ class DataJsonHarvester(HarvesterBase):
         '''
 
         name = munge_title_to_name(title).replace('_', '-')
+        if for_deletion: name = "deleted-" + name
         while '--' in name:
             name = name.replace('--', '-')
         pkg_obj = Session.query(Package).filter(Package.name == name).filter(Package.id != exclude_existing_package).first()
         if pkg_obj:
-            return name + str(uuid.uuid4())[:5]
+            return name + "-" + str(uuid.uuid4())[:5]
         else:
             return name
   
