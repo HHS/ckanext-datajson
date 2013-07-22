@@ -126,9 +126,10 @@ catalog itself. If not given, it defaults to ckan.site_url.
 The Harvester
 -------------
 
-You'll also need to set up the CKAN harvester extension. See the CKAN harvester
-README at https://github.com/okfn/ckanext-harvest for how to do that. You'll set
-some configuration variables and then initialize the CKAN harvester plugin using:
+To use the data.json harvester, you'll also need to set up the CKAN harvester
+extension. See the CKAN harvester README at https://github.com/okfn/ckanext-harvest
+for how to do that. You'll set some configuration variables and then initialize the
+CKAN harvester plugin using:
 
 	paster --plugin=ckanext-harvest harvester initdb --config=/path/to/ckan.ini
 
@@ -138,6 +139,19 @@ Now you can set up a new DataJson harvester by visiting:
 
 And when configuring the data source, just choose "/data.json" as the source type.
 
+In the configuration field, you can put a JSON dict containing defaults for fields
+that may not be set in the source data.json files, e.g. enter something like this:
+
+	{
+	  "defaults": {
+		"Agency": "Department of Health & Human Services", 
+		"Author": "Centers for Medicare & Medicaid Services", 
+		"Subject Area 1": "Medicare", 
+		"author_id": "http://healthdata.gov/id/agency/cms"
+	  }
+	}
+
+This again is tied to the HealthData.gov metadata schema.
 
 Credit / Copying
 ----------------

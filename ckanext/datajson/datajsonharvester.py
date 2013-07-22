@@ -1,5 +1,3 @@
-import urllib2
-
 from ckan.lib.base import c
 from ckan import model
 from ckan.model import Session, Package
@@ -11,12 +9,12 @@ from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError,
                                     HarvestObjectError
 from ckanext.harvest.harvesters.base import HarvesterBase
 
-import uuid, datetime, hashlib
+import uuid, datetime, hashlib, urllib2, json
 
 import logging
 log = logging.getLogger("harvester")
 
-HARVESTER_VERSION = "0.9a"
+HARVESTER_VERSION = "0.9ad"
 
 class DataJsonHarvester(HarvesterBase):
     '''
@@ -89,7 +87,7 @@ class DataJsonHarvester(HarvesterBase):
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
                 if pkg.get("state") == "active" \
-                    and self.find_extra(pkg, "source_datajson_hash") == self.make_upstream_content_hash(dataset) \
+                    and self.find_extra(pkg, "source_datajson_hash") == self.make_upstream_content_hash(dataset, harvest_job.source) \
                     and self.find_extra(pkg, "harvest_harvester_version") == HARVESTER_VERSION:
                     continue
             else:
@@ -125,6 +123,17 @@ class DataJsonHarvester(HarvesterBase):
         # The import stage actually creates the dataset.
         
         log.debug('In datajson import_stage')
+        
+        # Get default values.
+       	source_config = json.loads(harvest_object.source.config)
+       	dataset_defaults = None
+       	try:
+       		dataset_defaults = source_config["defaults"]
+       	except TypeError:
+       		pass
+       	except KeyError:
+       		pass
+   		if not dataset_defaults: dataset_defaults = { }
 
         # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
@@ -143,7 +152,7 @@ class DataJsonHarvester(HarvesterBase):
                 },
                 {
                 "key": "source_datajson_hash",
-                "value": self.make_upstream_content_hash(dataset),
+                "value": self.make_upstream_content_hash(dataset, harvest_object.source),
                 },
                 {
                 "key": "harvest_harvester_version",
@@ -155,7 +164,7 @@ class DataJsonHarvester(HarvesterBase):
                 }]
         }
         from parse_datajson import parse_datajson_entry
-        parse_datajson_entry(dataset, pkg)
+        parse_datajson_entry(dataset, pkg, dataset_defaults)
     
         # Try to update an existing package with the ID set in harvest_object.guid. If that GUID
         # corresponds with an existing package, get its current metadata.
@@ -200,8 +209,9 @@ class DataJsonHarvester(HarvesterBase):
 
         return True
         
-    def make_upstream_content_hash(self, datasetdict):
-        return hashlib.sha1(json.dumps(datasetdict, sort_keys=True)).hexdigest()
+    def make_upstream_content_hash(self, datasetdict, harvest_source):
+        return hashlib.sha1(json.dumps(datasetdict, sort_keys=True)
+        	+ "|" + harvest_source.config).hexdigest()
         
     def find_extra(self, pkg, key):
         for extra in pkg["extras"]:
