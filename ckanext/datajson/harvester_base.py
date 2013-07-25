@@ -2,14 +2,13 @@ from ckan.lib.base import c
 from ckan import model
 from ckan.model import Session, Package
 from ckan.logic import ValidationError, NotFound, get_action
-from ckan.lib.helpers import json
 from ckan.lib.munge import munge_title_to_name
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
                                     HarvestObjectError
 from ckanext.harvest.harvesters.base import HarvesterBase
 
-import uuid, datetime, hashlib, urllib2, json
+import uuid, datetime, hashlib, urllib2, json, yaml
 
 import logging
 log = logging.getLogger("harvester")
@@ -31,7 +30,7 @@ class DatasetHarvesterBase(HarvesterBase):
     def validate_config(self, config):
         if not config:
             return config
-        config_obj = json.loads(config)
+        config_obj = yaml.load(config)
         return config
 
     def context(self):
@@ -51,9 +50,9 @@ class DatasetHarvesterBase(HarvesterBase):
         # a list of datasets to import.
         
         log.debug('In %s gather_stage (%s)' % (repr(self), harvest_job.source.url))
-
+        
         source = self.load_remote_catalog(harvest_job)
-        if len(source) == 0: return None
+        if len(source) == 0: return []
 
         # Loop through the packages we've already imported from this source
         # and go into their extra fields to get their source_identifier,
@@ -101,7 +100,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
             # Create a new HarvestObject and store in it the GUID of the
             # existing dataset (if it exists here already) and the dataset's
-            # metadata from the /data.json file.
+            # metadata from the remote catalog file.
             obj = HarvestObject(
                 guid=pkg_id,
                 job=harvest_job,
@@ -137,7 +136,7 @@ class DatasetHarvesterBase(HarvesterBase):
         log.debug('In %s import_stage' % repr(self))
         
         # Get default values.
-       	source_config = json.loads(harvest_object.source.config)
+       	source_config = yaml.load(harvest_object.source.config)
        	dataset_defaults = None
        	try:
        		dataset_defaults = source_config["defaults"]
