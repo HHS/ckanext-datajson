@@ -8,3 +8,4 @@ except ImportError:
     
 from plugin import DataJsonPlugin
 from harvester_datajson import DataJsonHarvester
+from harvester_cmsdatanavigator import CmsDataNavigatorHarvester
