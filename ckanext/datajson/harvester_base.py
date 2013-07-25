@@ -14,46 +14,51 @@ import uuid, datetime, hashlib, urllib2, json
 import logging
 log = logging.getLogger("harvester")
 
-HARVESTER_VERSION = "0.9ad"
-
-class DataJsonHarvester(HarvesterBase):
+class DatasetHarvesterBase(HarvesterBase):
     '''
-    A Harvester for /data.json files.
+    A Harvester for datasets.
     '''
 
-    def info(self):
-        return {
-            'name': 'datajson',
-            'title': '/data.json',
-            'description': 'Harvests remote /data.json files',
-        }
+    # SUBCLASSES MUST IMPLEMENT
+    #HARVESTER_VERSION = "1.0"
+    #def info(self):
+    #    return {
+    #        'name': 'harvester_base',
+    #        'title': 'Base Harvester',
+    #        'description': 'Abstract base class for harvesters that pull in datasets.',
+    #    }
 
     def validate_config(self, config):
         if not config:
             return config
-
         config_obj = json.loads(config)
-
         return config
 
     def context(self):
         # Reusing the dict across calls to action methods can be dangerous, so
         # create a new dict every time we need it.
         return { "user": "harvest", "ignore_auth": True }
+        
+    # SUBCLASSES MUST IMPLEMENT
+    def load_remote_catalog(self, harvest_job):
+        # Loads a remote data catalog. This function must return a JSON-able
+        # list of dicts, each dict a dataset containing an 'identifier' field
+        # with a locally unique identifier string and a 'title' field.
+        raise Exception("Not implemented")
 
     def gather_stage(self, harvest_job):
-        # The gather stage scans a remote resource (in our case, the /data.json file) for
+        # The gather stage scans a remote resource (like a /data.json file) for
         # a list of datasets to import.
         
-        log.debug('In datajson harvester gather_stage (%s)' % harvest_job.source.url)
+        log.debug('In %s gather_stage (%s)' % (repr(self), harvest_job.source.url))
 
-        source = json.load(urllib2.urlopen(harvest_job.source.url))
+        source = self.load_remote_catalog(harvest_job)
         if len(source) == 0: return None
 
         # Loop through the packages we've already imported from this source
-        # and go into their extra fields to get their source_datajson_identifier,
-        # which corresponds to the /data.json 'identifier' field. Make a mapping
-        # so we know how to update existing records.
+        # and go into their extra fields to get their source_identifier,
+        # which corresponds to the remote catalog's 'identifier' field.
+        # Make a mapping so we know how to update existing records.
         existing_datasets = { }
         for hobj in model.Session.query(HarvestObject).filter_by(source=harvest_job.source, current=True):
             try:
@@ -61,17 +66,18 @@ class DataJsonHarvester(HarvesterBase):
             except:
                 # reference is broken
                 continue
-            sid = self.find_extra(pkg, "source_datajson_identifier")
+            sid = self.find_extra(pkg, "source_identifier")
+            if not sid: sid = self.find_extra(pkg, "source_datajson_identifier") # temporary compatibility layer
             if sid:
                 existing_datasets[sid] = pkg
                     
-        # Create HarvestObjects for any records in the /data.json file.
+        # Create HarvestObjects for any records in the remote catalog.
             
         object_ids = []
         seen_datasets = set()
         
         for dataset in source:
-            # Create a new HarvestObject for this identifier and save the
+            # Create a new HarvestObject for this dataset and save the
             # dataset metdata inside it for later.
             
             # Get the package_id of this resource if we've already imported
@@ -87,8 +93,8 @@ class DataJsonHarvester(HarvesterBase):
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
                 if pkg.get("state") == "active" \
-                    and self.find_extra(pkg, "source_datajson_hash") == self.make_upstream_content_hash(dataset, harvest_job.source) \
-                    and self.find_extra(pkg, "harvest_harvester_version") == HARVESTER_VERSION:
+                    and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, harvest_job.source) \
+                    and self.find_extra(pkg, "harvest_harvester_version") == self.HARVESTER_VERSION:
                     continue
             else:
                 pkg_id = uuid.uuid4().hex
@@ -103,7 +109,7 @@ class DataJsonHarvester(HarvesterBase):
             obj.save()
             object_ids.append(obj.id)
             
-        # Remove packages no longer in the /data.json file.
+        # Remove packages no longer in the remote catalog.
         for upstreamid, pkg in existing_datasets.items():
             if upstreamid in seen_datasets: continue # was just updated
             if pkg.get("state") == "deleted": continue # already deleted
@@ -116,13 +122,19 @@ class DataJsonHarvester(HarvesterBase):
 
     def fetch_stage(self, harvest_object):
         # Nothing to do in this stage because we captured complete
-        # dataset metadata from the first request to the /data.json file.
+        # dataset metadata from the first request to the remote catalog file.
         return True
+
+    # SUBCLASSES MUST IMPLEMENT
+    def set_dataset_info(self, pkg, dataset, dataset_defaults):
+        # Sets package metadata on 'pkg' using the remote catalog's metadata
+        # in 'dataset' and default values as configured in 'dataset_defaults'.
+        raise Exception("Not implemented.")
 
     def import_stage(self, harvest_object):
         # The import stage actually creates the dataset.
         
-        log.debug('In datajson import_stage')
+        log.debug('In %s import_stage' % repr(self))
         
         # Get default values.
        	source_config = json.loads(harvest_object.source.config)
@@ -143,28 +155,29 @@ class DataJsonHarvester(HarvesterBase):
             "name": self.make_package_name(dataset["title"], harvest_object.guid, False),
             "state": "active", # in case was previously deleted
             "extras": [{
-                "key": "source_datajson_url",
+                "key": "source_url",
                 "value": harvest_object.source.url,
                 },
                 {
-                "key": "source_datajson_identifier",
+                "key": "source_identifier",
                 "value": dataset["identifier"],
                 },
                 {
-                "key": "source_datajson_hash",
+                "key": "source_hash",
                 "value": self.make_upstream_content_hash(dataset, harvest_object.source),
                 },
                 {
                 "key": "harvest_harvester_version",
-                "value": HARVESTER_VERSION,
+                "value": self.HARVESTER_VERSION,
                 },
                 {
                 "key": "harvest_last_updated",
                 "value": datetime.datetime.utcnow().isoformat(),
                 }]
         }
-        from parse_datajson import parse_datajson_entry
-        parse_datajson_entry(dataset, pkg, dataset_defaults)
+        
+        # Set specific information about the dataset.
+        self.set_dataset_info(pkg, dataset, dataset_defaults)
     
         # Try to update an existing package with the ID set in harvest_object.guid. If that GUID
         # corresponds with an existing package, get its current metadata.

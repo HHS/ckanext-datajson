@@ -7,4 +7,4 @@ except ImportError:
     __path__ = pkgutil.extend_path(__path__, __name__)
     
 from plugin import DataJsonPlugin
-from datajsonharvester import DataJsonHarvester
+from harvester_datajson import DataJsonHarvester
