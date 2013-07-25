@@ -20,10 +20,12 @@ key names, you'll have to revise ckanext/datajson/plugin.py accordingly.
 Installation
 ------------
 
-To install, activate your CKAN virtualenv and then install the module
-in develop mode, which just puts the directory in your Python path.
+To install, activate your CKAN virtualenv, install dependencies, and
+install the module in develop mode, which just puts the directory in your
+Python path.
 
 	. path/to/pyenv/bin/activate
+	pip install -r pip-requirements.txt
 	python setup.py develop
 
 Then in your CKAN .ini file, add ``datajson'' to your ckan.plugins line:
@@ -139,17 +141,13 @@ Now you can set up a new DataJson harvester by visiting:
 
 And when configuring the data source, just choose "/data.json" as the source type.
 
-In the configuration field, you can put a JSON dict containing defaults for fields
+In the configuration field, you can put a YAML string containing defaults for fields
 that may not be set in the source data.json files, e.g. enter something like this:
 
-	{
-	  "defaults": {
-		"Agency": "Department of Health & Human Services", 
-		"Author": "Centers for Medicare & Medicaid Services", 
-		"Subject Area 1": "Medicare", 
-		"author_id": "http://healthdata.gov/id/agency/cms"
-	  }
-	}
+	defaults:
+	  Agency: Department of Health & Human Services
+	  Author: Substance Abuse & Mental Health Services Administration
+	  author_id: http://healthdata.gov/id/agency/samhsa
 
 This again is tied to the HealthData.gov metadata schema.
 
