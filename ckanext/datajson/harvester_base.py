@@ -243,6 +243,7 @@ class DatasetHarvesterBase(HarvesterBase):
         if for_deletion: name = "deleted-" + name
         while '--' in name:
             name = name.replace('--', '-')
+        name = name[0:90] # max length is 100
         pkg_obj = Session.query(Package).filter(Package.name == name).filter(Package.id != exclude_existing_package).first()
         if pkg_obj:
             return name + "-" + str(uuid.uuid4())[:5]
