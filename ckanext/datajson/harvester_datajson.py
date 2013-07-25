@@ -7,7 +7,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
     A Harvester for /data.json files.
     '''
 
-    HARVESTER_VERSION = "0.9ad"
+    HARVESTER_VERSION = "0.9ae"
 
     def info(self):
         return {

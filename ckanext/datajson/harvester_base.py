@@ -66,7 +66,6 @@ class DatasetHarvesterBase(HarvesterBase):
                 # reference is broken
                 continue
             sid = self.find_extra(pkg, "source_identifier")
-            if not sid: sid = self.find_extra(pkg, "source_datajson_identifier") # temporary compatibility layer
             if sid:
                 existing_datasets[sid] = pkg
                     
