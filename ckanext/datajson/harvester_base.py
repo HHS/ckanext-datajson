@@ -3,6 +3,7 @@ from ckan import model
 from ckan.model import Session, Package
 from ckan.logic import ValidationError, NotFound, get_action
 from ckan.lib.munge import munge_title_to_name
+from ckan.lib.search.index import PackageSearchIndex
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
                                     HarvestObjectError
@@ -36,7 +37,10 @@ class DatasetHarvesterBase(HarvesterBase):
     def context(self):
         # Reusing the dict across calls to action methods can be dangerous, so
         # create a new dict every time we need it.
-        return { "user": "harvest", "ignore_auth": True }
+        # Setting validate to False is critical for getting the harvester plugin
+        # to set extra fields on the package during indexing (see ckanext/harvest/plugin.py
+        # line 99, https://github.com/okfn/ckanext-harvest/blob/master/ckanext/harvest/plugin.py#L99).
+        return { "user": "harvest", "ignore_auth": True, "validate": False }
         
     # SUBCLASSES MUST IMPLEMENT
     def load_remote_catalog(self, harvest_job):
@@ -48,9 +52,13 @@ class DatasetHarvesterBase(HarvesterBase):
     def gather_stage(self, harvest_job):
         # The gather stage scans a remote resource (like a /data.json file) for
         # a list of datasets to import.
-        
+
         log.debug('In %s gather_stage (%s)' % (repr(self), harvest_job.source.url))
+
+        # Prepare this for later.
+        self.package_index = PackageSearchIndex()
         
+        # Start gathering.
         source = self.load_remote_catalog(harvest_job)
         if len(source) == 0: return []
 
@@ -217,6 +225,13 @@ class DatasetHarvesterBase(HarvesterBase):
         harvest_object.package_id = pkg['id']
         harvest_object.current = True
         harvest_object.save()
+
+        # Now that the package and the harvest source are associated, re-index the
+        # package so it knows it is part of the harvest source. The CKAN harvester
+        # does this by creating the association before the package is saved by
+        # overriding the GUID creation on a new package. That's too difficult.
+        # So here we end up indexing twice.
+        self.package_index.index_package(pkg) 
 
         return True
         
