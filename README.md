@@ -68,6 +68,7 @@ And then in your Apache configuration add:
 	CacheEnable disk /data.json
 	CacheRoot /tmp/apache_cache
 	CacheDefaultExpire 120
+	CacheMaxFileSize 50000000
 	CacheIgnoreCacheControl On
 	CacheIgnoreNoLastMod On
 	CacheStoreNoStore On
