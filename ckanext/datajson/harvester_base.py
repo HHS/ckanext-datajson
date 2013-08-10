@@ -99,8 +99,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
                 if pkg.get("state") == "active" \
-                    and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, harvest_job.source) \
-                    and self.find_extra(pkg, "harvest_harvester_version") == self.HARVESTER_VERSION:
+                    and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, harvest_job.source):
                     continue
             else:
                 pkg_id = uuid.uuid4().hex
@@ -237,7 +236,7 @@ class DatasetHarvesterBase(HarvesterBase):
         
     def make_upstream_content_hash(self, datasetdict, harvest_source):
         return hashlib.sha1(json.dumps(datasetdict, sort_keys=True)
-        	+ "|" + harvest_source.config).hexdigest()
+        	+ "|" + harvest_source.config + "|" + self.HARVESTER_VERSION).hexdigest()
         
     def find_extra(self, pkg, key):
         for extra in pkg["extras"]:
