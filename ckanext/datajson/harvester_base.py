@@ -164,6 +164,10 @@ class DatasetHarvesterBase(HarvesterBase):
                 "value": harvest_object.source.url,
                 },
                 {
+                "key": "source_title",
+                "value": harvest_object.source.title,
+                },
+                {
                 "key": "source_identifier",
                 "value": dataset["identifier"],
                 },
