@@ -55,9 +55,6 @@ class DatasetHarvesterBase(HarvesterBase):
 
         log.debug('In %s gather_stage (%s)' % (repr(self), harvest_job.source.url))
 
-        # Prepare this for later.
-        self.package_index = PackageSearchIndex()
-        
         # Start gathering.
         source = self.load_remote_catalog(harvest_job)
         if len(source) == 0: return []
@@ -234,7 +231,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # does this by creating the association before the package is saved by
         # overriding the GUID creation on a new package. That's too difficult.
         # So here we end up indexing twice.
-        self.package_index.index_package(pkg) 
+        self.get_package_search_index().index_package(pkg) 
 
         return True
         
@@ -265,4 +262,10 @@ class DatasetHarvesterBase(HarvesterBase):
             return name + "-" + str(uuid.uuid4())[:5]
         else:
             return name
-  
+            
+    self.package_index = None
+    def get_package_search_index(self):
+        if not self.package_index:
+            self.package_index = PackageSearchIndex()
+        return self.package_index
+        
