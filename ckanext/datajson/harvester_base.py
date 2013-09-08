@@ -147,7 +147,7 @@ class DatasetHarvesterBase(HarvesterBase):
        		pass
        	except KeyError:
        		pass
-   		if not dataset_defaults: dataset_defaults = { }
+        if not dataset_defaults: dataset_defaults = { }
 
         # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
