@@ -151,11 +151,19 @@ class DatasetHarvesterBase(HarvesterBase):
 
         # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
+
+        # We need to get the owner organization (if any) from the harvest
+        # source dataset
+        owner_org = None
+        source_dataset = model.Package.get(harvest_object.source.id)
+        if source_dataset.owner_org:
+            owner_org = source_dataset.owner_org
         
         # Assemble basic information about the dataset.
         pkg = {
             "name": self.make_package_name(dataset["title"], harvest_object.guid, False),
             "state": "active", # in case was previously deleted
+            "owner_org": owner_org,
             "extras": [{
                 "key": "source_url",
                 "value": harvest_object.source.url,
