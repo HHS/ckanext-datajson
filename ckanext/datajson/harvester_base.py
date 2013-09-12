@@ -239,7 +239,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # does this by creating the association before the package is saved by
         # overriding the GUID creation on a new package. That's too difficult.
         # So here we end up indexing twice.
-        self.get_package_search_index().index_package(pkg) 
+        PackageSearchIndex().index_package(pkg) 
 
         return True
         
@@ -271,9 +271,3 @@ class DatasetHarvesterBase(HarvesterBase):
         else:
             return name
             
-    self.package_index = None
-    def get_package_search_index(self):
-        if not self.package_index:
-            self.package_index = PackageSearchIndex()
-        return self.package_index
-        
