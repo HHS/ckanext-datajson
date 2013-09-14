@@ -4,13 +4,13 @@ def make_datajson_entry(package):
     return collections.OrderedDict([
         ("title", package["title"]),
         ("description", package["notes"]),
-        ("keyword", ",".join(t["display_name"] for t in package["tags"])),
+        ("keyword", [t["display_name"] for t in package["tags"]]),
         ("modified", extra(package, "Date Updated")),
         ("publisher", package["author"]),
         # person
         # mbox
         ("identifier", package["id"]),
-        ("accessLevel", "Public"),
+        ("accessLevel", "public"),
         ("dataDictionary", extra(package, "Data Dictionary")),
         ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("url", None)),
@@ -23,8 +23,8 @@ def make_datajson_entry(package):
         # language
         ("granularity", "/".join(x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if x != None)),
         ("dataQuality", True),
-        ("theme", extra(package, "Subject Area 1")),
-        ("references", extra(package, "Technical Documentation")),
+        ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None]),
+        ("references", [s for s in [extra(package, "Technical Documentation")] if s != None]),
         # size
         ("landingPage", package["url"]),
         # feed
