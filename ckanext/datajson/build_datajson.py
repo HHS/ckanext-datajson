@@ -68,13 +68,14 @@ def build_temporal(package):
     # Build one dataset entry of the data.json file.
     temporal = ""
     if extra(package, "Coverage Period Fiscal Year Start"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start")
+        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
     else:
-        temporal = extra(package, "Coverage Period Start", "Unknown")
-    temporal += " to "
+        temporal = extra(package, "Coverage Period Start", "Unknown").replace(" ", "T").replace("T00:00:00", "")
+    temporal += "/"
     if extra(package, "Coverage Period Fiscal Year End"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year End")
+        temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
     else:
-        temporal = extra(package, "Coverage Period End", "Unknown")
-    
+        temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
+    if temporal == "Unknown/Unknown": return None
+    return temporal
 
