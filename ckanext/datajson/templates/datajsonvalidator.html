@@ -1,0 +1,39 @@
+{% extends "page.html" %}
+
+{% block subtitle %}Validate a Project Open Data /data.json File{% endblock %}
+
+{% block breadcrumb_content %}
+{% endblock %}
+
+{% block primary %}
+  <article class="module">
+    <div class="module-content">
+      <h1>Validate a Project Open Data /data.json File</h1>
+      
+      <p>Let&rsquo;s validate that a data.json file meets the <a href="http://project-open-data.github.io/schema/">Project Open Data Metadata Schema</a>.</p>
+	
+      <form method="post">
+      	<label for="validate_url">Address of data.json file</label>
+      	<input id="validate_url" type="url" name="url" value="{% if c.source_url %}{{ c.source_url }}{% else %}http://hub.healthdata.gov/data.json{% endif %}" style="width: 90%; display: block;"/>
+      	<input type="submit" value="Go >"/>
+      </form>
+      
+      {% if c.source_url %}
+      	<hr>
+      	<h2>Validation Results</h2>
+      	
+      	<p><tt>{{ c.source_url }}</tt></p>
+      	
+      	{% for err in c.errors %}
+      		<h3>{{err.0}}</h3>
+      		
+      		{% for item in err.1 %}
+      			<p>{{item}}</p>
+      		{% endfor %}
+      	{% endfor %}
+      {% endif %}
+    </div>
+  </article>
+{% endblock %}
+
+{% block secondary %}{% endblock %}

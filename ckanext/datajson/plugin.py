@@ -1,7 +1,7 @@
 import ckan.plugins as p
 
-from ckan.lib.base import BaseController
-from pylons import response
+from ckan.lib.base import BaseController, render, c
+from pylons import request, response
 import collections, json, re
 
 import ckan.model
@@ -22,13 +22,22 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
-    
+
+        # Adds our local templates directory. It's smart. It knows it's
+        # relative to the path of *this* file. Wow.
+        p.toolkit.add_template_directory(config, "templates")
+
     def before_map(self, m):
         return m
     
     def after_map(self, m):
+        # /data.json and /data.jsonld (or other path as configured by user)
         m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
         m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+        
+        # /pod/validate
+        m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
+        
         return m
 
 class DataJsonController(BaseController):
@@ -68,6 +77,34 @@ class DataJsonController(BaseController):
         
     def generate_jsonld(self):
         return self.generate_output('json-ld')
+        
+    def validator(self):
+        # Validates that a URL is a good data.json file.
+        if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
+            c.source_url = request.POST["url"]
+            c.errors = []
+            
+            import urllib, json
+            from datajsonvalidator import do_validation
+            body = None
+            try:
+                body = json.load(urllib.urlopen(c.source_url))
+            except IOError as e:
+                c.errors.append(("Error Loading File", ["The address could not be loaded: " + unicode(e)]))
+            except ValueError as e:
+                c.errors.append(("Invalid JSON", ["The file does not meet basic JSON syntax requirements: " + unicode(e) + ". Try using JSONLint.com."]))
+            except Exception as e:
+                c.errors.append(("Internal Error", ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
+                
+            if body:
+                try:
+                    do_validation(body, c.errors)
+                except Exception as e:
+                    c.errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
+                if len(c.errors) == 0:
+                    c.errors.append(("No Errors", ["Great job!"]))
+            
+        return render('datajsonvalidator.html')
 
 def make_json():
     # Build the data.json file.

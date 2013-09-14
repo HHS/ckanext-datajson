@@ -11,7 +11,10 @@ Open Data JSON metadata format. It also creates a view at /data.jsonld
 which outputs the same in JSON-LD format.
 
 The plugin also provides a harvester to import datasets from other
-remote /data.json files.
+remote /data.json files. See below for setup instructions.
+
+And the plugin also provides a new view to validate /data.json files
+at http://ckanhostname/pod/validate.
 
 This module assumes metadata is stored in CKAN in the way we do it
 on http://hub.healthdata.gov. If you're storing metadata under different
@@ -52,6 +55,8 @@ Then restart your server and check out:
 	http://yourdomain.com/data.json
 	   and
 	http://yourdomain.com/data.jsonld
+	   and
+	http://yourdomain.com/pod/validate	
 	
 Caching The Response
 --------------------
@@ -141,6 +146,9 @@ Now you can set up a new DataJson harvester by visiting:
 	http://yourdomain.com/harvest
 
 And when configuring the data source, just choose "/data.json" as the source type.
+
+**The next paragraph assumes you're using my fork of the CKAN harvest extension
+at https://github.com/JoshData/ckanext-harvest**
 
 In the configuration field, you can put a YAML string containing defaults for fields
 that may not be set in the source data.json files, e.g. enter something like this:
