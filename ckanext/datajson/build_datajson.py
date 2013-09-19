@@ -7,10 +7,11 @@ def make_datajson_entry(package):
         ("keyword", [t["display_name"] for t in package["tags"]]),
         ("modified", extra(package, "Date Updated")),
         ("publisher", package["author"]),
+        ("organization", package["organization"]),
         # person
         # mbox
         ("identifier", package["id"]),
-        ("accessLevel", "public"),
+        ("accessLevel", "public"), #TODO get from metadata
         ("dataDictionary", extra(package, "Data Dictionary")),
         ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("url", None)),

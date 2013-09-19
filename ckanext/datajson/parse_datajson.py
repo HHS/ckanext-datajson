@@ -7,10 +7,11 @@ def parse_datajson_entry(datajson, package, defaults):
 		datajson.get("keyword", defaults.get("Tags", "")).split(",") if t.strip() != ""]
 	package["groups"] = [ { "name": g } for g in 
 		defaults.get("Groups", [])] # the complexity of permissions makes this useless, CKAN seems to ignore
+	package["organization"] = datajson.get("organization", defaults.get("Organization"))
 	extra(package, "Group Name", defaults.get("Group Name")) # i.e. dataset grouping string
 	extra(package, "Date Updated", datajson.get("modified"))
 	extra(package, "Agency", defaults.get("Agency")) # i.e. federal department
-	package["author"] = datajson.get("publisher", defaults.get("Author")) # i.e. agency within HHS
+	package["publisher"] = datajson.get("publisher", defaults.get("Author")) # i.e. agency within HHS
 	extra(package, "author_id", defaults.get("author_id")) # i.e. URI for agency
 	extra(package, "Agency Program URL", defaults.get("Agency Program URL")) # i.e. URL for agency program
 	extra(package, "Contact Person", datajson.get("person")) # not in HHS schema
