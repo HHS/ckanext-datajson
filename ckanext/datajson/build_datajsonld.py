@@ -31,7 +31,7 @@ jsonld_metadata_mapping = {
     "keyword": "dcat:keyword",
     "modified": "dcterms:modified",
     "publisher": "dcat:publisher",
-    "person": "foaf:Person",
+    "contactPoint": "foaf:Person",
     "mbox": "foaf:mbox",
     "identifier": "dcterms:identifier",
         
@@ -50,7 +50,6 @@ jsonld_metadata_mapping = {
     "dataQuality": "xsd:boolean",
     "theme": "dcat:theme",
     "references": "dcterms:references",
-    "size": "dcat:size",
     "landingPage": "dcat:landingPage",
     "feed": "dcat:feed",
 }
