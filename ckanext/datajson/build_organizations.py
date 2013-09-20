@@ -1,7 +1,7 @@
 import simplejson as json
 import urllib2
 
-response = urllib2.urlopen('http://54.225.249.14/data.json')
+response = urllib2.urlopen('http://localhost/data.json')
 data = json.load(response)
 
 # First we build a list of all of the organizations represented in the file
