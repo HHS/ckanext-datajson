@@ -109,6 +109,6 @@ class DataJsonController(BaseController):
 def make_json():
     # Build the data.json file.
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry(pkg) for pkg in packages]
+    return [make_datajson_entry(pkg) for pkg in packages if pkg["type"] == "dataset"]
     
 
