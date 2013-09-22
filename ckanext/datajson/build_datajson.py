@@ -1,7 +1,10 @@
-import collections
+try:
+    from collections import OrderedDict # 2.7
+except ImportError:
+    from sqlalchemy.util import OrderedDict
 
 def make_datajson_entry(package):
-    return collections.OrderedDict([
+    return OrderedDict([
         ("title", package["title"]),
         ("description", package["notes"]),
         ("keyword", [t["display_name"] for t in package["tags"]]),
@@ -30,7 +33,7 @@ def make_datajson_entry(package):
         # systemOfRecords
         ("distribution",
             [
-                collections.OrderedDict([
+                OrderedDict([
                    ("identifier", r["id"]), # NOT in POD standard, but useful for conversion to JSON-LD
                    ("accessURL", r["url"]),
                    ("format", extension_to_mime_type(r["format"])),
