@@ -75,7 +75,7 @@ class DataJsonController(BaseController):
                 ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
             ])
             
-        return p.toolkit.literal(json.dumps(data))
+        return p.toolkit.literal(json.dumps(data, indent=2))
 
     def generate_json(self):
         return self.generate_output('json')
