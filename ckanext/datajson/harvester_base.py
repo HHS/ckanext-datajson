@@ -265,9 +265,24 @@ class DatasetHarvesterBase(HarvesterBase):
         while '--' in name:
             name = name.replace('--', '-')
         name = name[0:90] # max length is 100
+
+        # Is this slug already in use (and if we're updating a package, is it in
+        # use by a different package?).
         pkg_obj = Session.query(Package).filter(Package.name == name).filter(Package.id != exclude_existing_package).first()
-        if pkg_obj:
-            return name + "-" + str(uuid.uuid4())[:5]
-        else:
+        if not pkg_obj:
+            # The name is available, so use it. Note that if we're updating an
+            # existing package we will be updating this package's URL, so incoming
+            # links may break.
             return name
-            
+        elif exclude_existing_package:
+            # The name is not available, and we're updating a package. Chances
+            # are the package's name already had some random string attached
+            # to it last time. Prevent spurrious updates to the package's URL
+            # (choosing new random text) by just reusing the existing package's
+            # name.
+            pkg_obj = Session.query(Package).filter(Package.id == exclude_existing_package).first()
+            return pkg_obj.name
+        else:
+            # Append some random text to the URL. Hope that with five character
+            # there will be no collsion.
+            return name + "-" + str(uuid.uuid4())[:5]
