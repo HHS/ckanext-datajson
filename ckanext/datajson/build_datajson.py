@@ -10,6 +10,8 @@ def make_datajson_entry(package):
         ("keyword", [t["display_name"] for t in package["tags"]]),
         ("modified", extra(package, "Date Updated")),
         ("publisher", package["author"]),
+        ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
+        ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
         # person
         # mbox
         ("identifier", package["id"]),
