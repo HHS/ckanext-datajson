@@ -2,7 +2,12 @@ import ckan.plugins as p
 
 from ckan.lib.base import BaseController, render, c
 from pylons import request, response
-import collections, json, re
+import json, re
+
+try:
+    from collections import OrderedDict # 2.7
+except ImportError:
+    from sqlalchemy.util import OrderedDict
 
 import ckan.model
 
@@ -54,8 +59,8 @@ class DataJsonController(BaseController):
         
         if format == 'json-ld':
             # Convert this to JSON-LD.
-            data = collections.OrderedDict([
-                ("@context", collections.OrderedDict([
+            data = OrderedDict([
+                ("@context", OrderedDict([
                     ("rdfs", "http://www.w3.org/2000/01/rdf-schema#"),
                     ("dcterms", "http://purl.org/dc/terms/"),
                     ("dcat", "http://www.w3.org/ns/dcat#"),

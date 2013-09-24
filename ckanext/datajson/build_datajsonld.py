@@ -1,9 +1,12 @@
-import collections
+try:
+    from collections import OrderedDict # 2.7
+except ImportError:
+    from sqlalchemy.util import OrderedDict
 
 def dataset_to_jsonld(dataset):
     from plugin import DataJsonPlugin
 	
-    ret = collections.OrderedDict([
+    ret = OrderedDict([
        ("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
        ("@type", "dcat:Dataset"),
     ])
@@ -18,7 +21,7 @@ def dataset_to_jsonld(dataset):
         
 def distribution_to_jsonld(distribution):
     from plugin import DataJsonPlugin
-    ret = collections.OrderedDict([
+    ret = OrderedDict([
        ("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
        ("@type", "dcat:Distribution"),
     ])
@@ -79,7 +82,7 @@ def apply_jsonld_metadata_mapping(data, newdict):
             if jsonld_metadata_datatypes[k] == "http://www.w3.org/2001/XMLSchema#dateTime":
                 v = v.replace(" ", "T")
                 
-            v = collections.OrderedDict([
+            v = OrderedDict([
                ("@value", v),
                ("@type", jsonld_metadata_datatypes[k]),
             ])

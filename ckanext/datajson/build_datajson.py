@@ -1,4 +1,8 @@
-import collections
+try:
+    from collections import OrderedDict # 2.7
+except ImportError:
+    from sqlalchemy.util import OrderedDict
+
 
 import logging
 
@@ -49,7 +53,7 @@ def make_datajson_entry(package):
          ("distribution",
           #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
          [
-              collections.OrderedDict([
+              OrderedDict([
                   ("identifier", r["id"]), # NOT in POD standard, but useful for conversion to JSON-LD
                   ("accessURL" if r["format"].lower() not in ("api", "query tool") else "webService",
                    r["url"]),
@@ -73,8 +77,6 @@ def make_datajson_entry(package):
     retlist_keys = [x for x,y in retlist]
     extras_keys = set(extras.keys()) - set(extras_to_filter_out)
 
-    log.debug('retlist_keys %s', extras_keys)
-
     for key in extras_keys:
         convertedKey = underscore_to_camelcase(key)
         if convertedKey not in retlist_keys:
@@ -83,7 +85,7 @@ def make_datajson_entry(package):
     # Remove entries where value is None, "", or empty list []
     striped_retlist = [(x, y) for x,y in retlist if y != None and y != "" and y != []]
 
-    return collections.OrderedDict(striped_retlist)
+    return OrderedDict(striped_retlist)
 
     
 def extra(package, key, default=None):
