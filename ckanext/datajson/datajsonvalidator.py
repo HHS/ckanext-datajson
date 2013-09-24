@@ -12,7 +12,7 @@ URL_REGEX = re.compile(
         r'(?::\d+)?' # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-ACCRUAL_PERIODICITY_VALUES = (None, "Annual", "Bimonthly", "Semiweekly", "Daily", "Biweekly", "Semiannual", "Biennial", "Triennial", "Three times a week", "Three times a month", "Continuously updated", "Monthly", "Quarterly", "Semimonthly", "Three times a year", "Weekly", "Completely irregular")
+ACCRUAL_PERIODICITY_VALUES = ("Annual", "Bimonthly", "Semiweekly", "Daily", "Biweekly", "Semiannual", "Biennial", "Triennial", "Three times a week", "Three times a month", "Continuously updated", "Monthly", "Quarterly", "Semimonthly", "Three times a year", "Weekly", "Completely irregular")
 
 LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}([A-Za-z]{2})?$")
 
@@ -132,17 +132,21 @@ def do_validation(doc, errors_array):
                         check_mime_type(s, "format", dataset_name, errs)
                             
             # license
-            if item.get("license") is not None and not isinstance(item.get("license"), (str, unicode)):
+            if item.get("license") is None:
+                add_error(errs, 75, "Check Required-If-Applicable Fields", "Add a 'license' field to datasets. This field is required-if-applicable.", dataset_name)
+            elif not isinstance(item.get("license"), (str, unicode)):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'license' must be a string value if specified.", dataset_name)
             
             # spatial
             # TODO: There are more requirements than it be a string.
-            if item.get("spatial") is not None and not isinstance(item.get("spatial"), (str, unicode)):
+            if item.get("spatial") is None:
+                add_error(errs, 75, "Check Required-If-Applicable Fields", "Add a 'spatial' field to datasets. This field is required if the dataset is spatial in nature.", dataset_name)
+            elif not isinstance(item.get("spatial"), (str, unicode)):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'spatial' must be a string value if specified.", dataset_name)
                 
             # temporal
             if item.get("temporal") is None:
-                pass # not required
+                add_error(errs, 75, "Check Required-If-Applicable Fields", "Add a 'temporal' field to datasets. This field is required if the dataset is temporal in nature.", dataset_name)
             elif not isinstance(item["temporal"], (str, unicode)):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' must be a string value if specified.", dataset_name)
             elif "/" not in item["temporal"]:
@@ -156,7 +160,7 @@ def do_validation(doc, errors_array):
             
             # theme
             if item.get("theme") is None:
-                pass # not required
+                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'theme' field to datasets.", dataset_name)
             elif not isinstance(item["theme"], list):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'theme' must be an array.", dataset_name)
             else:
@@ -167,17 +171,19 @@ def do_validation(doc, errors_array):
                         add_error(errs, 50, "Invalid Field Value (Optional Fields)", "A value in the theme array was an empty string.", dataset_name)
             
             # dataDictionary
-            check_url_field(False, item, "dataDictionary", dataset_name, errs)
+            if check_url_field(False, item, "dataDictionary", dataset_name, errs):
+                if item.get("dataDictionary") is None:
+                    add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'dataDictionary' field to datasets.", dataset_name)
             
             # dataQuality
             if item.get("dataQuality") is None:
-                pass # not required
+                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'dataQuality' field to datasets.", dataset_name)
             elif not isinstance(item["dataQuality"], bool):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'theme' must be true or false, as a JSON boolean literal (not the string \"true\" or \"false\").", dataset_name)
                 
             # distribution
             if item.get("distribution") is None:
-                pass # not required
+                pass # not required, and missing just means there's only one access URL and it's in the accessURL field
             elif not isinstance(item["distribution"], list):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'distribution' must be an array, if present.", dataset_name)
             else:
@@ -191,15 +197,19 @@ def do_validation(doc, errors_array):
                         check_mime_type(d["format"], "distribution format", resource_name, errs)
                 
             # accrualPeriodicity
-            if item.get("accrualPeriodicity") not in ACCRUAL_PERIODICITY_VALUES:
+            if item.get("accrualPeriodicity") is None:
+                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'accrualPeriodicity' field to datasets.", dataset_name)
+            elif item.get("accrualPeriodicity") not in ACCRUAL_PERIODICITY_VALUES:
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'accrualPeriodicity' had an invalid value.", dataset_name)
             
             # landingPage
-            check_url_field(False, item, "landingPage", dataset_name, errs)
+            if check_url_field(False, item, "landingPage", dataset_name, errs):
+                if item.get("landingPage") is None:
+                    add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'landingPage' field to datasets.", dataset_name)
             
             # language
             if item.get("language") is None:
-                pass # not required
+                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'language' field to datasets.", dataset_name)
             elif not isinstance(item["language"], list):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'language' must be an array, if present.", dataset_name)
             else:
@@ -209,13 +219,13 @@ def do_validation(doc, errors_array):
                     
             # PrimaryITInvestmentUII
             if item.get("PrimaryITInvestmentUII") is None:
-                pass # not required
+                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'PrimaryITInvestmentUII' field to datasets.", dataset_name)
             elif not isinstance(item["PrimaryITInvestmentUII"], (str, unicode)):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'PrimaryITInvestmentUII' must be a string, if present.", dataset_name)
                 
             # references
             if item.get("references") is None:
-                pass # not required
+                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'references' field to datasets.", dataset_name)
             elif not isinstance(item["references"], list):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'references' must be an array, if present.", dataset_name)
             else:
@@ -224,7 +234,9 @@ def do_validation(doc, errors_array):
                         add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'references' had an invalid URL: \"%s\"" % s, dataset_name)
             
             # issued
-            if item.get("issued") is not None:
+            if item.get("issued") is None:
+                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'issued' field to datasets.", dataset_name)
+            else:
                 check_date_field(item, "issued", dataset_name, errs)
             
             # systemOfRecords
