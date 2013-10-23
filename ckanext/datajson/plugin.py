@@ -12,6 +12,7 @@ except ImportError:
 import ckan.model
 
 from build_datajson import make_datajson_entry
+from build_enterprisedatajson import make_enterprisedatajson_entry
 from build_datajsonld import dataset_to_jsonld
 
 class DataJsonPlugin(p.SingletonPlugin):
@@ -23,6 +24,7 @@ class DataJsonPlugin(p.SingletonPlugin):
     	# is called before after_map, in which we need the configuration directives
     	# to know how to set the paths.
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
+        EnterpriseDataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path", re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
@@ -38,6 +40,7 @@ class DataJsonPlugin(p.SingletonPlugin):
     def after_map(self, m):
         # /data.json and /data.jsonld (or other path as configured by user)
         m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
+        m.connect('enterprisedatajson', EnterpriseDataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
         m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
         
         # /pod/validate
@@ -115,5 +118,10 @@ def make_json():
     # Build the data.json file.
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     return [make_datajson_entry(pkg) for pkg in packages]
+    
+def make_enterprise_json():
+    # Build the enterprise data.json file.
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    return [make_enterprisedatajson_entry(pkg) for pkg in packages]
     
 
