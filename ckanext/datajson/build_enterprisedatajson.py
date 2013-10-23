@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 #TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
-def make_datajson_entry(package):
+def make_enterprisedatajson_entry(package):
 
     #extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
