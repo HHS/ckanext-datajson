@@ -13,6 +13,7 @@ import ckan.model
 
 from package_to_pod import make_datajson_entry, get_facet_fields
 from pod_jsonld import dataset_to_jsonld
+from build_enterprisedatajson import make_enterprisedatajson_entry
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
@@ -27,6 +28,7 @@ class DataJsonPlugin(p.SingletonPlugin):
     	# to know how to set the paths.
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
         DataJsonPlugin.route_hhs_path = config.get("ckanext.datajsonhhs.path", re.sub(r"\.json$", ".jsonhhs", DataJsonPlugin.route_path))
+        EnterpriseDataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path", re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
@@ -50,6 +52,7 @@ class DataJsonPlugin(p.SingletonPlugin):
     def after_map(self, m):
         # /data.json and /data.jsonld (or other path as configured by user)
         m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
+        m.connect('enterprisedatajson', EnterpriseDataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
         m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
         m.connect('datajsonhhs', DataJsonPlugin.route_hhs_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonhhs')
         
@@ -174,5 +177,10 @@ def make_json():
     # Build the data.json file.
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset"]
+    
+def make_enterprise_json():
+    # Build the enterprise data.json file.
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    return [make_enterprisedatajson_entry(pkg) for pkg in packages]
     
 
