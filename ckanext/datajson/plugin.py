@@ -11,12 +11,15 @@ except ImportError:
 
 import ckan.model
 
-from build_datajson import make_datajson_entry
+from build_datajson import make_datajson_entry, get_facet_fields
 from build_datajsonld import dataset_to_jsonld
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
     p.implements(p.interfaces.IRoutes, inherit=True)
+    p.implements(p.interfaces.IFacets)
+
+    # IConfigurer
     
     def update_config(self, config):
     	# Must use IConfigurer rather than IConfigurable because only IConfigurer
@@ -32,6 +35,8 @@ class DataJsonPlugin(p.SingletonPlugin):
         # relative to the path of *this* file. Wow.
         p.toolkit.add_template_directory(config, "templates")
 
+    # IRoutes
+
     def before_map(self, m):
         return m
     
@@ -44,6 +49,16 @@ class DataJsonPlugin(p.SingletonPlugin):
         m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
         
         return m
+
+    # IFacets
+    
+    def dataset_facets(self, facets, package_type):
+        # Add any facets specified in build_datajson.get_facet_fields() to the top
+        # of the facet list, and then put the CKAN default facets below that.
+        f = OrderedDict()
+        f.update(get_facet_fields())
+        f.update(facets)
+        return f
 
 class DataJsonController(BaseController):
     def generate_output(self, format):
