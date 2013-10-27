@@ -12,6 +12,8 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Agency", defaults.get("Agency")) # i.e. federal department
 	package["author"] = datajson.get("publisher", defaults.get("Author")) # i.e. agency within HHS
 	extra(package, "author_id", defaults.get("author_id")) # i.e. URI for agency
+	extra(package, "Bureau Code", " ".join(datajson.get("bureauCode", defaults.get("Bureau Code", []))))
+	extra(package, "Program Code", " ".join(datajson.get("programCode", defaults.get("Program Code", []))))
 	extra(package, "Agency Program URL", defaults.get("Agency Program URL")) # i.e. URL for agency program
 	extra(package, "Contact Person", datajson.get("person")) # not in HHS schema
 	extra(package, "Contact Email", datajson.get("mbox")) # not in HHS schema
