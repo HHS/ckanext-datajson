@@ -274,15 +274,17 @@ class DatasetHarvesterBase(HarvesterBase):
             # existing package we will be updating this package's URL, so incoming
             # links may break.
             return name
-        elif exclude_existing_package:
+
+        if exclude_existing_package:
             # The name is not available, and we're updating a package. Chances
             # are the package's name already had some random string attached
             # to it last time. Prevent spurrious updates to the package's URL
             # (choosing new random text) by just reusing the existing package's
             # name.
             pkg_obj = Session.query(Package).filter(Package.id == exclude_existing_package).first()
-            return pkg_obj.name
-        else:
-            # Append some random text to the URL. Hope that with five character
-            # there will be no collsion.
-            return name + "-" + str(uuid.uuid4())[:5]
+            if pkg_obj: # the package may not exist yet because we may be passed the desired package GUID before a new package is instantiated
+                return pkg_obj.name
+
+        # Append some random text to the URL. Hope that with five character
+        # there will be no collsion.
+        return name + "-" + str(uuid.uuid4())[:5]
