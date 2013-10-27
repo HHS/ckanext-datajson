@@ -158,7 +158,14 @@ that may not be set in the source data.json files, e.g. enter something like thi
 	  Author: Substance Abuse & Mental Health Services Administration
 	  author_id: http://healthdata.gov/id/agency/samhsa
 
-This again is tied to the HealthData.gov metadata schema.
+The keys for the defaults are specified in ckanext/datajson/parse_datajson.py. This again is tied to the HealthData.gov metadata schema.
+
+You can also specify filters to control what datasets from the data.json file are
+imported. By default everything is imported. In a "filters" section, map data.json
+field names to an array of permitted values:
+
+	filters:
+		theme: ["Health"]
 
 Credit / Copying
 ----------------

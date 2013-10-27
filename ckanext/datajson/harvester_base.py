@@ -34,6 +34,35 @@ class DatasetHarvesterBase(HarvesterBase):
         config_obj = yaml.load(config)
         return config
 
+    def load_config(self, harvest_source):
+        # Load the harvest source's configuration data. We expect it to be a YAML
+        # string. Unfortunately I went ahead of CKAN on this. The stock CKAN harvester
+        # only allows JSON in the configuration box. My fork is necessary for this
+        # to work: https://github.com/joshdata/ckanext-harvest
+
+        ret = {
+            "filters": { }, # map data.json field name to list of values one of which must be present
+            "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
+        }
+
+        source_config = yaml.load(harvest_source.config)
+
+        try:
+            ret["filters"].update(source_config["filters"])
+        except TypeError:
+            pass
+        except KeyError:
+            pass
+
+        try:
+            ret["defaults"].update(source_config["defaults"])
+        except TypeError:
+            pass
+        except KeyError:
+            pass
+
+        return ret
+
     def context(self):
         # Reusing the dict across calls to action methods can be dangerous, so
         # create a new dict every time we need it.
@@ -79,9 +108,22 @@ class DatasetHarvesterBase(HarvesterBase):
         object_ids = []
         seen_datasets = set()
         
+        filters = self.load_config(harvest_job.source)["filters"]
+
         for dataset in source:
             # Create a new HarvestObject for this dataset and save the
             # dataset metdata inside it for later.
+
+            # Check the config's filters to see if we should import this dataset.
+            # For each filter, check that the value specified in the data.json file
+            # is among the permitted values in the filter specification.
+            matched_filters = True
+            for k, v in filters.items():
+                if dataset.get(k) not in v:
+                    matched_filters = False
+            if not matched_filters:
+                continue
+
             
             # Get the package_id of this resource if we've already imported
             # it into our system. Otherwise, assign a brand new GUID to the
@@ -139,15 +181,7 @@ class DatasetHarvesterBase(HarvesterBase):
         log.debug('In %s import_stage' % repr(self))
         
         # Get default values.
-       	source_config = yaml.load(harvest_object.source.config)
-       	dataset_defaults = None
-       	try:
-       		dataset_defaults = source_config["defaults"]
-       	except TypeError:
-       		pass
-       	except KeyError:
-       		pass
-        if not dataset_defaults: dataset_defaults = { }
+        dataset_defaults = self.load_config(harvest_object.source)["defaults"]
 
         # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
