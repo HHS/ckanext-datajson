@@ -7,7 +7,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
     A Harvester for the CMS Data Navigator catalog.
     '''
 
-    HARVESTER_VERSION = "0.9aj" # increment to force an update even if nothing has changed
+    HARVESTER_VERSION = "0.9ak" # increment to force an update even if nothing has changed
 
     def info(self):
         return {
@@ -27,6 +27,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         extra(package, "Agency", "Department of Health & Human Services")
         package["author"] = "Centers for Medicare & Medicaid Services"
         extra(package, "author_id", "http://healthdata.gov/id/agency/cms")
+        extra(package, "Bureau Code", "009:38")
         package["title"] = dataset["Name"].strip()
         package["notes"] = dataset.get("Description")
         
