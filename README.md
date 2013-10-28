@@ -123,7 +123,11 @@ You can customize the URL that generates the data.json output:
 	ckanext.datajson.path = /data.json
 	ckanext.datajsonld.path = /data.jsonld
 	ckanext.datajsonld.id = http://www.youragency.gov/data.json
-	
+
+You can enable or disable the Data.json output by setting
+
+    ckanext.datajson.url_enabled = False
+
 If ckanext.datajsonld.path is omitted, it defaults to replacing ".json" in your
 ckanext.datajson.path path with ".jsonld", so it probably won't need to be
 specified.
@@ -163,7 +167,7 @@ This again is tied to the HealthData.gov metadata schema.
 Credit / Copying
 ----------------
 
-Written by the HealthData.gov team.
+Original work written by the HealthData.gov team. It has been modified in support of Data.gov.
 
 As a work of the United States Government, this package is in the public 
 domain within the United States. Additionally, we waive copyright and 
