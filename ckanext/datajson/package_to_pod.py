@@ -39,11 +39,9 @@ def make_datajson_entry(package):
         ("issued", extras.get('release_date', extras.get("Date Released", None))),
         ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
         ('language', extras.get('language', None)),
-        ("granularity", extras.get('granularity', "/".join(x for x in [extras.get("Unit of Analysis", None), extras.get("Geographic Granularity", None)] if x != None))),
         ("dataQuality", extras.get('data_quality', True)),
         ("theme", [s for s in extras.get("Subject Area 1", None), extras.get("Subject Area 2", None),extras.get("Subject Area 3", None) if s != None]),
         ("references", [s for s in [extras.get("Technical Documentation", None)] if s != None]),
-        ('size', extras.get('size', None)),
         ("landingPage", extras.get('homepage_url', package["url"])),
          ('rssFeed', extras.get('rss_feed', None)),
          ('category', extras.get('category', None)),
@@ -59,7 +57,6 @@ def make_datajson_entry(package):
                    r["url"]),
                   ("format", r["format"]),
                   # language
-                  # size
               ])
               for r in package["resources"]
          ])]

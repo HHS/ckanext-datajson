@@ -1,0 +1,10 @@
+{% ckan_extends %}
+
+{% block page_primary_action %}
+    {% if h.check_access('package_create', {'organization_id': c.group_dict.id}) %}
+        {% link_for _('Add Dataset'), controller='package', action='new', group=c.group_dict.id, class_='btn btn-primary', icon='plus-sign-alt' %}
+
+        <form action="{{c.group_dict.id + '/edi.json' }}"><input type="submit" value="Enterprise Data Inventory" class="btn btn-secondary"/></form>
+  {% endif %}
+        <form action="{{c.group_dict.id + '/data.json' }}"><input type="submit" value="Public Data Listing" class="btn btn-secondary"/></form>
+{% endblock %}
