@@ -2,6 +2,7 @@ import ckan.plugins as p
 
 from ckan.lib.base import BaseController, render, c
 from pylons import request, response
+from ckan.common import request as ckan_request
 import json, re
 
 try:
@@ -48,6 +49,14 @@ class DataJsonPlugin(p.SingletonPlugin):
             # TODO commenting out enterprise data inventory for right now
             #m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
             m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+
+        # TODO DWC update action
+        # /data/{org}/data.json
+        m.connect('public_data_listing', '/organization/{org}/data.json', controller='ckanext.datajson.plugin:DataJsonController', action='generate_pdl')
+
+        # TODO DWC update action
+        # /data/{org}/edi.json
+        m.connect('enterprise_data_inventory', '/organization/{org}/edi.json', controller='ckanext.datajson.plugin:DataJsonController', action='generate_edi')
 
         # /pod/validate
         m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
@@ -125,15 +134,60 @@ class DataJsonController(BaseController):
             
         return render('datajsonvalidator.html')
 
+    def generate_pdl(self):
+        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        match = re.match(r"/organization/([-a-z0-9]+)/data.json", request.path)
+        if match:
+            # set content type (charset required or pylons throws an error)
+            response.content_type = 'application/json; charset=UTF-8'
+
+            # allow caching of response (e.g. by Apache)
+            del response.headers["Cache-Control"]
+            del response.headers["Pragma"]
+            return make_pdl(match.group(1))
+        return "Invalid organization id"
+
+    def generate_edi(self):
+        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        match = re.match(r"/organization/([-a-z0-9]+)/edi.json", request.path)
+        if match:
+            # set content type (charset required or pylons throws an error)
+            response.content_type = 'application/json; charset=UTF-8'
+
+            # allow caching of response (e.g. by Apache)
+            del response.headers["Cache-Control"]
+            del response.headers["Pragma"]
+            return make_edi(match.group(1))
+        return "Invalid organization id"
+
 def make_json():
     # Build the data.json file.
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     output = []
     #Create data.json only using public datasets, datasets marked private are not exposed
     for pkg in packages:
-        if not pkg['private']:
-            output.append(make_datajson_entry(pkg));
+        output.append(make_datajson_entry(pkg));
     return output
+
+def make_edi(owner_org):
+    # Build the data.json file.
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    output = []
+    for pkg in packages:
+        if pkg['owner_org']==owner_org:
+            output.append(make_datajson_entry(pkg));
+    return json.dumps(output)
+
+def make_pdl(owner_org):
+    # Build the data.json file.
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    output = []
+    #Create data.json only using public datasets, datasets marked private are not exposed
+    for pkg in packages:
+        extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+        if pkg['owner_org']==owner_org and not (re.match(r'[rR]estricted', extras['public_access_level'])):
+            output.append(make_datajson_entry(pkg));
+    return json.dumps(output)
 
 # TODO commenting out enterprise data inventory for right now
 #def make_enterprise_json():
