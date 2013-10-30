@@ -128,7 +128,27 @@ class DataJsonController(BaseController):
 
 def make_json():
     # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry(pkg) for pkg in packages if pkg["type"] == "dataset"]
-    
+    return [make_datajson_entry(dataset) for dataset in _get_ckan_datasets()]
 
+def _get_ckan_datasets():
+
+    n = 500
+    page = 1
+    datasets = []
+
+    while True:
+        search_data_dict = {
+            'q': '*:*',
+            'fq': 'dataset_type:dataset',
+            'sort': 'metadata_modified desc',
+            'rows': n,
+            'start': n * (page - 1),
+        }
+
+        query = p.toolkit.get_action('package_search')({}, search_data_dict)
+        if len(query['results']):
+            datasets.extend(query['results'])
+            page = page + 1
+        else:
+            break
+    return datasets

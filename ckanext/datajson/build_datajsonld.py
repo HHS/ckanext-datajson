@@ -70,10 +70,6 @@ def apply_jsonld_metadata_mapping(data, newdict):
         
         # skip fields with no mapping to RDF
         if k not in jsonld_metadata_mapping: continue
-        
-        # specially handle 'keyword' which in JSON is packed in a comma-separated field
-        if k == "keyword":
-            v = v.split(",")
             
         # specially handle literal fields with datatypes
         if k in jsonld_metadata_datatypes:
