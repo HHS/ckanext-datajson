@@ -3,8 +3,23 @@
 {% block page_primary_action %}
     {% if h.check_access('package_create', {'organization_id': c.group_dict.id}) %}
         {% link_for _('Add Dataset'), controller='package', action='new', group=c.group_dict.id, class_='btn btn-primary', icon='plus-sign-alt' %}
-
-        <form action="{{c.group_dict.id + '/edi.json' }}"><input type="submit" value="Enterprise Data Inventory" class="btn btn-secondary"/></form>
+        <button id="btnEdi" class="btn btn-secondary">Enterprise Data Inventory</button>
   {% endif %}
-        <form action="{{c.group_dict.id + '/data.json' }}"><input type="submit" value="Public Data Listing" class="btn btn-secondary"/></form>
+        <button id="btnPdl" class="btn btn-secondary">Public Data Listing</button>
+
+        <form id="formEdi" action="{{c.group_dict.id + '/edi.json' }}"></form>
+        <form id="formPdl" action="{{c.group_dict.id + '/data.json' }}"></form>
+
+        <script type="text/javascript" src="/base/vendor/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $('#btnEdi').click(function () {
+                    $('#formEdi').submit();
+                });
+
+                $('#btnPdl').click(function () {
+                    $('#formPdl').submit();
+                });
+            });
+        </script>
 {% endblock %}
