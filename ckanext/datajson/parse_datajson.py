@@ -54,9 +54,14 @@ def parse_datajson_entry(datajson, package, defaults):
 				extra(r, "Language", d.get("language"))
 				extra(r, "Size", d.get("size"))
 				
-				# work-around for Socrata-style formats array
+				# Work-around for Socrata-style formats array. Pull from the value field
+				# if it is set, otherwise the label.
 				try:
-					r["format"] = normalize_format(d["formats"][0]["label"])
+					r["format"] = normalize_format(d["formats"][0]["label"], raise_on_unknown=True)
+				except:
+					pass
+				try:
+					r["format"] = normalize_format(d["formats"][0]["value"], raise_on_unknown=True)
 				except:
 					pass
 				
@@ -68,7 +73,7 @@ def extra(package, key, value):
 	if not value: return
 	package.setdefault("extras", []).append({ "key": key, "value": value })
 	
-def normalize_format(format):
+def normalize_format(format, raise_on_unknown=False):
 	# Format should be a file extension. But sometimes Socrata outputs a MIME type.
 	format = format.lower()
 	m = re.match(r"((application|text)/(\S+))(; charset=.*)?", format)
@@ -77,6 +82,8 @@ def normalize_format(format):
 		if m.group(1) == "application/zip": return "ZIP"
 		if m.group(1) == "application/vnd.ms-excel": return "XLS"
 		if m.group(1) == "application/x-msaccess": return "Access"
+		if raise_on_unknown: raise ValueError() # caught & ignored by caller
 		return "Other"
 	if format == "text": return "Text"
+	if raise_on_unknown and "?" in format: raise ValueError() # weird value we should try to filter out; exception is caught & ignored by caller
 	return format.upper() # hope it's one of our formats by converting to upprecase
