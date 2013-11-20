@@ -7,7 +7,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
     A Harvester for the CMS Data Navigator catalog.
     '''
 
-    HARVESTER_VERSION = "0.9ak" # increment to force an update even if nothing has changed
+    HARVESTER_VERSION = "0.9al" # increment to force an update even if nothing has changed
 
     def info(self):
         return {
@@ -41,10 +41,10 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         extra(package, "Coverage Period", dataset["HealthData"].get("Coverage Period"))
         extra(package, "Collection Frequency", dataset["HealthData"].get("Collection Frequency"))
         extra(package, "Geographic Scope", dataset["HealthData"].get("GeographicScope"))
-        #extra(package, "Contact Person", dataset["HealthData"].get("ContactName")) # not in HHS schema
-        #extra(package, "Contact Email", dataset["HealthData"].get("ContactEmail")) # not in HHS schema
+        extra(package, "Contact Name", dataset["HealthData"].get("GenericContactName", None) or dataset["HealthData"].get("ContactName")) # 'X or Y' syntax returns Y if X is either None or the empty string
+        extra(package, "Contact Email", dataset["HealthData"].get("GenericContactEmail", None) or dataset["HealthData"].get("ContactEmail"))
         extra(package, "License Agreement", dataset["HealthData"].get("DataLicenseAgreementURL"))
-	
+        
         from ckan.lib.munge import munge_title_to_name
         package["tags"] = [ { "name": munge_title_to_name(t["Name"]) } for t in dataset.get("Keywords", [])]
         

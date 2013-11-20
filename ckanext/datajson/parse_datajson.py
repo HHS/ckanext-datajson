@@ -15,8 +15,8 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Bureau Code", " ".join(datajson.get("bureauCode", defaults.get("Bureau Code", []))))
 	extra(package, "Program Code", " ".join(datajson.get("programCode", defaults.get("Program Code", []))))
 	extra(package, "Agency Program URL", defaults.get("Agency Program URL")) # i.e. URL for agency program
-	extra(package, "Contact Person", datajson.get("person")) # not in HHS schema
-	extra(package, "Contact Email", datajson.get("mbox")) # not in HHS schema
+	extra(package, "Contact Name", datajson.get("contactPoint", defaults.get("Contact Name"))) # not in HHS schema
+	extra(package, "Contact Email", datajson.get("mbox", defaults.get("Contact Email"))) # not in HHS schema
 	# "identifier" is handled by the harvester
 	extra(package, "Access Level", datajson.get("accessLevel")) # not in HHS schema
 	extra(package, "Data Dictionary", datajson.get("dataDictionary", defaults.get("Data Dictionary")))

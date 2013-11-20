@@ -20,8 +20,8 @@ def make_datajson_entry(package):
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
-        # person
-        # mbox
+        ("contactPoint", extra(package, "Contact Name")),
+        ("mbox", extra(package, "Contact Email")),
         ("identifier", package["id"]),
         ("accessLevel", "public"),
         ("dataDictionary", extra(package, "Data Dictionary")),
