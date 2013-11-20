@@ -19,6 +19,7 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Contact Email", datajson.get("mbox", defaults.get("Contact Email"))) # not in HHS schema
 	# "identifier" is handled by the harvester
 	extra(package, "Access Level", datajson.get("accessLevel")) # not in HHS schema
+	extra(package, "Access Level Comment", datajson.get("accessLevelComment")) # not in HHS schema
 	extra(package, "Data Dictionary", datajson.get("dataDictionary", defaults.get("Data Dictionary")))
 	# accessURL is redundant with resources
 	# webService is redundant with resources
@@ -28,11 +29,11 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Geographic Scope", datajson.get("spatial"))
 	extra(package, "Temporal", datajson.get("temporal")) # HHS uses Coverage Period (FY) Start/End
 	extra(package, "Date Released", datajson.get("issued"))
-	#extra(package, "Collection Frequency", ...)
-	extra(package, "Publish Frequency", datajson.get("accrualPeriodicity")) # not in HHS schema
+	#extra(package, "Collection Frequency", ...) # in HHS schema but not in POD schema
+	extra(package, "Publish Frequency", datajson.get("accrualPeriodicity")) # not in HHS schema but in POD schema
 	extra(package, "Language", datajson.get("language")) # not in HHS schema
 	extra(package, "Granularity", datajson.get("granularity")) # not in HHS schema
-	extra(package, "Data Quality Met", datajson.get("dataQuality")) # not in HHS schema
+	extra(package, "Data Quality Met", { True: "true", False: "false" }.get(datajson.get("dataQuality"))) # not in HHS schema
 	#extra(package, "Unit of Analysis", ...)
 	#extra(package, "Collection Instrument", ...)
 	extra(package, "Subject Area 1", datajson.get("theme", defaults.get("Subject Area 1")))
@@ -41,7 +42,7 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Technical Documentation", datajson.get("references"))
 	extra(package, "Size", datajson.get("size")) # not in HHS schema
 	package["url"] = datajson.get("landingPage", datajson.get("webService", datajson.get("accessURL")))
-	extra(package, "Feed", datajson.get("feed")) # not in HHS schema
+	extra(package, "PrimaryITInvestmentUII", datajson.get("PrimaryITInvestmentUII")) # not in HHS schema
 	extra(package, "System Of Records", datajson.get("systemOfRecords")) # not in HHS schema
 	package["resources"] = [ ]
 	for d in datajson.get("distribution", []):
@@ -50,9 +51,11 @@ def parse_datajson_entry(datajson, package, defaults):
 				r = {
 					"url": d[k],
 					"format": normalize_format(d.get("format", "Query Tool" if k == "webService" else "Unknown")),
+
+					# Since we normalize the 'format' for the benefit of our Drupal site,
+					# also store the MIME type as provided in the resource mimetype field.
+					"mimetype": d.get("format"),
 				}
-				extra(r, "Language", d.get("language"))
-				extra(r, "Size", d.get("size"))
 				
 				# Work-around for Socrata-style formats array. Pull from the value field
 				# if it is set, otherwise the label.
@@ -64,9 +67,15 @@ def parse_datajson_entry(datajson, package, defaults):
 					r["format"] = normalize_format(d["formats"][0]["value"], raise_on_unknown=True)
 				except:
 					pass
+				try:
+					r["mimetype"] = d["formats"][0]["value"]
+				except:
+					pass
 				
+				# Name the resource the same as the normalized format, since we have
+				# nothing better.
 				r["name"] = r["format"]
-				
+
 				package["resources"].append(r)
 	
 def extra(package, key, value):

@@ -23,7 +23,8 @@ def make_datajson_entry(package):
         ("contactPoint", extra(package, "Contact Name")),
         ("mbox", extra(package, "Contact Email")),
         ("identifier", package["id"]),
-        ("accessLevel", "public"),
+        ("accessLevel", extra(package, "Access Level", default="public")),
+        ("accessLevelComment", extra(package, "Access Level Comment")),
         ("dataDictionary", extra(package, "Data Dictionary")),
         ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("url", None)),
@@ -32,21 +33,21 @@ def make_datajson_entry(package):
         ("spatial", extra(package, "Geographic Scope")),
         ("temporal", build_temporal(package)),
         ("issued", extra(package, "Date Released")),
-        # accrualPeriodicity (frequency of publishing, not the collection frequency)
-        # language
+        ("accrualPeriodicity", extra(package, "Publish Frequency")),
+        ("language", extra(package, "Language")),
+        ("PrimaryITInvestmentUII", extra(package, "PrimaryITInvestmentUII")),
         ("granularity", "/".join(x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if x != None)),
-        ("dataQuality", True),
+        ("dataQuality", extra(package, "Data Quality Met", default="true") == "true"),
         ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None]),
         ("references", [s for s in [extra(package, "Technical Documentation")] if s != None]),
         ("landingPage", package["url"]),
-        # feed
-        # systemOfRecords
+        ("systemOfRecords", extra(package, "System Of Records")),
         ("distribution",
             [
                 OrderedDict([
                    ("identifier", r["id"]), # NOT in POD standard, but useful for conversion to JSON-LD
                    ("accessURL", r["url"]),
-                   ("format", extension_to_mime_type(r["format"])),
+                   ("format", r.get("mimetype", extension_to_mime_type(r["format"]))),
                 ])
                 for r in package["resources"]
                 if r["format"].lower() not in ("api", "query tool", "widget")
