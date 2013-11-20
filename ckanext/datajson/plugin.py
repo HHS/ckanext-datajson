@@ -47,6 +47,9 @@ class DataJsonPlugin(p.SingletonPlugin):
         
         # /pod/validate
         m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
+
+        # /pod/data-listing
+        m.connect('datajsonhtml', "/pod/data-catalog", controller='ckanext.datajson.plugin:DataJsonController', action='show_html_rendition')
         
         return m
 
@@ -126,6 +129,20 @@ class DataJsonController(BaseController):
                     c.errors.append(("No Errors", ["Great job!"]))
             
         return render('datajsonvalidator.html')
+
+    def show_html_rendition(self):
+        # Shows an HTML rendition of the data.json file. Requests the file live
+        # from http://localhost/data.json.
+            
+        import urllib, json
+        try:
+            c.catalog_data = json.load(urllib.urlopen("http://localhost/data.json"))
+        except:
+            c.catalog_data = []
+                
+        c.catalog_data.sort(key = lambda x : x.get("modified"), reverse=True)
+
+        return render('html_rendition.html')
 
 def make_json():
     # Build the data.json file.
