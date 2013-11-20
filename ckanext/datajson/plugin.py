@@ -80,6 +80,7 @@ class DataJsonController(BaseController):
                     ("dcterms", "http://purl.org/dc/terms/"),
                     ("dcat", "http://www.w3.org/ns/dcat#"),
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
+                    ("pod", "http://project-open-data.github.io/schema/2013-09-20_1.0#"),
                     ])
                 ),
                 ("@id", DataJsonPlugin.ld_id),
