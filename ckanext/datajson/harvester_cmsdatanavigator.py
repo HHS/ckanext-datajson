@@ -32,18 +32,20 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         package["notes"] = dataset.get("Description")
         
         package["url"] = dataset.get("Address")
-        extra(package, "Date Released", parsedate(dataset["HealthData"].get("DateReleased")))
-        extra(package, "Date Updated", parsedate(dataset["HealthData"].get("DateUpdated")))
-        extra(package, "Agency Program URL", dataset["HealthData"].get("AgencyProgramURL"))
+
+        dataset_hd = dataset["HealthData"]
+        extra(package, "Date Released", parsedate(dataset_hd.get("DateReleased")))
+        extra(package, "Date Updated", parsedate(dataset_hd.get("DateUpdated")))
+        extra(package, "Agency Program URL", dataset_hd.get("AgencyProgramURL"))
         extra(package, "Subject Area 1", "Medicare")
-        extra(package, "Unit of Analysis", dataset["HealthData"].get("UnitOfAnalysis"))
-        extra(package, "Data Dictionary", dataset["HealthData"].get("DataDictionaryURL"))
-        extra(package, "Coverage Period", dataset["HealthData"].get("Coverage Period"))
-        extra(package, "Collection Frequency", dataset["HealthData"].get("Collection Frequency"))
-        extra(package, "Geographic Scope", dataset["HealthData"].get("GeographicScope"))
-        extra(package, "Contact Name", dataset["HealthData"].get("GenericContactName", None) or dataset["HealthData"].get("ContactName")) # 'X or Y' syntax returns Y if X is either None or the empty string
-        extra(package, "Contact Email", dataset["HealthData"].get("GenericContactEmail", None) or dataset["HealthData"].get("ContactEmail"))
-        extra(package, "License Agreement", dataset["HealthData"].get("DataLicenseAgreementURL"))
+        extra(package, "Unit of Analysis", dataset_hd.get("UnitOfAnalysis"))
+        extra(package, "Data Dictionary", dataset_hd.get("DataDictionaryURL"))
+        extra(package, "Coverage Period", dataset_hd.get("Coverage Period"))
+        extra(package, "Collection Frequency", dataset_hd.get("Collection Frequency"))
+        extra(package, "Geographic Scope", dataset_hd.get("GeographicScope"))
+        extra(package, "Contact Name", dataset_hd.get("GenericContactName", None) or dataset_hd.get("ContactName")) # 'X or Y' syntax returns Y if X is either None or the empty string
+        extra(package, "Contact Email", dataset_hd.get("GenericContactEmail", None) or dataset_hd.get("ContactEmail"))
+        extra(package, "License Agreement", dataset_hd.get("DataLicenseAgreementURL"))
         
         from ckan.lib.munge import munge_title_to_name
         package["tags"] = [ { "name": munge_title_to_name(t["Name"]) } for t in dataset.get("Keywords", [])]
