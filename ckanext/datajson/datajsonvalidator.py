@@ -26,7 +26,7 @@ for row in csv.DictReader(urllib.urlopen("https://raw.github.com/seanherron/OMB-
     omb_burueau_codes.add(row["OMB Agency Code"] + ":" + row["OMB Bureau Code"])
 
 # main function for validation
-def do_validation(doc, errors_array):
+def do_validation(doc, src_url, errors_array):
     errs = { }
     
     if type(doc) != list:
@@ -116,7 +116,11 @@ def do_validation(doc, errors_array):
             check_url_field(False, item, "webService", dataset_name, errs)
             if item.get("accessLevel") == "public" and item.get("accessURL") is None and item.get("webService") is None:
                 add_error(errs, 20, "Where's the Dataset?", "A public dataset has neither an accessURL nor a webService.", dataset_name)
-            
+
+            # the first entry should be an entry for the catalog itself
+            if i == 0 and item.get("accessURL") != src_url:
+                add_error(errs, 2, "File Format Issues", "The first entry in the data.json file should be for the data.json file itself. Its accessURL should match the URL \"%s\"." % src_url, dataset_name)
+
             # format
             if isinstance(item.get("format"), (str, unicode)):
                 add_error(errs, 5, "Update Your File!", "The 'format' field used to be a string but now it must be an array.", dataset_name)
