@@ -122,18 +122,11 @@ def do_validation(doc, src_url, errors_array):
                 add_error(errs, 2, "File Format Issues", "The first entry in the data.json file should be for the data.json file itself. Its accessURL should match the URL \"%s\"." % src_url, dataset_name)
 
             # format
-            if isinstance(item.get("format"), (str, unicode)):
-                add_error(errs, 5, "Update Your File!", "The 'format' field used to be a string but now it must be an array.", dataset_name)
-            elif item.get("accessURL") is None:
-                pass # not required
-            elif check_required_field(item, "format", list, dataset_name, errs):
-                for s in item["format"]:
-                    if not isinstance(s, (str, unicode)):
-                        add_error(errs, 50, "Invalid Field Value", "Each value in the format array must be a string", dataset_name)
-                    elif len(s.strip()) == 0:
-                        add_error(errs, 50, "Invalid Field Value", "A value in the format array was an empty string.", dataset_name)
-                    else:
-                        check_mime_type(s, "format", dataset_name, errs)
+            if item.get("accessURL") is None:
+                if item.get("format") != None:
+                    add_error(errs, 50, "Invalid Field Value", "Datasets without an 'accessURL' should not have a 'format'.", dataset_name)
+            elif check_string_field(item, "format", -1, dataset_name, errs):
+                check_mime_type(item.get("format"), "format", dataset_name, errs)
                             
             # license
             if item.get("license") is None:

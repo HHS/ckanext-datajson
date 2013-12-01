@@ -28,7 +28,7 @@ def make_datajson_entry(package):
         ("dataDictionary", extra(package, "Data Dictionary")),
         ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("url", None)),
-        ("format", [ extension_to_mime_type(get_primary_resource(package).get("format", None)) ]),
+        ("format", extension_to_mime_type(get_primary_resource(package).get("format", None)) ),
         ("license", extra(package, "License Agreement")),
         ("spatial", extra(package, "Geographic Scope")),
         ("temporal", build_temporal(package)),
