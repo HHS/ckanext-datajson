@@ -1,9 +1,11 @@
+from ckan.lib.munge import munge_title_to_name
+
 import re
 
 def parse_datajson_entry(datajson, package, defaults):
 	package["title"] = datajson.get("title", defaults.get("Title"))
 	package["notes"] = datajson.get("description", defaults.get("Notes"))
-	package["tags"] = [ { "name": t } for t in
+	package["tags"] = [ { "name": munge_title_to_name(t) } for t in
 		datajson.get("keyword", defaults.get("Tags", "")).split(",") if t.strip() != ""]
 	package["groups"] = [ { "name": g } for g in 
 		defaults.get("Groups", [])] # the complexity of permissions makes this useless, CKAN seems to ignore
