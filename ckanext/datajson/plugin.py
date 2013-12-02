@@ -62,6 +62,10 @@ class DataJsonPlugin(p.SingletonPlugin):
         f.update(get_facet_fields())
         f.update(facets)
         return f
+    def group_facets(self, facets_dict, group_type, package_type):
+        return facets_dict
+    def organization_facets(self, facets_dict, organization_type, package_type):
+        return facets_dict
 
 class DataJsonController(BaseController):
     def generate_output(self, format):
