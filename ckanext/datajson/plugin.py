@@ -167,8 +167,8 @@ def make_json():
     #Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-            output.append(make_datajson_entry(pkg));
+        if not (re.match(r'[Nn]on-public', extras.get('public_access_level', 'Public'))):
+            output.append(make_datajson_entry(pkg))
     return output
 
 def make_edi(owner_org):
@@ -176,8 +176,8 @@ def make_edi(owner_org):
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     output = []
     for pkg in packages:
-        if pkg['owner_org']==owner_org:
-            output.append(make_datajson_entry(pkg));
+        if pkg['owner_org'] == owner_org:
+            output.append(make_datajson_entry(pkg))
     return json.dumps(output)
 
 def make_pdl(owner_org):
@@ -187,8 +187,9 @@ def make_pdl(owner_org):
     #Create data.json only using public datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        if pkg['owner_org']==owner_org and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-            output.append(make_datajson_entry(pkg));
+        if pkg['owner_org'] == owner_org \
+            and not (re.match(r'[Nn]on-public', extras.get('public_access_level', 'Public'))):
+            output.append(make_datajson_entry(pkg))
     return json.dumps(output)
 
 # TODO commenting out enterprise data inventory for right now
