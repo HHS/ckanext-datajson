@@ -59,11 +59,10 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "System Of Records", datajson.get("systemOfRecords")) # not in HHS schema
 	package["resources"] = [ ]
 	for d in datajson.get("distribution", []):
-		for k in ("accessURL", "webService"):
-			if d.get(k, "").strip() != "":
+				if d.get("accessURL", "").strip() == "": continue # skip if this has an empty accessURL
 				r = {
-					"url": d[k],
-					"format": normalize_format(d.get("format", "Query Tool" if k == "webService" else "Unknown")),
+					"url": d["accessURL"],
+					"format": normalize_format(d.get("format", "Unknown")),
 
 					# Since we normalize the 'format' for the benefit of our Drupal site,
 					# also store the MIME type as provided in the resource mimetype field.
