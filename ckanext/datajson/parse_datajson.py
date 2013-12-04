@@ -11,9 +11,9 @@ def parse_datajson_entry(datajson, package, defaults):
 		defaults.get("Groups", [])] # the complexity of permissions makes this useless, CKAN seems to ignore
 	extra(package, "Group Name", defaults.get("Group Name")) # i.e. dataset grouping string
 	extra(package, "Date Updated", datajson.get("modified"))
-	extra(package, "Agency", defaults.get("Agency")) # i.e. federal department
+	extra(package, "Agency", defaults.get("Agency")) # i.e. federal department: not in data.json spec but required by the HHS metadata schema
 	package["author"] = datajson.get("publisher", defaults.get("Author")) # i.e. agency within HHS
-	extra(package, "author_id", defaults.get("author_id")) # i.e. URI for agency
+	extra(package, "author_id", defaults.get("author_id")) # i.e. URI for agency: not in data.json spec but in HHS metadata schema
 	extra(package, "Bureau Code", " ".join(datajson.get("bureauCode", defaults.get("Bureau Code", []))))
 	extra(package, "Program Code", " ".join(datajson.get("programCode", defaults.get("Program Code", []))))
 	extra(package, "Agency Program URL", defaults.get("Agency Program URL")) # i.e. URL for agency program
