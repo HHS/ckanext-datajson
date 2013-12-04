@@ -5,8 +5,19 @@ import re
 def parse_datajson_entry(datajson, package, defaults):
 	package["title"] = datajson.get("title", defaults.get("Title"))
 	package["notes"] = datajson.get("description", defaults.get("Notes"))
-	package["tags"] = [ { "name": munge_title_to_name(t) } for t in
-		datajson.get("keyword", defaults.get("Tags", "")).split(",") if t.strip() != ""]
+
+	# backwards-compatibility for files from Socrata
+	if isinstance(datajson.get("keyword"), str):
+		package["tags"] = [ { "name": munge_title_to_name(t) } for t in
+			datajson.get("keyword").split(",") if t.strip() != ""]
+	# field is provided correctly as an array...
+	elif isinstance(datajson.get("keyword"), list):
+		package["tags"] = [ { "name": munge_title_to_name(t) } for t in
+			datajson.get("keyword") if t.strip() != ""]
+	# field is not provided, use defaults specified in harvester config
+	elif isinstance(defaults.get("Tags"), list):
+		package["tags"] = [ { "name": t } for t in defaults.get("Tags")]
+
 	package["groups"] = [ { "name": g } for g in 
 		defaults.get("Groups", [])] # the complexity of permissions makes this useless, CKAN seems to ignore
 	extra(package, "Group Name", defaults.get("Group Name")) # i.e. dataset grouping string
