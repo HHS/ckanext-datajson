@@ -112,7 +112,15 @@ def do_validation(doc, src_url, errors_array):
                 check_string_field(item, "accessLevelComment", 10, dataset_name, errs)
             
             # accessURL & webService
-            check_url_field(False, item, "accessURL", dataset_name, errs)
+            if check_url_field(False, item, "accessURL", dataset_name, errs):
+                if item.get("accessURL") and isinstance(item.get("distribution"), list):
+                    # If accessURL and distribution are both given, the accessURL must be one of the distributions.
+                    for d in item["distribution"]:
+                        if d.get("accessURL") == item.get("accessURL"):
+                            break # found
+                    else: # not found
+                        add_error(errs, 20, "Where's the Dataset?", "If a top-level 'accessURL' and 'distribution' are both present, the accessURL must be one of the distributions.", dataset_name)
+
             check_url_field(False, item, "webService", dataset_name, errs)
             if item.get("accessLevel") == "public" and item.get("accessURL") is None and item.get("webService") is None:
                 add_error(errs, 20, "Where's the Dataset?", "A public dataset has neither an accessURL nor a webService.", dataset_name)
