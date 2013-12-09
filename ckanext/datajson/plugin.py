@@ -30,6 +30,8 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
+        DataJsonPlugin.default_contactpoint = config.get("ckanext.datajson.default_contactpoint")
+        DataJsonPlugin.default_mbox = config.get("ckanext.datajson.default_mbox")
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
@@ -151,6 +153,6 @@ class DataJsonController(BaseController):
 def make_json():
     # Build the data.json file.
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry(pkg) for pkg in packages if pkg["type"] == "dataset"]
+    return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset"]
     
 

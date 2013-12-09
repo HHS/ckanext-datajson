@@ -11,7 +11,7 @@ def get_facet_fields():
     facets["SubjectArea1"] = "Subjects" # search facets remove spaces from field names
     return facets
 
-def make_datajson_entry(package):
+def make_datajson_entry(package, plugin):
     return OrderedDict([
         ("title", package["title"]),
         ("description", package["notes"]),
@@ -20,8 +20,8 @@ def make_datajson_entry(package):
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
-        ("contactPoint", extra(package, "Contact Name")),
-        ("mbox", extra(package, "Contact Email")),
+        ("contactPoint", extra(package, "Contact Name", default=plugin.default_contactpoint)),
+        ("mbox", extra(package, "Contact Email", default=plugin.default_mbox)),
         ("identifier", package["id"]),
         ("accessLevel", extra(package, "Access Level", default="public")),
         ("accessLevelComment", extra(package, "Access Level Comment")),

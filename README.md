@@ -131,6 +131,12 @@ specified.
 The option ckanext.datajsonld.id is the @id value used to identify the data
 catalog itself. If not given, it defaults to ckan.site_url.
 
+You can also set a default contactPoint and mbox for datasets that do not have
+a value set:
+
+	ckanext.datajson.default_contactpoint = Health Data Initiative
+	ckanext.datajson.default_mbox = Healthdata@example.hhs.gov
+
 The Harvester
 -------------
 
