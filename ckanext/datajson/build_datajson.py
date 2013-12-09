@@ -15,24 +15,26 @@ def make_datajson_entry(package):
     #extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
-    retlist = [
-        ("title", package.get("title", None)),
-        ("description", package.get("notes", None)),
-        ("keyword", [t["display_name"] for t in package.get("tags", None)]),
-        ("modified", package.get("metadata_modified", None)),
-        ("publisher", extras.get('publisher', package.get('author', None))),
-        ("organization", package.get("organization", None).get('title', 'None')),
-        ('contactPoint', extras.get('contact_name', None)),
-        ('mbox', extras.get('contact_email', None)),
-        ("identifier", extras.get('unique_id', package.get('id', None))),
-        ("accessLevel", extras.get('public_access_level', 'public')),
+    retlist = []
+
+    try:
+        retlist = [
+        ("title", package["title"]), #required
+        ("description", package["notes"]), #required
+        ("keyword", [t["display_name"] for t in package["tags"]]),#required
+        ("modified", package["metadata_modified"]), #required
+        ("publisher", extras.get('publisher', package['author'])), #required
+        ('contactPoint', extras['contact_name']), #required
+        ('mbox', extras['contact_email']), #required
+        ("identifier", extras['unique_id']), #required
+        ("accessLevel", extras['public_access_level']), #required
         ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
         ("bureauCode", extras.get("bureau_code", None)),
         ("programCode", extras.get("program_code", None)),
         ("accessLevelComment", extras.get("access_level_comment", None)),
-        ("accessURL", get_primary_resource(package).get("url", None)),
+#DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("endpoint", None)),
-        ("format", get_primary_resource(package).get("format", None)),
+#DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
         ("license", extras.get("License Agreement", package['license_title'])),
         ("spatial", extras.get('spatial', extras.get("Geographic Scope", None))),
         ("temporal", extras.get('temporal', build_temporal(package))),
@@ -52,14 +54,15 @@ def make_datajson_entry(package):
           #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
          [
               OrderedDict([
-                  ("identifier", r["id"]), # NOT in POD standard, but useful for conversion to JSON-LD
-                  ("accessURL" if r["format"].lower() not in ("api", "query tool") else "webService",
-                   r["url"]),
+                  ("accessURL", r["url"]),
                   ("format", r["format"]),
-                  # language
               ])
               for r in package["resources"]
          ])]
+
+    except KeyError as e:
+        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), e)
+        return
 
     #TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
     extras_to_filter_out = ['publisher', 'contact_name','contact_email', 'unique_id', 'public_access_level',
@@ -82,6 +85,13 @@ def make_datajson_entry(package):
 
     # Remove entries where value is None, "", or empty list []
     striped_retlist = [(x, y) for x,y in retlist if y != None and y != "" and y != []]
+    striped_retlist_keys = [x for x,y in striped_retlist]
+
+    # If a required metadata field was removed, return empty string
+    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint", "mbox", "identifier", "accessLevel"]:
+        if required_field not in striped_retlist_keys:
+            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), required_field)
+            return
 
     return OrderedDict(striped_retlist)
 

@@ -4,6 +4,9 @@ from ckan.lib.base import BaseController, render, c
 from pylons import request, response
 from ckan.common import request as ckan_request
 import json, re
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from collections import OrderedDict # 2.7
@@ -167,8 +170,16 @@ def make_json():
     #Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        if not (re.match(r'[Nn]on-public', extras.get('public_access_level', 'Public'))):
-            output.append(make_datajson_entry(pkg))
+        try:
+            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
+                datajson_entry = make_datajson_entry(pkg)
+                if datajson_entry:
+                    output.append(datajson_entry)
+                else:
+                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+        except KeyError:
+            logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None), pkg.get('title', None))
+            pass
     return output
 
 def make_edi(owner_org):
@@ -177,7 +188,11 @@ def make_edi(owner_org):
     output = []
     for pkg in packages:
         if pkg['owner_org'] == owner_org:
-            output.append(make_datajson_entry(pkg))
+            datajson_entry = make_datajson_entry(pkg)
+            if datajson_entry:
+                output.append(datajson_entry)
+            else:
+                logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
     return json.dumps(output)
 
 def make_pdl(owner_org):
@@ -187,9 +202,19 @@ def make_pdl(owner_org):
     #Create data.json only using public datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        if pkg['owner_org'] == owner_org \
-            and not (re.match(r'[Nn]on-public', extras.get('public_access_level', 'Public'))):
-            output.append(make_datajson_entry(pkg))
+        try:
+            if pkg['owner_org'] == owner_org \
+                and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
+
+                datajson_entry = make_datajson_entry(pkg)
+                if datajson_entry:
+                    output.append(datajson_entry)
+                else:
+                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+
+        except KeyError:
+            logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field", pkg.get('id', None), pkg.get('title', None))
+            pass
     return json.dumps(output)
 
 # TODO commenting out enterprise data inventory for right now
