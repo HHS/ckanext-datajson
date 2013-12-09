@@ -76,6 +76,14 @@ def get_best_resource(package, acceptable_formats, unacceptable_formats=None):
 
 def get_primary_resource(package):
     # Return info about a "primary" resource. Select a good one.
+
+    # If this came from a harvested data.json file, we marked the resource
+    # that came from the top-level accessURL as 'is_primary_distribution'.
+    for r in package["resources"]:
+        if r.get("is_primary_distribution") == 'true':
+            return r
+
+    # Otherwise fall back to a resource by prefering certain formats over others.
     return get_best_resource(package, ("csv", "xls", "xml", "text", "zip", "rdf"), ("api", "query tool", "widget"))
     
 def get_api_resource(package):

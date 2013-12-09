@@ -34,8 +34,8 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Access Level", datajson.get("accessLevel")) # not in HHS schema
 	extra(package, "Access Level Comment", datajson.get("accessLevelComment")) # not in HHS schema
 	extra(package, "Data Dictionary", datajson.get("dataDictionary", defaults.get("Data Dictionary")))
-	# accessURL is redundant with resources
-	# webService is redundant with resources
+	# accessURL is handled with the distributions below
+	# webService is handled with the distributions below
 	extra(package, "Format", datajson.get("format")) # not in HHS schema
 	extra(package, "License Agreement", datajson.get("license"))
 	#extra(package, "License Agreement Required", ...)
@@ -57,38 +57,67 @@ def parse_datajson_entry(datajson, package, defaults):
 	package["url"] = datajson.get("landingPage", datajson.get("webService", datajson.get("accessURL")))
 	extra(package, "PrimaryITInvestmentUII", datajson.get("PrimaryITInvestmentUII")) # not in HHS schema
 	extra(package, "System Of Records", datajson.get("systemOfRecords")) # not in HHS schema
+
+	# Add resources.
+
 	package["resources"] = [ ]
-	for d in datajson.get("distribution", []):
-				if d.get("accessURL", "").strip() == "": continue # skip if this has an empty accessURL
-				r = {
-					"url": d["accessURL"],
-					"format": normalize_format(d.get("format", "Unknown")),
 
-					# Since we normalize the 'format' for the benefit of our Drupal site,
-					# also store the MIME type as provided in the resource mimetype field.
-					"mimetype": d.get("format"),
-				}
-				
-				# Work-around for Socrata-style formats array. Pull from the value field
-				# if it is set, otherwise the label.
-				try:
-					r["format"] = normalize_format(d["formats"][0]["label"], raise_on_unknown=True)
-				except:
-					pass
-				try:
-					r["format"] = normalize_format(d["formats"][0]["value"], raise_on_unknown=True)
-				except:
-					pass
-				try:
-					r["mimetype"] = d["formats"][0]["value"]
-				except:
-					pass
-				
-				# Name the resource the same as the normalized format, since we have
-				# nothing better.
-				r["name"] = r["format"]
+	def add_resource(accessURL, format, is_primary=False, socrata_formats=None):
+		# skip if this has an empty accessURL
+		if accessURL is None or accessURL.strip() == "": return
 
-				package["resources"].append(r)
+		# form the resource
+		r = {
+			"url": accessURL,
+
+			# Store the format normalized to a file-extension-like string.
+			# e.g. turn text/csv into CSV
+			"format": normalize_format(format),
+
+			# Also store the MIME type as given in the data.json file.
+			"mimetype": format,
+		}
+
+		# Remember which resource came from the top-level accessURL so we can round-trip that.
+		if is_primary:
+			r["is_primary_distribution"] = "true"
+		
+		# Work-around for Socrata-style formats array. Pull from the value field
+		# if it is set, otherwise the label.
+		if isinstance(socrata_formats, list):
+			try:
+				r["format"] = normalize_format(socrata_formats[0]["label"], raise_on_unknown=True)
+			except:
+				pass
+			try:
+				r["format"] = normalize_format(socrata_formats[0]["value"], raise_on_unknown=True)
+			except:
+				pass
+			try:
+				r["mimetype"] = socrata_formats[0]["value"]
+			except:
+				pass
+		
+		# Name the resource the same as the normalized format, since we have
+		# nothing better.
+		r["name"] = r["format"]
+
+		package["resources"].append(r)
+
+	# Use the top-level accessURL and format fields only if there are no distributions, because
+	# otherwise the accessURL and format should be repeated in the distributions and acts as
+	# the primary distribution, whatever that might mean.
+	if not isinstance(datajson.get("distribution"), list) or len(datajson.get("distribution")) == 0:
+		add_resource(datajson.get("accessURL"), datajson.get("format"), is_primary=True)
+
+	# Include the webService URL as an API resource.
+	if isinstance(datajson.get("webService"), (str, unicode)):
+		add_resource(datajson.get("webService"), "API")
+
+	# ...And the distributions.
+	if isinstance(datajson.get("distribution"), list):
+		for d in datajson.get("distribution"):
+			add_resource(d.get("accessURL"), d.get("format"), socrata_formats=d.get("formats"), is_primary=(d.get("accessURL")==datajson.get("accessURL")))
 	
 def extra(package, key, value):
 	if not value: return
@@ -96,6 +125,9 @@ def extra(package, key, value):
 	
 def normalize_format(format, raise_on_unknown=False):
 	# Format should be a file extension. But sometimes Socrata outputs a MIME type.
+	if format is None:
+		if raise_on_unknown: raise ValueError()
+		return "Unknown"
 	format = format.lower()
 	m = re.match(r"((application|text)/(\S+))(; charset=.*)?", format)
 	if m:
