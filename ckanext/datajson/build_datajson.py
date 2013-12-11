@@ -70,7 +70,7 @@ def make_datajson_entry(package):
                             'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
                             'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
                             'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
-                            'extrasRollup']
+                            'extrasRollup', 'format', 'accessURL']
 
     #Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
     #TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
