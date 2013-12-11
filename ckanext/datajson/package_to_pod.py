@@ -4,7 +4,7 @@ except ImportError:
     from sqlalchemy.util import OrderedDict
 
 
-import logging
+import logging, string
 
 log = logging.getLogger(__name__)
 
@@ -46,8 +46,8 @@ def make_datajson_entry(package):
         ("references", [s for s in [extras.get("Technical Documentation", None)] if s != None]),
         ("landingPage", extras.get('homepage_url', package["url"])),
          ('rssFeed', extras.get('rss_feed', None)),
-         ('theme', extras.get('category', None)),
-         ('references', extras.get('related_documents', None)),
+         ('theme', string.split(extras.get('category', ""), ',')),
+         ('references', string.split(extras.get('related_documents', ""), ',')),
          ('systemOfRecords', extras.get('system_of_records', None)),
          ('systemOfRecordsNoneRelatedToThisDataset', extras.get('system_of_records_none_related_to_this_dataset', None)),
          ("distribution",
