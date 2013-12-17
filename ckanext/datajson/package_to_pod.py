@@ -42,12 +42,8 @@ def make_datajson_entry(package):
         ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
         ('language', extras.get('language', None)),
         ("dataQuality", extras.get('data_quality', True)),
-        ("theme", [s for s in extras.get("Subject Area 1", None), extras.get("Subject Area 2", None),extras.get("Subject Area 3", None) if s != None]),
-        ("references", [s for s in [extras.get("Technical Documentation", None)] if s != None]),
         ("landingPage", extras.get('homepage_url', package["url"])),
          ('rssFeed', extras.get('rss_feed', None)),
-         ('theme', string.split(extras.get('category', ""), ',')),
-         ('references', string.split(extras.get('related_documents', ""), ',')),
          ('systemOfRecords', extras.get('system_of_records', None)),
          ('systemOfRecordsNoneRelatedToThisDataset', extras.get('system_of_records_none_related_to_this_dataset', None)),
          ("distribution",
@@ -59,6 +55,18 @@ def make_datajson_entry(package):
               ])
               for r in package["resources"]
          ])]
+
+        theme = string.strip(extras.get('category', ""))
+        if theme:
+            retlist.append(
+                ('theme', [string.strip(x) for x in string.split(theme, ',')])
+            )
+
+        references = string.strip(extras.get('related_documents', ""))
+        if references:
+            retlist.append(
+                ('references', [string.strip(x) for x in string.split(references, ',')])
+            )
 
     except KeyError as e:
         log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), e)
