@@ -1,8 +1,9 @@
 import ckan.plugins as p
 
 from ckan.lib.base import BaseController, render, c
+import ckan.model as model
 from pylons import request, response
-from ckan.common import request as ckan_request
+import ckan.lib.dictization.model_dictize as model_dictize
 import json, re
 import logging
 
@@ -244,7 +245,7 @@ def make_json():
 
 def make_edi(owner_org):
     # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    packages = get_all_group_packages(group_id=owner_org)
     output = []
     for pkg in packages:
         if pkg['owner_org'] == owner_org:
@@ -257,7 +258,8 @@ def make_edi(owner_org):
 
 def make_pdl(owner_org):
     # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    packages = get_all_group_packages(group_id=owner_org)
+
     output = []
     #Create data.json only using public datasets, datasets marked non-public are not exposed
     for pkg in packages:
@@ -276,6 +278,16 @@ def make_pdl(owner_org):
             logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field", pkg.get('id', None), pkg.get('title', None))
             pass
     return json.dumps(output)
+
+def get_all_group_packages(group_id):
+    """
+    Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
+    """
+    result = []
+    for pkg_rev in model.Group.get(group_id).packages(with_private=True, context={'user_is_admin':True}):
+        result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
+
+    return result
 
 # TODO commenting out enterprise data inventory for right now
 #def make_enterprise_json():
