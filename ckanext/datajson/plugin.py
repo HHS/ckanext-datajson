@@ -6,15 +6,26 @@ from pylons import request, response
 import ckan.lib.dictization.model_dictize as model_dictize
 import json, re
 import logging
+from jsonschema.exceptions import best_match
+import StringIO
 
 logger = logging.getLogger(__name__)
+
+def get_validator():
+    import urllib2
+    from jsonschema import Draft4Validator, FormatChecker
+
+    schema = json.loads(urllib2.urlopen('http://project-open-data.github.io/schema/1_0_final/single_entry.json').read())
+
+    return Draft4Validator(schema, format_checker=FormatChecker())
+
+validator = get_validator()
+
 
 try:
     from collections import OrderedDict # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
-
-import ckan.model
 
 from build_datajson import make_datajson_entry
 # from build_enterprisedatajson import make_enterprisedatajson_entry
@@ -52,7 +63,7 @@ class DataJsonPlugin(p.SingletonPlugin):
             m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
             # TODO commenting out enterprise data inventory for right now
             #m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
-            m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+            #m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -63,7 +74,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         m.connect('enterprise_data_inventory', '/organization/{org}/edi.json', controller='ckanext.datajson.plugin:DataJsonController', action='generate_edi')
 
         # /pod/validate
-        m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
+        #m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
         
         return m
 
@@ -184,19 +195,45 @@ def make_json():
     return output
 
 def make_edi(owner_org):
+    #Error handler for creating error log
+    stream = StringIO.StringIO()
+    eh = logging.StreamHandler(stream)
+    eh.setLevel(logging.WARN)
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    eh.setFormatter(formatter)
+    logger.addHandler(eh)
+
     # Build the data.json file.
     packages = get_all_group_packages(group_id=owner_org)
     output = []
     for pkg in packages:
         if pkg['owner_org'] == owner_org:
             datajson_entry = make_datajson_entry(pkg)
-            if datajson_entry:
+            if datajson_entry and is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
                 logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
-    return json.dumps(output)
+
+    # Get the error log
+    eh.flush()
+    error = stream.getvalue()
+    eh.close()
+    logger.removeHandler(eh)
+    stream.close()
+
+    #return json.dumps(output)
+    return write_zip(output, error, zip_name='edi')
 
 def make_pdl(owner_org):
+    #Error handler for creating error log
+    stream = StringIO.StringIO()
+    eh = logging.StreamHandler(stream)
+    eh.setLevel(logging.WARN)
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    eh.setFormatter(formatter)
+    logger.addHandler(eh)
+
+
     # Build the data.json file.
     packages = get_all_group_packages(group_id=owner_org)
 
@@ -209,7 +246,7 @@ def make_pdl(owner_org):
                 and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
 
                 datajson_entry = make_datajson_entry(pkg)
-                if datajson_entry:
+                if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
                     logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
@@ -217,7 +254,16 @@ def make_pdl(owner_org):
         except KeyError:
             logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field", pkg.get('id', None), pkg.get('title', None))
             pass
-    return json.dumps(output)
+
+    # Get the error log
+    eh.flush()
+    error = stream.getvalue()
+    eh.close()
+    logger.removeHandler(eh)
+    stream.close()
+
+    #return json.dumps(output)
+    return write_zip(output, error, zip_name='pdl')
 
 def get_all_group_packages(group_id):
     """
@@ -228,6 +274,47 @@ def get_all_group_packages(group_id):
         result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
 
     return result
+
+def is_valid(instance):
+    """
+    Validates a data.json entry against the project open data's JSON schema. Log a warning message on validation error
+    """
+    error = best_match(validator.iter_errors(instance))
+    if error:
+        logger.warn("Validation failed, best guess of error = %s", error)
+        return False
+    return True
+
+def write_zip(data, error=None, zip_name='data'):
+    """
+    Data: a python object to write to the data.json
+    Error: unicode string representing the content of the error log.
+    zip_name: the name to use for the zip file
+    """
+    import zipfile
+
+    o = StringIO.StringIO()
+    zf = zipfile.ZipFile(o, mode='w')
+
+    #Write the data file
+    if data:
+        zf.writestr('datajson.txt', json.dumps(data).encode('utf8'))
+
+    #Write the error log
+    if error:
+        zf.writestr('errorlog.txt', error.encode('utf8'))
+
+    zf.close()
+    o.seek(0)
+
+    binary = o.read()
+    o.close()
+
+    response.content_type = 'application/octet-stream'
+    response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
+
+    return binary
+
 
 # TODO commenting out enterprise data inventory for right now
 #def make_enterprise_json():
