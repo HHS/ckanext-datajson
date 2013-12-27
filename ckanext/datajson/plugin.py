@@ -13,9 +13,18 @@ logger = logging.getLogger(__name__)
 
 def get_validator():
     import urllib2
+    import os
     from jsonschema import Draft4Validator, FormatChecker
 
-    schema = json.loads(urllib2.urlopen('http://project-open-data.github.io/schema/1_0_final/single_entry.json').read())
+    schema = None
+
+    try:
+        schema = json.loads(urllib2.urlopen('http://project-open-data.github.io/schema/1_0_final/single_entry.json',
+                                            timeout=500).read())
+    except Exception, e:
+        schema_path = os.path.relpath('schema/1_0_final/single_entry.json')
+        with open(schema_path, 'r') as file:
+            schema = json.loads(file.read())
 
     return Draft4Validator(schema, format_checker=FormatChecker())
 
