@@ -9,24 +9,19 @@ import logging
 from jsonschema.exceptions import best_match
 import StringIO
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('datajson')
 
 def get_validator():
-    import urllib2
     import os
     from jsonschema import Draft4Validator, FormatChecker
 
-    schema = None
+    schema_path = os.path.join(os.path.dirname(__file__), 'schema', '1_0_final', 'single_entry.json')
+    with open(schema_path, 'r') as file:
+        schema = json.loads(file.read())
+        return Draft4Validator(schema, format_checker=FormatChecker())
 
-    try:
-        schema = json.loads(urllib2.urlopen('http://project-open-data.github.io/schema/1_0_final/single_entry.json',
-                                            timeout=500).read())
-    except Exception, e:
-        schema_path = os.path.join(os.path.dirname(__file__), 'schema/1_0_final/single_entry.json')
-        with open(schema_path, 'r') as file:
-            schema = json.loads(file.read())
-
-    return Draft4Validator(schema, format_checker=FormatChecker())
+    logger.warn('Unable to create validator')
+    return None
 
 validator = get_validator()
 
@@ -126,10 +121,6 @@ class DataJsonController(BaseController):
     def generate_jsonld(self):
         return self.generate_output('json-ld')
 
-    ## TODO commenting out enterprise data inventory for right now
-    #def generate_enterprise(self):
-    #    return self.generate_output('enterprise')
-        
     def validator(self):
         # Validates that a URL is a good data.json file.
         if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
@@ -323,12 +314,4 @@ def write_zip(data, error=None, zip_name='data'):
     response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
 
     return binary
-
-
-# TODO commenting out enterprise data inventory for right now
-#def make_enterprise_json():
-#    # Build the enterprise data.json file, which includes private files
-#    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-#    return [make_enterprisedatajson_entry(pkg) for pkg in packages]
-    
 

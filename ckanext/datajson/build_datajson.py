@@ -6,7 +6,7 @@ except ImportError:
 
 import logging, string
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('datajson.builder')
 
 #TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
