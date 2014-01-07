@@ -12,7 +12,7 @@ def get_facet_fields():
     return facets
 
 def make_datajson_entry(package, plugin):
-    return OrderedDict([
+    ret = [
         ("title", package["title"]),
         ("description", package["notes"]),
         ("keyword", [t["display_name"] for t in package["tags"]]),
@@ -52,7 +52,14 @@ def make_datajson_entry(package, plugin):
                 for r in package["resources"]
                 if r["format"].lower() not in ("api", "query tool", "widget")
             ]),
-    ])
+    ]
+
+    # GSA doesn't like null values so remove those now.
+    ret = [(k, v) for (k, v) in ret if v is not None]
+
+    # And return it as an OrderedDict because we need dict output in JSON
+    # and we want to have the output be stable which is helpful for debugging (e.g. with diff).
+    return OrderedDict(ret)
     
 def extra(package, key, default=None):
     # Retrieves the value of an extras field.

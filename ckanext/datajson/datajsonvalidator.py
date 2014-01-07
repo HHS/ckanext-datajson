@@ -43,6 +43,12 @@ def do_validation(doc, src_url, errors_array):
             dataset_name = "dataset %d" % (i+1)
             if check_string_field(item, "title", 5, dataset_name, errs):
                 dataset_name = '"%s"' % item.get("title", "").strip()
+
+            # No fields should be null. After this point we treat nulls as if they were
+            # not present. This check must be after dataset_name is set above.
+            for k, v in item.items():
+                if v is None:
+                    add_error(errs, 2, "File Format Issues", "The '%s' field was set to 'null.' If there is no value, the field must not be present." % k, dataset_name)
                 
             # description
             check_string_field(item, "description", 30, dataset_name, errs)
