@@ -52,7 +52,7 @@ def parse_datajson_entry(datajson, package, defaults):
 	extra(package, "Subject Area 1", datajson.get("theme", defaults.get("Subject Area 1")))
 	extra(package, "Subject Area 2", defaults.get("Subject Area 2"))
 	extra(package, "Subject Area 2", defaults.get("Subject Area 3"))
-	extra(package, "Technical Documentation", datajson.get("references"))
+	extra(package, "Technical Documentation", " ".join(datajson.get("references", [])))
 	extra(package, "Size", datajson.get("size")) # not in HHS schema
 	package["url"] = datajson.get("landingPage", datajson.get("webService", datajson.get("accessURL")))
 	extra(package, "PrimaryITInvestmentUII", datajson.get("PrimaryITInvestmentUII")) # not in HHS schema

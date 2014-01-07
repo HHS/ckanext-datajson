@@ -39,7 +39,7 @@ def make_datajson_entry(package, plugin):
         ("granularity", "/".join(x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if x != None)),
         ("dataQuality", extra(package, "Data Quality Met", default="true") == "true"),
         ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None]),
-        ("references", [s for s in [extra(package, "Technical Documentation")] if s != None]),
+        ("references", [s for s in extra(package, "Technical Documentation", default="").split(" ") if s != ""]),
         ("landingPage", package["url"]),
         ("systemOfRecords", extra(package, "System Of Records")),
         ("distribution",
