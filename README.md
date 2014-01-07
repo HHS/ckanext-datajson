@@ -173,6 +173,14 @@ field names to an array of permitted values:
 	filters:
 		theme: ["Health"]
 
+Only datasets matching at least one permitted value are harvested.
+
+You may also override values found in the harvested file with fixed values set in the configuration like so:
+
+	overrides:
+	  Author: U.S. Food and Drug Administration
+
+
 Credit / Copying
 ----------------
 

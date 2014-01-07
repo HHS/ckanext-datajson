@@ -43,6 +43,7 @@ class DatasetHarvesterBase(HarvesterBase):
         ret = {
             "filters": { }, # map data.json field name to list of values one of which must be present
             "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
+            "overrides": { }, # map field name to value to supply overriding what is found in the harvest source
         }
 
         source_config = yaml.load(harvest_source.config)
@@ -56,6 +57,13 @@ class DatasetHarvesterBase(HarvesterBase):
 
         try:
             ret["defaults"].update(source_config["defaults"])
+        except TypeError:
+            pass
+        except KeyError:
+            pass
+
+        try:
+            ret["overrides"].update(source_config["overrides"])
         except TypeError:
             pass
         except KeyError:
@@ -170,9 +178,9 @@ class DatasetHarvesterBase(HarvesterBase):
         return True
 
     # SUBCLASSES MUST IMPLEMENT
-    def set_dataset_info(self, pkg, dataset, dataset_defaults):
+    def set_dataset_info(self, pkg, dataset, harvester_config):
         # Sets package metadata on 'pkg' using the remote catalog's metadata
-        # in 'dataset' and default values as configured in 'dataset_defaults'.
+        # in 'dataset' and default values as configured in 'harvester_config'.
         raise Exception("Not implemented.")
 
     def import_stage(self, harvest_object):
@@ -181,7 +189,7 @@ class DatasetHarvesterBase(HarvesterBase):
         log.debug('In %s import_stage' % repr(self))
         
         # Get default values.
-        dataset_defaults = self.load_config(harvest_object.source)["defaults"]
+        harvester_config = self.load_config(harvest_object.source)
 
         # Get the metadata that we stored in the HarvestObject's content field.
         dataset = json.loads(harvest_object.content)
@@ -225,7 +233,7 @@ class DatasetHarvesterBase(HarvesterBase):
         }
         
         # Set specific information about the dataset.
-        self.set_dataset_info(pkg, dataset, dataset_defaults)
+        self.set_dataset_info(pkg, dataset, harvester_config)
     
         # Try to update an existing package with the ID set in harvest_object.guid. If that GUID
         # corresponds with an existing package, get its current metadata.
