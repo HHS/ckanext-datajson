@@ -9,7 +9,7 @@ from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError,
                                     HarvestObjectError
 from ckanext.harvest.harvesters.base import HarvesterBase
 
-import uuid, datetime, hashlib, urllib2, json, yaml
+import uuid, datetime, hashlib, urllib2, json, yaml, re
 
 import logging
 log = logging.getLogger("harvester")
@@ -42,6 +42,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
         ret = {
             "filters": { }, # map data.json field name to list of values one of which must be present
+            "excludes": { }, # map data.json field name to list of values or regexes none of which may be present
             "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
             "overrides": { }, # map field name to value to supply overriding what is found in the harvest source
         }
@@ -50,6 +51,13 @@ class DatasetHarvesterBase(HarvesterBase):
 
         try:
             ret["filters"].update(source_config["filters"])
+        except TypeError:
+            pass
+        except KeyError:
+            pass
+
+        try:
+            ret["excludes"].update(source_config["excludes"])
         except TypeError:
             pass
         except KeyError:
@@ -117,6 +125,7 @@ class DatasetHarvesterBase(HarvesterBase):
         seen_datasets = set()
         
         filters = self.load_config(harvest_job.source)["filters"]
+        excludes = self.load_config(harvest_job.source)["excludes"]
 
         for dataset in source:
             # Create a new HarvestObject for this dataset and save the
@@ -132,6 +141,25 @@ class DatasetHarvesterBase(HarvesterBase):
             if not matched_filters:
                 continue
 
+            # Check the config's excludes to see if we should NOT import this dataset.
+            matched_excludes = False
+            for k, v in excludes.items():
+                # See if the value appears exactly in the list.
+                value = dataset.get(k)
+                if value in v:
+                    matched_excludes = True
+
+                # For any regex in the list, see if the regex matches. Specify regexes
+                # by surrounding them in forward slashes, e.g. "/mypattern/". Must turn
+                # the value into a string though,
+                value = unicode(value)
+                for pattern in v:
+                    if not re.match("^/.*/$", pattern): continue
+                    pattern = pattern[1:-1] # strip slashes
+                    if re.search(pattern, value):
+                        matched_excludes = True
+            if matched_excludes:
+                continue
             
             # Get the package_id of this resource if we've already imported
             # it into our system. Otherwise, assign a brand new GUID to the
@@ -287,7 +315,7 @@ class DatasetHarvesterBase(HarvesterBase):
         
     def make_upstream_content_hash(self, datasetdict, harvest_source):
         return hashlib.sha1(json.dumps(datasetdict, sort_keys=True)
-        	+ "|" + harvest_source.config + "|" + self.HARVESTER_VERSION).hexdigest()
+        	+ "|" + harvest_source.config.encode("utf8") + "|" + self.HARVESTER_VERSION).hexdigest()
         
     def find_extra(self, pkg, key):
         for extra in pkg["extras"]:

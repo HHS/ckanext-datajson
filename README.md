@@ -166,20 +166,28 @@ that may not be set in the source data.json files, e.g. enter something like thi
 
 The keys for the defaults are specified in ckanext/datajson/parse_datajson.py. This again is tied to the HealthData.gov metadata schema.
 
-You can also specify filters to control what datasets from the data.json file are
-imported. By default everything is imported. In a "filters" section, map data.json
-field names to an array of permitted values:
-
-	filters:
-		theme: ["Health"]
-
-Only datasets matching at least one permitted value are harvested.
-
 You may also override values found in the harvested file with fixed values set in the configuration like so:
 
 	overrides:
 	  Author: U.S. Food and Drug Administration
 
+You can also specify filters to control what datasets from the data.json file are
+imported. By default everything is imported. In a "filters" section, map data.json
+field names to an array of permitted values or in an "excludes" section map data.json
+field names to values or regular expressions surrounded in forward slashes that will
+cause datasets to be excluded:
+
+	filters:
+		theme: ["Health"]
+	excludes:
+		accessURL: ["http://example.org/dataset", "/^http://some-pattern/here/"]
+
+Each dataset is compared to each filter and exclude (in this example, a theme filter
+and an accessURL exclude). To be imported, the dataset must match at least one value
+of a filter and may not match any value of an exclude. In this example, all imported
+datasets will have Health set as their theme and no accessURL will be either
+"http://example.org/dataset" or start with "http://some-pattern/here" (not that the
+final slash indicates the end of the regular expression).
 
 Credit / Copying
 ----------------
