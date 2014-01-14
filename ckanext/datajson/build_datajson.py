@@ -94,7 +94,7 @@ def get_primary_resource(package):
     
 def get_api_resource(package):
     # Return info about an API resource.
-    return get_best_resource(package, ("api", "query tool"))
+    return get_best_resource(package, ("api",))
 
 def build_temporal(package):
     # Build one dataset entry of the data.json file.
