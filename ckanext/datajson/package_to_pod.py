@@ -29,8 +29,8 @@ def make_datajson_entry(package):
         ("identifier", extras['unique_id']), #required
         ("accessLevel", extras['public_access_level']), #required
         ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
-        ("bureauCode", extras.get("bureau_code", None)),
-        ("programCode", extras.get("program_code", None)),
+        # ("bureauCode", extras.get("bureau_code", None)),
+        # ("programCode", extras.get("program_code", None)),
         ("accessLevelComment", extras.get("access_level_comment", None)),
 #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("endpoint", None)),
@@ -40,7 +40,7 @@ def make_datajson_entry(package):
         ("temporal", extras.get('temporal', build_temporal(package))),
         ("issued", extras.get('release_date', extras.get("Date Released", None))),
         ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
-        ('language', extras.get('language', None)),
+        # ('language', extras.get('language', None)),
         ("dataQuality", extras.get('data_quality', True)),
         ("landingPage", extras.get('homepage_url', package["url"])),
          ('rssFeed', extras.get('rss_feed', None)),
@@ -56,17 +56,14 @@ def make_datajson_entry(package):
               for r in package["resources"]
          ])]
 
-        theme = string.strip(extras.get('category', ""))
-        if theme:
-            retlist.append(
-                ('theme', [string.strip(x) for x in string.split(theme, ',')])
-            )
-
-        references = string.strip(extras.get('related_documents', ""))
-        if references:
-            retlist.append(
-                ('references', [string.strip(x) for x in string.split(references, ',')])
-            )
+        for pair in [
+            ('program_code', 'programCode'),
+            ('bureau_code', 'bureauCode'),
+            ('category', 'theme'),
+            ('related_documents', 'references'),
+            ('language', 'language')
+        ]:
+            split_multiple_entries(retlist, extras, pair)
 
     except KeyError as e:
         log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), e)
@@ -151,3 +148,9 @@ def build_temporal(package):
     if temporal == "Unknown/Unknown": return None
     return temporal
 
+def split_multiple_entries(retlist, extras, names):
+        found_element = string.strip(extras.get(names[0], ""))
+        if found_element:
+            retlist.append(
+                (names[1], [string.strip(x) for x in string.split(found_element, ',')])
+            )
