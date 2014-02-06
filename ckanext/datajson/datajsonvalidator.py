@@ -166,8 +166,10 @@ def do_validation(doc, src_url, errors_array):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' must be two dates separated by a forward slash.", dataset_name)
             else:
                 d1, d2 = item["temporal"].split("/", 1)
-                if not ISO8601_REGEX.match(d1) or not ISO8601_REGEX.match(d2):
-                    add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' has an invalid start or end date.", dataset_name)
+                if not ISO8601_REGEX.match(d1):
+                    add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' has an invalid start date: %s." % d1, dataset_name)
+                if not ISO8601_REGEX.match(d2):
+                    add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' has an invalid end date: %s." % d2, dataset_name)
             
             # Expanded Fields
             

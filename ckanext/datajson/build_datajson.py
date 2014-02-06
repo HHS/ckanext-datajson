@@ -16,7 +16,7 @@ def make_datajson_entry(package, plugin):
         ("title", package["title"]),
         ("description", package["notes"]),
         ("keyword", [t["display_name"] for t in package["tags"]]),
-        ("modified", extra(package, "Date Updated")),
+        ("modified", extra(package, "Date Updated", datatype="iso8601")),
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
@@ -32,7 +32,7 @@ def make_datajson_entry(package, plugin):
         ("license", extra(package, "License Agreement")),
         ("spatial", extra(package, "Geographic Scope")),
         ("temporal", build_temporal(package)),
-        ("issued", extra(package, "Date Released")),
+        ("issued", extra(package, "Date Released", datatype="iso8601")),
         ("accrualPeriodicity", extra(package, "Publish Frequency")),
         ("language", extra(package, "Language")),
         ("PrimaryITInvestmentUII", extra(package, "PrimaryITInvestmentUII")),
@@ -60,11 +60,21 @@ def make_datajson_entry(package, plugin):
     # and we want to have the output be stable which is helpful for debugging (e.g. with diff).
     return OrderedDict(ret)
     
-def extra(package, key, default=None):
+def extra(package, key, default=None, datatype=None, raise_if_missing=False):
     # Retrieves the value of an extras field.
     for extra in package["extras"]:
         if extra["key"] == key:
-            return extra["value"]
+            v = extra["value"]
+
+            if datatype == "iso8601":
+                # Hack: If this value is a date, convert Drupal style dates to ISO 8601
+                # dates by replacing the space date/time separator with a T. Also if it
+                # looks like a plain date (midnight time), remove the time component.
+                v = v.replace(" ", "T")
+                v = v.replace("T00:00:00", "")
+
+            return v
+    if raise_if_missing: raise ValueError("Missing value for %s.", key)
     return default
 
 def get_best_resource(package, acceptable_formats, unacceptable_formats=None):
@@ -98,18 +108,15 @@ def get_api_resource(package):
 
 def build_temporal(package):
     # Build one dataset entry of the data.json file.
-    temporal = ""
-    if extra(package, "Coverage Period Fiscal Year Start"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal = extra(package, "Coverage Period Start", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    temporal += "/"
-    if extra(package, "Coverage Period Fiscal Year End"):
-        temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    if temporal == "Unknown/Unknown": return None
-    return temporal
+    try:
+        # we ask extra() to raise if either the start or end date is missing since we can't
+        # form a valid value in that case
+        return \
+              extra(package, "Coverage Period Start", datatype="iso8601", raise_if_missing=True) \
+            + "/" \
+            + extra(package, "Coverage Period End", datatype="iso8601", raise_if_missing=True)
+    except ValueError:
+        return None
 
 def extension_to_mime_type(file_ext):
     if file_ext is None: return None
