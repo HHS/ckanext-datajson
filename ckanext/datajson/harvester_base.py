@@ -39,43 +39,13 @@ class DatasetHarvesterBase(HarvesterBase):
         # string. Unfortunately I went ahead of CKAN on this. The stock CKAN harvester
         # only allows JSON in the configuration box. My fork is necessary for this
         # to work: https://github.com/joshdata/ckanext-harvest
+        ret = yaml.load(harvest_source.config)
+        if not isinstance(ret, dict): ret = { }
 
-        ret = {
-            "filters": { }, # map data.json field name to list of values one of which must be present
-            "excludes": { }, # map data.json field name to list of values or regexes none of which may be present
-            "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
-            "overrides": { }, # map field name to value to supply overriding what is found in the harvest source
-        }
-
-        source_config = yaml.load(harvest_source.config)
-
-        try:
-            ret["filters"].update(source_config["filters"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
-
-        try:
-            ret["excludes"].update(source_config["excludes"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
-
-        try:
-            ret["defaults"].update(source_config["defaults"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
-
-        try:
-            ret["overrides"].update(source_config["overrides"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
+        # ensure that some expected keys are present and have dictionary values
+        for key in ("filters", "excludes", "defaults", "overrides"):
+            if not isinstance(ret.get(key), dict):
+                ret[key] = { }
 
         return ret
 
@@ -124,8 +94,7 @@ class DatasetHarvesterBase(HarvesterBase):
         object_ids = []
         seen_datasets = set()
         
-        filters = self.load_config(harvest_job.source)["filters"]
-        excludes = self.load_config(harvest_job.source)["excludes"]
+        config = self.load_config(harvest_job.source)
 
         for dataset in source:
             # Create a new HarvestObject for this dataset and save the
@@ -135,7 +104,7 @@ class DatasetHarvesterBase(HarvesterBase):
             # For each filter, check that the value specified in the data.json file
             # is among the permitted values in the filter specification.
             matched_filters = True
-            for k, v in filters.items():
+            for k, v in config["filters"].items():
                 if dataset.get(k) not in v:
                     matched_filters = False
             if not matched_filters:
@@ -143,7 +112,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
             # Check the config's excludes to see if we should NOT import this dataset.
             matched_excludes = False
-            for k, v in excludes.items():
+            for k, v in config["excludes"].items():
                 # See if the value appears exactly in the list.
                 value = dataset.get(k)
                 if value in v:
