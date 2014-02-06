@@ -228,9 +228,18 @@ class DatasetHarvesterBase(HarvesterBase):
                 "value": datetime.datetime.utcnow().isoformat(),
                 }]
         }
+
+        # Set default values from the harvester configuration. Do this before
+        # applying values from the harvest source so that the values can be
+        # overridden.
+        self.set_extras(pkg, harvester_config["defaults"])
         
         # Set specific information about the dataset.
         self.set_dataset_info(pkg, dataset, harvester_config)
+
+        # Set "overrides" values from the harvester configuration, overriding
+        # anything found in the harvester source.
+        self.set_extras(pkg, harvester_config["overrides"])
     
         # Try to update an existing package with the ID set in harvest_object.guid. If that GUID
         # corresponds with an existing package, get its current metadata.
@@ -327,3 +336,16 @@ class DatasetHarvesterBase(HarvesterBase):
         # Append some random text to the URL. Hope that with five character
         # there will be no collsion.
         return name + "-" + str(uuid.uuid4())[:5]
+
+    def set_extras(self, package, extras):
+        for k, v in extras.items():
+            if k in ("title", "notes", "author", "url"):
+                # these are CKAN package fields
+                package[k] = v
+            elif k == "tags":
+                # tags are special
+                package["tags"] = [ { "name": munge_title_to_name(t) } for t in v ]
+            else:
+                # everything else is an "extra"
+                package.setdefault("extras", []).append({ "key": k, "value": v })
+
