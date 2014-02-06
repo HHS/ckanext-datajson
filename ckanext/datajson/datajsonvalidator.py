@@ -44,11 +44,13 @@ def do_validation(doc, src_url, errors_array):
             if check_string_field(item, "title", 5, dataset_name, errs):
                 dataset_name = '"%s"' % item.get("title", "").strip()
 
-            # No fields should be null. After this point we treat nulls as if they were
+            # No fields should be null or an empty list, according to GSA. After this point we treat nulls as if they were
             # not present. This check must be after dataset_name is set above.
             for k, v in item.items():
                 if v is None:
-                    add_error(errs, 2, "File Format Issues", "The '%s' field was set to 'null.' If there is no value, the field must not be present." % k, dataset_name)
+                    add_error(errs, 2, "File Format Issues", "The '%s' field is set to 'null'. If there is no value, the field must not be present." % k, dataset_name)
+                if isinstance(v, list) and len(v) == 0:
+                    add_error(errs, 2, "File Format Issues", "The '%s' field is an empty list. If there is no value, the field must not be present." % k, dataset_name)
                 
             # description
             check_string_field(item, "description", 30, dataset_name, errs)
