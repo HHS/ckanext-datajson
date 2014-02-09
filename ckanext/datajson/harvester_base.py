@@ -347,5 +347,13 @@ class DatasetHarvesterBase(HarvesterBase):
                 package["tags"] = [ { "name": munge_title_to_name(t) } for t in v ]
             else:
                 # everything else is an "extra"
-                package.setdefault("extras", []).append({ "key": k, "value": v })
+                DatasetHarvesterBase.set_extra(package, k, v)
 
+    @staticmethod
+    def set_extra(package, key, value):
+        extras = package.setdefault("extras", [])
+        for extra in extras:
+            if extra.get("key") == key:
+                extra["value"] = value
+                return
+        extras.append({ "key": key, "value": value })

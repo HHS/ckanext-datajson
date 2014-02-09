@@ -2,6 +2,8 @@ from ckan.lib.munge import munge_title_to_name
 
 import re
 
+from ckanext.datajson.harvester_base import DatasetHarvesterBase
+
 def parse_datajson_entry(datajson, package, harvester_config):
 	# Notes:
 	# * the data.json field "identifier" is handled by the harvester
@@ -122,7 +124,7 @@ def extra(package, ckan_key, datajson, datajson_fieldname):
 	if not value: return
 	if isinstance(value, list): value = " ".join(value) # for bureauCode, programCode, references
 	if value in (True, False): value = str(value).lower() # for dataQuality which is a boolean field, turn into "true" and "false"
-	package.setdefault("extras", []).append({ "key": ckan_key, "value": value })
+	DatasetHarvesterBase.set_extra(package, ckan_key, value)
 	
 def normalize_format(format, raise_on_unknown=False):
 	# Format should be a file extension. But sometimes Socrata outputs a MIME type.
