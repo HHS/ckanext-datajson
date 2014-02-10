@@ -351,6 +351,11 @@ class DatasetHarvesterBase(HarvesterBase):
 
     @staticmethod
     def set_extra(package, key, value):
+        if value is None: raise ValueError("value cannot be None")
+
+        if isinstance(value, list): value = " ".join(value) # for bureauCode, programCode, references
+        if value in (True, False): value = str(value).lower() # for dataQuality which is a boolean field, turn into "true" and "false"
+ 
         extras = package.setdefault("extras", [])
         for extra in extras:
             if extra.get("key") == key:

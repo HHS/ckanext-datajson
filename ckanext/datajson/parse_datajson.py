@@ -122,8 +122,6 @@ def parse_datajson_entry(datajson, package, harvester_config):
 def extra(package, ckan_key, datajson, datajson_fieldname):
 	value = datajson.get(datajson_fieldname)
 	if not value: return
-	if isinstance(value, list): value = " ".join(value) # for bureauCode, programCode, references
-	if value in (True, False): value = str(value).lower() # for dataQuality which is a boolean field, turn into "true" and "false"
 	DatasetHarvesterBase.set_extra(package, ckan_key, value)
 	
 def normalize_format(format, raise_on_unknown=False):
