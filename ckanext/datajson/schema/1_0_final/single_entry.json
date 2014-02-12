@@ -37,7 +37,7 @@
         },
         "contactPoint": {
             "title":"Contact Name",
-            "description":"Contact person’s name for the asset.",
+            "description":"Contact personâ€™s name for the asset.",
             "type": "string"
         },
         "dataDictionary": {
@@ -48,7 +48,7 @@
         },
         "dataQuality": {
             "title":"Data Quality",
-            "description":"Whether the dataset meets the agency’s Information Quality Guidelines (true/false).",
+            "description":"Whether the dataset meets the agencyâ€™s Information Quality Guidelines (true/false).",
             "type": "boolean"
         },
         "description": {
@@ -72,7 +72,7 @@
                     "format": {
                         "title":"Format",
                         "description":"The file format or API type of the distribution.",
-                        "pattern": "^[-\\w]+/[-\\w]+([+][-\\w]+)?$",
+                        "pattern": "^[-\\w]+/[-\\w]+(\\.[-\\w]+)*([+][-\\w]+)?$",
                         "type": "string"
                     }
                 }
@@ -104,7 +104,7 @@
         },
         "landingPage": {
             "title":"Homepage URL",
-            "description":"Alternative landing page used to redirect user to a contextual, Agency-hosted “homepage” for the Dataset or API when selecting this resource from the Data.gov user interface.",
+            "description":"Alternative landing page used to redirect user to a contextual, Agency-hosted â€œhomepageâ€ for the Dataset or API when selecting this resource from the Data.gov user interface.",
             "type": "string",
             "format": "uri"
         },
@@ -124,7 +124,7 @@
         },
         "mbox": {
             "title":"Contact Email",
-            "description":"Contact person’s email address.",
+            "description":"Contact personâ€™s email address.",
             "type": "string",
             "format": "email"
         },
