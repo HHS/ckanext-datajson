@@ -32,6 +32,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.site_url = config.get("ckan.site_url")
         DataJsonPlugin.default_contactpoint = config.get("ckanext.datajson.default_contactpoint")
         DataJsonPlugin.default_mbox = config.get("ckanext.datajson.default_mbox")
+        DataJsonPlugin.default_keywords = config.get("ckanext.datajson.default_keywords")
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.

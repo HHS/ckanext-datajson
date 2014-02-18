@@ -1,3 +1,5 @@
+import re
+
 try:
     from collections import OrderedDict # 2.7
 except ImportError:
@@ -12,10 +14,16 @@ def get_facet_fields():
     return facets
 
 def make_datajson_entry(package, plugin):
+    # keywords
+    keywords = [t["display_name"] for t in package["tags"]]
+    if len(keywords) == 0 and plugin.default_keywords is not None:
+        keywords = re.split("\s*,\s*", plugin.default_keywords)
+
+    # form the return value as an ordered list of fields which is nice for doing diffs of output
     ret = [
         ("title", package["title"]),
         ("description", package["notes"]),
-        ("keyword", [t["display_name"] for t in package["tags"]]),
+        ("keyword", keywords),
         ("modified", extra(package, "Date Updated", datatype="iso8601")),
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
