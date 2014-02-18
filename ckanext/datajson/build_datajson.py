@@ -24,7 +24,7 @@ def make_datajson_entry(package, plugin):
         ("title", package["title"]),
         ("description", package["notes"]),
         ("keyword", keywords),
-        ("modified", extra(package, "Date Updated", datatype="iso8601")),
+        ("modified", extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601"))),
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
