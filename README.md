@@ -162,15 +162,18 @@ that may not be set in the source data.json files, e.g. enter something like thi
 
 	defaults:
 	  Agency: Department of Health & Human Services
-	  Author: Substance Abuse & Mental Health Services Administration
+	  author: Substance Abuse & Mental Health Services Administration
 	  author_id: http://healthdata.gov/id/agency/samhsa
 
-The keys for the defaults are specified in ckanext/datajson/parse_datajson.py. This again is tied to the HealthData.gov metadata schema.
+The keys `title`, `notes`, `author`, and `url` are stored in the corresponding CKAN
+package fields. `tags`, which must be an array of strings, is stored as CKAN package
+tags. All other keys are stored in package extras (i.e. the Additional Info of a
+package).
 
 You may also override values found in the harvested file with fixed values set in the configuration like so:
 
 	overrides:
-	  Author: U.S. Food and Drug Administration
+	  author: U.S. Food and Drug Administration
 
 You can also specify filters to control what datasets from the data.json file are
 imported. By default everything is imported. In a "filters" section, map data.json
