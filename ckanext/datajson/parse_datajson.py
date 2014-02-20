@@ -8,10 +8,10 @@ def parse_datajson_entry(datajson, package, harvester_config):
 	# Notes:
 	# * the data.json field "identifier" is handled by the harvester
 
-	package["title"] = datajson.get("title")
-	package["notes"] = datajson.get("description")
-	package["author"] = datajson.get("publisher")
-	package["url"] = datajson.get("landingPage", datajson.get("webService", datajson.get("accessURL")))
+	package["title"] = datajson.get("title", package.get("title"))
+	package["notes"] = datajson.get("description", package.get("notes"))
+	package["author"] = datajson.get("publisher", package.get("author"))
+	package["url"] = datajson.get("landingPage", datajson.get("webService", datajson.get("accessURL", package.get("url"))))
 
 	package["groups"] = [ { "name": g } for g in 
 		harvester_config["defaults"].get("Groups", [])] # the complexity of permissions makes this useless, CKAN seems to ignore
