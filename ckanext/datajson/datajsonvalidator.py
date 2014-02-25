@@ -17,7 +17,7 @@ ACCRUAL_PERIODICITY_VALUES = ("Annual", "Bimonthly", "Semiweekly", "Daily", "Biw
 LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}([A-Za-z]{2})?$")
 
 COMMON_MIMETYPES = ("application/zip", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "application/xml", "application/rdf+xml", "application/json", "text/plain", "application/rss+xml")
-MIMETYPE_REGEX = re.compile("^(application|text)/([a-z\-\.\+]+)$")
+MIMETYPE_REGEX = re.compile("^(application|text)/([a-z\-\.\+]+)(;.*)?$")
 
 # load the OMB bureau codes on first load of this module
 import urllib, csv
@@ -337,6 +337,7 @@ def check_mime_type(format, field_name, dataset_name, errs):
         add_error(errs, 5, "Update Your File!", "The '%s' field used to be a file extension but now it must be a MIME type." % field_name, dataset_name)
     elif not MIMETYPE_REGEX.match(format):
         add_error(errs, 5, "Invalid Required Field Value", "The '%s' field has an invalid MIME type: \"%s\"." % (field_name, format), dataset_name)
-    elif format not in COMMON_MIMETYPES:
+    elif format.split(";")[0] not in COMMON_MIMETYPES:
+        # if there's an optional parameter like "; charset=UTF-8" chop it off before checking the COMMON_MIMETYPES list
         add_error(errs, 100, "Are These Okay?", "The '%s' field has an unusual MIME type: \"%s\"" % (field_name, format), dataset_name)
         
