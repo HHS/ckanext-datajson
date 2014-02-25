@@ -67,7 +67,9 @@ def do_validation(doc, src_url, errors_array):
                         add_error(errs, 5, "Invalid Required Field Value", "A keyword in the keyword array was an empty string.", dataset_name)
                     
             # bureauCode
-            if check_required_field(item, "bureauCode", list, dataset_name, errs):
+            # (skip if this is known to not be a federal dataset)
+            if item.get("_is_federal_dataset", True) == True and \
+               check_required_field(item, "bureauCode", list, dataset_name, errs):
                 for bc in item["bureauCode"]:
                     if not isinstance(bc, (str, unicode)):
                         add_error(errs, 5, "Invalid Required Field Value", "Each bureauCode must be a string", dataset_name)

@@ -61,6 +61,10 @@ def make_datajson_entry(package, plugin):
             ]),
     ]
 
+    # Special case to help validation.
+    if extra(package, "Catalog Type") == "State Catalog":
+        ret.append( ("_is_federal_dataset", False) )
+
     # GSA doesn't like null values and empty lists so remove those now.
     ret = [(k, v) for (k, v) in ret if v is not None and (not isinstance(v, list) or len(v) > 0)]
 
