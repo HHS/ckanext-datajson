@@ -99,7 +99,8 @@ def do_validation(doc, src_url, errors_array):
                 seen_identifiers.add(item["identifier"])
                 
             # programCode
-            if check_required_field(item, "programCode", list, dataset_name, errs):
+            # (don't bother reporting a missing programCode if no bureauCode is set)
+            if isinstance(item.get("bureauCode"), list) and check_required_field(item, "programCode", list, dataset_name, errs):
                 for s in item["programCode"]:
                     if not isinstance(s, (str, unicode)):
                         add_error(errs, 5, "Invalid Required Field Value", "Each value in the programCode array must be a string", dataset_name)
