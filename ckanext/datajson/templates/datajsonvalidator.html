@@ -22,8 +22,8 @@
       	<hr>
       	<h2>Validation Results</h2>
       	
-      	<p><tt>{{ c.source_url }}</tt></p>
-      	
+        <p>validated {% if c.number_of_records %}{{ c.number_of_records }} datasets in {% endif %}<tt><a href="{{c.source_url}}">{{ c.source_url }}</a></tt></p>
+
       	{% for err in c.errors %}
       		<h3>{{err.0}}</h3>
       		
