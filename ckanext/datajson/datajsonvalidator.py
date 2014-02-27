@@ -232,7 +232,7 @@ def do_validation(doc, src_url, errors_array):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'language' must be an array, if present.", dataset_name)
             else:
                 for s in item["language"]:
-                    if not LANGUAGE_REGEX.matches(s):
+                    if not LANGUAGE_REGEX.match(s):
                         add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'language' had an invalid language: \"%s\"" % s, dataset_name)
                     
             # PrimaryITInvestmentUII
