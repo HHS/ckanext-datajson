@@ -14,7 +14,7 @@ URL_REGEX = re.compile(
 
 ACCRUAL_PERIODICITY_VALUES = ("Annual", "Bimonthly", "Semiweekly", "Daily", "Biweekly", "Semiannual", "Biennial", "Triennial", "Three times a week", "Three times a month", "Continuously updated", "Monthly", "Quarterly", "Semimonthly", "Three times a year", "Weekly", "Completely irregular")
 
-LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}([A-Za-z]{2})?$")
+LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}(-[A-Za-z]{2})?$")
 
 COMMON_MIMETYPES = ("application/zip", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "application/xml", "application/rdf+xml", "application/json", "text/plain", "application/rss+xml")
 MIMETYPE_REGEX = re.compile("^(application|text)/([a-z\-\.\+]+)(;.*)?$")
