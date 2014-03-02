@@ -79,6 +79,9 @@ REDACTED_REGEX = re.compile(
     r'^(\[\[REDACTED).*?(\]\])$'
 )
 
+import lepl.apps.rfc3696
+email_validator = lepl.apps.rfc3696.Email()
+
 # load the OMB bureau codes on first load of this module
 import urllib
 import csv
@@ -140,9 +143,6 @@ def do_validation(doc, errors_array, seen_identifiers):
                 # contactPoint - hasEmail # required
                 if check_required_string_field(cp, "hasEmail", 9, dataset_name, errs):
                     if not is_redacted(cp.get('hasEmail')):
-                        import lepl.apps.rfc3696
-
-                        email_validator = lepl.apps.rfc3696.Email()
                         email = cp["hasEmail"].replace('mailto:', '')
                         if not email_validator(email):
                             add_error(errs, 5, "Invalid Required Field Value",
