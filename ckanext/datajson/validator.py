@@ -19,6 +19,9 @@ LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}(-[A-Za-z]{2})?$")
 COMMON_MIMETYPES = ("application/zip", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "application/xml", "application/rdf+xml", "application/json", "text/plain", "application/rss+xml")
 MIMETYPE_REGEX = re.compile("^(application|text)/([a-z\-\.\+]+)(;.*)?$")
 
+import lepl.apps.rfc3696
+email_validator = lepl.apps.rfc3696.Email()
+
 # load the OMB bureau codes on first load of this module
 import urllib, csv
 omb_burueau_codes = set()
@@ -89,8 +92,6 @@ def do_validation(doc, src_url, errors_array):
             
             # mbox
             if check_string_field(item, "mbox", 3, dataset_name, errs):
-                import lepl.apps.rfc3696
-                email_validator = lepl.apps.rfc3696.Email()
                 if not email_validator(item["mbox"]):
                     add_error(errs, 5, "Invalid Required Field Value", "The email address \"%s\" is not a valid email address." % item["mbox"], dataset_name)
             
