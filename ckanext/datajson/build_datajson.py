@@ -19,6 +19,13 @@ def make_datajson_entry(package, plugin):
     if len(keywords) == 0 and plugin.default_keywords is not None:
         keywords = re.split("\s*,\s*", plugin.default_keywords)
 
+    # Make a default program code value when a bureau code is none. The
+    # departmental component of a bureau code plus ":000" means
+    # "Primary Program Not Available".
+    defaultProgramCode = None
+    if extra(package, "Bureau Code"):
+        defaultProgramCode = [bcode.split(":")[0] + ":000" for bcode in extra(package, "Bureau Code").split(" ")]
+
     # form the return value as an ordered list of fields which is nice for doing diffs of output
     ret = [
         ("title", package["title"]),
@@ -27,7 +34,7 @@ def make_datajson_entry(package, plugin):
         ("modified", extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601"))),
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
-        ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else None),
+        ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else defaultProgramCode),
         ("contactPoint", extra(package, "Contact Name", default=plugin.default_contactpoint)),
         ("mbox", extra(package, "Contact Email", default=plugin.default_mbox)),
         ("identifier", package["id"]),
