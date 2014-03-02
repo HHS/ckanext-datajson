@@ -11,8 +11,8 @@ except ImportError:
 
 import ckan.model
 
-from build_datajson import make_datajson_entry, get_facet_fields
-from build_datajsonld import dataset_to_jsonld
+from package_to_pod import make_datajson_entry, get_facet_fields
+from pod_jsonld import dataset_to_jsonld
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
@@ -59,7 +59,7 @@ class DataJsonPlugin(p.SingletonPlugin):
     # IFacets
     
     def dataset_facets(self, facets, package_type):
-        # Add any facets specified in build_datajson.get_facet_fields() to the top
+        # Add any facets specified in package_to_pod.get_facet_fields() to the top
         # of the facet list, and then put the CKAN default facets below that.
         f = OrderedDict()
         f.update(get_facet_fields())
@@ -117,7 +117,7 @@ class DataJsonController(BaseController):
             c.errors = []
             
             import urllib, json
-            from datajsonvalidator import do_validation
+            from validator import do_validation
             body = None
             try:
                 body = json.load(urllib.urlopen(c.source_url))

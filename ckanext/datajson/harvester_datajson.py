@@ -32,7 +32,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
         return datasets
         
     def set_dataset_info(self, pkg, dataset, harvester_config):
-        from parse_datajson import parse_datajson_entry
+        from pod_to_package import parse_datajson_entry
         parse_datajson_entry(dataset, pkg, harvester_config)
     
 
