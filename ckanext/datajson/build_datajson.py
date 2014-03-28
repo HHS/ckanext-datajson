@@ -98,7 +98,13 @@ def make_datajson_entry(package):
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), required_field)
             return
 
-    return OrderedDict(striped_retlist)
+    # When saved from UI DataQuality value is stored as "on" instead of True.
+    # Check if value is "on" and replace it with True.
+    striped_retlist_dict = OrderedDict(striped_retlist)
+    if striped_retlist_dict.get('dataQuality') == "on":
+        striped_retlist_dict['dataQuality'] = True
+
+    return striped_retlist_dict
 
     
 def extra(package, key, default=None):
