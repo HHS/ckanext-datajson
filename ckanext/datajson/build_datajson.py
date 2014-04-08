@@ -41,7 +41,7 @@ def make_datajson_entry(package):
         ("issued", extras.get('release_date', extras.get("Date Released", None))),
         ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
         # ('language', extras.get('language', None)),
-        ("dataQuality", extras.get('data_quality', True)),
+        ("dataQuality", extras.get('data_quality', None)),
         ("landingPage", extras.get('homepage_url', package["url"])),
          ('rssFeed', extras.get('rss_feed', None)),
          ('systemOfRecords', extras.get('system_of_records', None)),
@@ -101,8 +101,13 @@ def make_datajson_entry(package):
     # When saved from UI DataQuality value is stored as "on" instead of True.
     # Check if value is "on" and replace it with True.
     striped_retlist_dict = OrderedDict(striped_retlist)
-    if striped_retlist_dict.get('dataQuality') == "on":
+    if striped_retlist_dict.get('dataQuality') == "on" \
+            or striped_retlist_dict.get('dataQuality') == "true" \
+            or striped_retlist_dict.get('dataQuality') == "True":
         striped_retlist_dict['dataQuality'] = True
+    elif striped_retlist_dict.get('dataQuality') == "false" \
+            or striped_retlist_dict.get('dataQuality') == "False":
+        striped_retlist_dict['dataQuality'] = False
 
     return striped_retlist_dict
 
