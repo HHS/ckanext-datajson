@@ -107,7 +107,7 @@ class DatasetHarvesterBase(HarvesterBase):
             for k, v in config["filters"].items():
                 value = dataset.get(k)
 		if isinstance(value, list):
-		    if len(val & v) == 0:
+		    if len(set(value).intersection(set(v))) == 0:
                         log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
                         matched_filters = False
 		else:
