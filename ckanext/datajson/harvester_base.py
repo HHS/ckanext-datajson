@@ -105,8 +105,15 @@ class DatasetHarvesterBase(HarvesterBase):
             # is among the permitted values in the filter specification.
             matched_filters = True
             for k, v in config["filters"].items():
-                if dataset.get(k) not in v:
-                    matched_filters = False
+                value = dataset.get(k)
+		if isinstance(value, list):
+		    if len(val & v) == 0:
+                        log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
+                        matched_filters = False
+		else:
+                    if value not in v:
+                        log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
+                        matched_filters = False
             if not matched_filters:
                 continue
 
@@ -116,6 +123,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 # See if the value appears exactly in the list.
                 value = dataset.get(k)
                 if value in v:
+                    log.info('"%s" eliminated by excludes (%s matches %s)' % (dataset["title"], k, v))
                     matched_excludes = True
 
                 # For any regex in the list, see if the regex matches. Specify regexes
@@ -126,8 +134,10 @@ class DatasetHarvesterBase(HarvesterBase):
                     if not re.match("^/.*/$", pattern): continue
                     pattern = pattern[1:-1] # strip slashes
                     if re.search(pattern, value):
+                        log.info('"%s" eliminated by excludes (%s matches %s)' % (dataset["title"], k, pattern))
                         matched_excludes = True
             if matched_excludes:
+            	log.warn('"%s" eliminated by excludes' % dataset["title"])
                 continue
             
             # Get the package_id of this resource if we've already imported

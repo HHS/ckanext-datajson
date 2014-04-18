@@ -17,7 +17,11 @@ class DataJsonHarvester(DatasetHarvesterBase):
         }
 
     def load_remote_catalog(self, harvest_job):
-        datasets = json.load(urllib2.urlopen(harvest_job.source.url, None, 90))
+	try:
+	        datasets = json.load(urllib2.urlopen(harvest_job.source.url, None, 90))
+	except urllib2.URLError as e:
+		log.warn('Failed to fetch %s' % harvest_object.source.url)
+
 
         # The first dataset should be for the data.json file itself. Check that
         # it is, and if so rewrite the dataset's title because Socrata exports
