@@ -1,4 +1,8 @@
 import re
+import sys
+import validator
+from validator import URL_REGEX
+from pprint import pprint
 
 try:
     from collections import OrderedDict # 2.7
@@ -25,7 +29,24 @@ def make_datajson_entry(package, plugin):
     defaultProgramCode = None
     if extra(package, "Bureau Code"):
         defaultProgramCode = [bcode.split(":")[0] + ":000" for bcode in extra(package, "Bureau Code").split(" ")]
+ 
+    f1=open('/tmp/testfile', 'a+')
+    if package["url"] != None and not URL_REGEX.match(package["url"]):
+        package["url"] = None
+    for r in package["resources"]:
+        if r["url"] != None and not URL_REGEX.match(r["url"]):
+            r["url"] = None
+        if r["mimetype"] != None:
+            r["mimetype"] = re.sub(r"[,\s].*", "", r["mimetype"])
 
+    foo = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601"))
+    if "Date Updated" not in package and "Date Released" not in package:
+        print >>f1, "Missing date fields in "+package["id"]+"\n"
+#        print >>f1, package["Date Updated"]
+#        print >>f1, "\n"
+#        print >>f1, package["Date Released"]
+#        print >>f1, "\n"
+#        print >>f1, "\n"
     # form the return value as an ordered list of fields which is nice for doing diffs of output
     ret = [
         ("title", package["title"]),
@@ -64,7 +85,7 @@ def make_datajson_entry(package, plugin):
                    ("format", r.get("mimetype", extension_to_mime_type(r["format"]))),
                 ])
                 for r in package["resources"]
-                if r["format"].lower() not in ("api", "query tool", "widget")
+                if r["format"].lower() not in ("api", "query tool", "widget") and r["url"] != None
             ]),
     ]
 
@@ -81,9 +102,14 @@ def make_datajson_entry(package, plugin):
     
 def extra(package, key, default=None, datatype=None, raise_if_missing=False):
     # Retrieves the value of an extras field.
+    f1=open('/tmp/testfile', 'a+')
     for extra in package["extras"]:
         if extra["key"] == key:
             v = extra["value"]
+            if key == "Access Level" and v == "Public":
+                v = "public"
+            if key == "Data Dictionary" and " " in v:
+                return default
 
             if datatype == "iso8601":
                 # Hack: If this value is a date, convert Drupal style dates to ISO 8601
@@ -139,6 +165,7 @@ def build_temporal(package):
 
 def extension_to_mime_type(file_ext):
     if file_ext is None: return None
+    if file_ext is "Other": return None
     ext = {
         "csv": "text/csv",
         "xls": "application/vnd.ms-excel",
