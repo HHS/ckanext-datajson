@@ -30,7 +30,8 @@ def make_datajson_entry(package, plugin):
     if extra(package, "Bureau Code"):
         defaultProgramCode = [bcode.split(":")[0] + ":000" for bcode in extra(package, "Bureau Code").split(" ")]
  
-    f1=open('/tmp/testfile', 'a+')
+#    f1=open('/tmp/testfile', 'a+')
+
     if package["url"] != None and not URL_REGEX.match(package["url"]):
         package["url"] = None
     for r in package["resources"]:
@@ -38,21 +39,33 @@ def make_datajson_entry(package, plugin):
             r["url"] = None
         if r["mimetype"] != None:
             r["mimetype"] = re.sub(r"[,\s].*", "", r["mimetype"])
+        # r.get doesn't get this right, so logic it here
+        if r["mimetype"] == None:
+            r["mimetype"] = extension_to_mime_type(r["format"])
 
-    foo = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601"))
-    if "Date Updated" not in package and "Date Released" not in package:
-        print >>f1, "Missing date fields in "+package["id"]+"\n"
-#        print >>f1, package["Date Updated"]
+
+    # The 'modified' field needs to be populated somehow, try all the date
+    # fields we can think of.
+    modified = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601", default=extra(package, "harvest_last_updated", datatype="iso8601", default=extra(package, "Coverage Period Start", datatype="iso8601", default=package["revision_timestamp"]))))
+
+    access_url = get_primary_resource(package).get("url", package['url'])
+#    if access_url == None:
+#        print >>f1, "Missing url for "+package['id']
+#        if orig_url != None:
+#            print >>f1, "Was "+orig_url
+#        foo = get_primary_resource(package)
+#        pprint(foo, f1)
+#        print >>f1, foo.get("url", None)
 #        print >>f1, "\n"
-#        print >>f1, package["Date Released"]
-#        print >>f1, "\n"
-#        print >>f1, "\n"
+#    pprint(package, f1)
+#    print >>f1, "\n"
+
     # form the return value as an ordered list of fields which is nice for doing diffs of output
     ret = [
         ("title", package["title"]),
         ("description", package["notes"]),
         ("keyword", keywords),
-        ("modified", extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601"))),
+        ("modified", modified),
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else defaultProgramCode),
@@ -62,7 +75,7 @@ def make_datajson_entry(package, plugin):
         ("accessLevel", extra(package, "Access Level", default="public")),
         ("accessLevelComment", extra(package, "Access Level Comment")),
         ("dataDictionary", extra(package, "Data Dictionary")),
-        ("accessURL", get_primary_resource(package).get("url", None)),
+        ("accessURL", access_url),
         ("webService", get_api_resource(package).get("url", None)),
         ("format", extension_to_mime_type(get_primary_resource(package).get("format", None)) ),
         ("license", extra(package, "License Agreement")),
@@ -102,7 +115,6 @@ def make_datajson_entry(package, plugin):
     
 def extra(package, key, default=None, datatype=None, raise_if_missing=False):
     # Retrieves the value of an extras field.
-    f1=open('/tmp/testfile', 'a+')
     for extra in package["extras"]:
         if extra["key"] == key:
             v = extra["value"]
@@ -164,8 +176,10 @@ def build_temporal(package):
         return None
 
 def extension_to_mime_type(file_ext):
-    if file_ext is None: return None
-    if file_ext is "Other": return None
+#    if file_ext is None: return None
+#    if file_ext is "Other": return None
+    if file_ext is None: return "application/unknown"
+    if file_ext is "Other": return "application/unknown"
     ext = {
         "csv": "text/csv",
         "xls": "application/vnd.ms-excel",
