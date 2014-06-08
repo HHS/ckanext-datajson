@@ -2,6 +2,7 @@ import re
 import sys
 import validator
 from validator import URL_REGEX
+from validator import email_validator
 from pprint import pprint
 
 try:
@@ -49,12 +50,21 @@ def make_datajson_entry(package, plugin):
     modified = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601", default=extra(package, "harvest_last_updated", datatype="iso8601", default=extra(package, "Coverage Period Start", datatype="iso8601", default=package["revision_timestamp"]))))
 
     access_url = get_primary_resource(package).get("url", package['url'])
-#    if access_url == None:
-#        print >>f1, "Missing url for "+package['id']
+    mbox = extra(package, "Contact Email", default=plugin.default_mbox)
+    if not email_validator(mbox):
+        mbox = plugin.default_mbox
+
+    language = extra(package, "Language")
+    if isinstance(language, basestring):
+        language = [language]
+    if package["notes"] == None:
+        package["notes"] = access_url
+#    print >>f1, "language for "+package['id']
+#    print >>f1, language
 #        if orig_url != None:
 #            print >>f1, "Was "+orig_url
-#        foo = get_primary_resource(package)
-#        pprint(foo, f1)
+#    foo = get_primary_resource(package)
+#    pprint(foo, f1)
 #        print >>f1, foo.get("url", None)
 #        print >>f1, "\n"
 #    pprint(package, f1)
@@ -70,7 +80,7 @@ def make_datajson_entry(package, plugin):
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else defaultProgramCode),
         ("contactPoint", extra(package, "Contact Name", default=plugin.default_contactpoint)),
-        ("mbox", extra(package, "Contact Email", default=plugin.default_mbox)),
+        ("mbox", mbox),
         ("identifier", package["id"]),
         ("accessLevel", extra(package, "Access Level", default="public")),
         ("accessLevelComment", extra(package, "Access Level Comment")),
@@ -83,7 +93,7 @@ def make_datajson_entry(package, plugin):
         ("temporal", build_temporal(package)),
         ("issued", extra(package, "Date Released", datatype="iso8601")),
         ("accrualPeriodicity", extra(package, "Publish Frequency")),
-        ("language", extra(package, "Language")),
+        ("language", language),
         ("PrimaryITInvestmentUII", extra(package, "PrimaryITInvestmentUII")),
         ("dataQuality", extra(package, "Data Quality Met", default="true") == "true"),
         ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None]),
