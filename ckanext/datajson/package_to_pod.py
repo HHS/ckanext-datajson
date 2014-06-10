@@ -57,7 +57,7 @@ def make_datajson_entry(package, plugin):
     language = extra(package, "Language")
     if isinstance(language, basestring):
         language = [language]
-    if package["notes"] == None:
+    if package["notes"] == None or package["notes"] == "":
         package["notes"] = access_url
 #    print >>f1, "language for "+package['id']
 #    print >>f1, language

@@ -8,8 +8,10 @@ from ckan.lib.search.index import PackageSearchIndex
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
                                     HarvestObjectError
 from ckanext.harvest.harvesters.base import HarvesterBase
+from plugin import DataJsonPlugin
 
-import uuid, datetime, hashlib, urllib2, json, yaml, re
+import uuid, datetime, hashlib, urllib2, json, yaml, re, smtplib
+from smtplib import SMTP
 
 import logging
 log = logging.getLogger("harvester")
@@ -93,9 +95,11 @@ class DatasetHarvesterBase(HarvesterBase):
             
         object_ids = []
         seen_datasets = set()
+        dataset_count = len(existing_datasets)
         
         config = self.load_config(harvest_job.source)
 
+#        dataset_count = 0
         for dataset in source:
             # Create a new HarvestObject for this dataset and save the
             # dataset metdata inside it for later.
@@ -106,14 +110,17 @@ class DatasetHarvesterBase(HarvesterBase):
             matched_filters = True
             for k, v in config["filters"].items():
                 value = dataset.get(k)
-		if isinstance(value, list):
-		    if len(set(value).intersection(set(v))) == 0:
+                if isinstance(value, list):
+                    if len(set(value).intersection(set(v))) == 0:
                         log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
                         matched_filters = False
-		else:
+                else:
                     if value not in v:
                         log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
                         matched_filters = False
+#                if value not in v:
+#                    log.info('"%s" eliminated by filters (%s not one of %s, saw %s)' % (dataset["title"], k, v, value))
+#                    matched_filters = False
             if not matched_filters:
                 continue
 
@@ -167,14 +174,31 @@ class DatasetHarvesterBase(HarvesterBase):
                 content=json.dumps(dataset, sort_keys=True)) # use sort_keys to preserve field order so hashes of this string are constant from run to run
             obj.save()
             object_ids.append(obj.id)
-            
+
+        # Count packages we plan to remove. If it's too many, we won't actually
+        # actually do it.
+        deletia = 0
+        for upstreamid, pkg in existing_datasets.items():
+            if upstreamid in seen_datasets: continue # was just updated
+            if pkg.get("state") == "deleted": continue # already deleted
+            deletia+=1
+
+        log.warn('%d datasets in %s; marked %d for deletion' % (dataset_count, harvest_job.source.url, deletia))
+        if float(deletia)/float(dataset_count) > 0.1:
+            log.warn('Too many deleted datasets in %s, skipping deletion' % (harvest_job.source.url))
+            server = smtplib.SMTP('localhost')
+            server.sendmail(DataJsonPlugin.error_email_from, DataJsonPlugin.email_to, "Subject: Harvested dataset %s has too many deletions!\n\n%d deletions out of %d datasets, I'm not going to disable these." % (harvest_job.source.url, deletia, dataset_count))
+            server.quit()
+            return object_ids
+
+ 
         # Remove packages no longer in the remote catalog.
         for upstreamid, pkg in existing_datasets.items():
             if upstreamid in seen_datasets: continue # was just updated
             if pkg.get("state") == "deleted": continue # already deleted
             pkg["state"] = "deleted"
             pkg["name"] = self.make_package_name(pkg["title"], pkg["id"], True) # try to prevent name clash by giving it a "deleted-" name
-            log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
+#            log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
             get_action('package_update')(self.context(), pkg)
             
         return object_ids
