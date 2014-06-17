@@ -22,7 +22,8 @@ def make_datajson_entry(package):
         ("title", package["title"]), #required
         ("description", package["notes"]), #required
         ("keyword", [t["display_name"] for t in package["tags"]]),#required
-        ("modified", package["metadata_modified"]), #required
+        #("modified", package["metadata_modified"]), #required
+        ("modified", extras["modified"]), #required        
         ("publisher", extras.get('publisher', package['author'])), #required
         ('contactPoint', extras['contact_name']), #required
         ('mbox', extras['contact_email']), #required
