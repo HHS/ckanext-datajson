@@ -23,6 +23,9 @@ class DataJsonHarvester(DatasetHarvesterBase):
 	except urllib2.URLError as e:
 		log.warn('Failed to fetch %s' % harvest_job.source.url)
 		return []
+	except ValueError as e:
+		log.warn('Failed to parse %s' % harvest_job.source.url)
+		return []
 
 
         # The first dataset should be for the data.json file itself. Check that

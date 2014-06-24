@@ -184,7 +184,7 @@ class DatasetHarvesterBase(HarvesterBase):
             deletia+=1
 
         log.warn('%d datasets in %s; marked %d for deletion' % (dataset_count, harvest_job.source.url, deletia))
-        if float(deletia)/float(dataset_count) > 0.1:
+        if dataset_count > 0 and float(deletia)/float(dataset_count) > 0.1:
             log.warn('Too many deleted datasets in %s, skipping deletion' % (harvest_job.source.url))
             server = smtplib.SMTP('localhost')
             server.sendmail(DataJsonPlugin.error_email_from, DataJsonPlugin.email_to, "Subject: Harvested dataset %s has too many deletions!\n\n%d deletions out of %d datasets, I'm not going to disable these." % (harvest_job.source.url, deletia, dataset_count))
