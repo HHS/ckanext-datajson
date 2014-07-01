@@ -298,7 +298,7 @@ def write_zip(data, error=None, zip_name='data'):
 
     #Write the data file
     if data:
-        zf.writestr('datajson.txt', json.dumps(data, ensure_ascii=False).encode('utf8'))
+        zf.writestr('data.json', json.dumps(data, ensure_ascii=False).encode('utf8'))
 
     #Write the error log
     if error:

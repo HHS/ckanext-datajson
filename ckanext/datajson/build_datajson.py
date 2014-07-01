@@ -16,13 +16,19 @@ def make_datajson_entry(package):
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
     retlist = []
+    #if resource format is CSV then convert it to text/csv
+    #Resource format has to be in 'csv' format for automatic datastore push.
+    for r in package["resources"]:
+        if r["format"].lower() == "csv":
+            r["format"] = "text/csv"
 
     try:
         retlist = [
         ("title", package["title"]), #required
         ("description", package["notes"]), #required
         ("keyword", [t["display_name"] for t in package["tags"]]),#required
-        ("modified", package["metadata_modified"]), #required
+        #("modified", package["metadata_modified"]), #required
+        ("modified", extras.get("modified", package["metadata_modified"])), #required
         ("publisher", extras.get('publisher', package['author'])), #required
         ('contactPoint', extras['contact_name']), #required
         ('mbox', extras['contact_email']), #required
