@@ -195,6 +195,8 @@ class DatasetHarvesterBase(HarvesterBase):
                 package_titles += pkg["title"] + "\n\n"
             msg = MIMEText(package_titles, _charset='utf-8')
             msg['Subject'] = "Harvested dataset "+harvest_job.source.url+" has too many deletions!"
+            msg['From'] = DataJsonPlugin.error_email_from
+            msg['To'] = DataJsonPlugin.email_to
             server = smtplib.SMTP('localhost')
             server.sendmail(DataJsonPlugin.error_email_from, DataJsonPlugin.email_to, msg.as_string())
             server.quit()
