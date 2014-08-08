@@ -32,6 +32,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
         DataJsonPlugin.error_email_from = config.get("error_email_from")
+        DataJsonPlugin.allow_harvester_deletion = config.get("ckanext.datajson.allow_harvester_deletion", True)
         DataJsonPlugin.email_to = config.get("email_to")
         DataJsonPlugin.default_contactpoint = config.get("ckanext.datajson.default_contactpoint")
         DataJsonPlugin.default_mbox = config.get("ckanext.datajson.default_mbox")

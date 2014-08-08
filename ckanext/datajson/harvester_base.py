@@ -185,20 +185,20 @@ class DatasetHarvesterBase(HarvesterBase):
             deletia+=1
 
         log.warn('%d datasets in %s; marked %d for deletion' % (dataset_count, harvest_job.source.url, deletia))
-        if dataset_count > 0 and float(deletia)/float(dataset_count) > 0.1:
+        if dataset_count > 0 and float(deletia)/float(dataset_count) > 0.1 and DataJsonPlugin.allow_harvester_deletion != "true":
             log.warn('Too many deleted datasets in %s, skipping deletion' % (harvest_job.source.url))
             package_titles = u"The following datasets have been dropped from this feed, but since there are so many I'm going to hold off on actually deleting them:\n\n"
             for upstreamid, pkg in existing_datasets.items():
                 if upstreamid in seen_datasets: continue # was just updated
                 if pkg.get("state") == "deleted": continue # already deleted
-                log.warn('%s (%s) would be deleted' % (pkg["title"], pkg["id"]))
+                log.warn('%s (%s) would be deleted %s' % (pkg["title"], pkg["id"], DataJsonPlugin.allow_harvester_deletion))
                 package_titles += pkg["title"] + "\n\n"
             msg = MIMEText(package_titles, _charset='utf-8')
             msg['Subject'] = "Harvested dataset "+harvest_job.source.url+" has too many deletions!"
             msg['From'] = DataJsonPlugin.error_email_from
             msg['To'] = DataJsonPlugin.email_to
             server = smtplib.SMTP('localhost')
-            server.sendmail(DataJsonPlugin.error_email_from, DataJsonPlugin.email_to, msg.as_string())
+            server.sendmail(DataJsonPlugin.error_email_from, DataJsonPlugin.email_to.split(","), msg.as_string())
             server.quit()
             return object_ids
 
