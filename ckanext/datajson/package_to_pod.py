@@ -51,6 +51,7 @@ def make_datajson_entry(package, plugin):
 
     access_url = get_primary_resource(package).get("url", package['url'])
     mbox = extra(package, "Contact Email", default=plugin.default_mbox)
+    fn = extra(package, "Contact Name", default=plugin.default_contactpoint)
     if not email_validator(mbox):
         mbox = plugin.default_mbox
 
@@ -79,8 +80,13 @@ def make_datajson_entry(package, plugin):
         ("publisher", package["author"]),
         ("bureauCode", extra(package, "Bureau Code").split(" ") if extra(package, "Bureau Code") else None),
         ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else defaultProgramCode),
-        ("contactPoint", extra(package, "Contact Name", default=plugin.default_contactpoint)),
-        ("mbox", mbox),
+        ("contactPoint", 
+            [
+                OrderedDict([
+                 ("fn", fn),
+                 ("hasEmail", mbox),
+                ])
+            ]),
         ("identifier", package["id"]),
         ("accessLevel", extra(package, "Access Level", default="public")),
         ("accessLevelComment", extra(package, "Access Level Comment")),
