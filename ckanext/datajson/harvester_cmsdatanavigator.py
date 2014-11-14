@@ -7,7 +7,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
     A Harvester for the CMS Data Navigator catalog.
     '''
 
-    HARVESTER_VERSION = "0.9ao" # increment to force an update even if nothing has changed
+    HARVESTER_VERSION = "0.9ap" # increment to force an update even if nothing has changed
 
     def info(self):
         return {
@@ -43,6 +43,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         extra(package, "Coverage Period", dataset_hd.get("Coverage Period"))
         extra(package, "Collection Frequency", dataset_hd.get("Collection Frequency"))
         extra(package, "Geographic Scope", dataset_hd.get("GeographicScope"))
+        extra(package, "Access Level", "restricted public" if dataset.get("RequiresCustomAccessForms") else "public")
         #extra(package, "Contact Name", dataset_hd.get("GenericContactName", None) or dataset_hd.get("ContactName")) # 'X or Y' syntax returns Y if X is either None or the empty string
         #extra(package, "Contact Email", dataset_hd.get("GenericContactEmail", None) or dataset_hd.get("ContactEmail"))
         extra(package, "License Agreement", dataset_hd.get("DataLicenseAgreementURL"))
