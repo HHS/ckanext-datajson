@@ -5,7 +5,4 @@ try:
 except ImportError:
     import pkgutil
     __path__ = pkgutil.extend_path(__path__, __name__)
-    
-from plugin import DataJsonPlugin
-from harvester_datajson import DataJsonHarvester
-from harvester_cmsdatanavigator import CmsDataNavigatorHarvester
+
