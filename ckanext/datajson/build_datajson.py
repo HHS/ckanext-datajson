@@ -40,7 +40,7 @@ def make_datajson_entry(package):
             # ("modified", package["metadata_modified"]), #required
             ("modified", extras.get("modified", package["metadata_modified"])),  # required
             # ("publisher", extras.get('publisher', package['author'])),  #required #json schema changed since 1.1
-            ("publisher", get_publisher_tree(package, extras)),     #required
+            ("publisher", get_publisher_tree(package, extras)),  # required
             # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
             ('contactPoint', OrderedDict([
                 ('@type', 'vcard:Contact'),  #optional
@@ -53,9 +53,9 @@ def make_datajson_entry(package):
             ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
             # ("bureauCode", extras.get("bureau_code", None)),
             # ("programCode", extras.get("program_code", None)),
-            ("accessLevelComment", extras.get("access_level_comment", None)),
+            ("rights", extras.get("access_level_comment", None)),   #renamed from accessLevelComment since 1.1
             #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
-            ("webService", get_api_resource(package).get("endpoint", None)),
+            # ("webService", get_api_resource(package).get("endpoint", None)),  #deprecated since 1.1
             #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
             ("license", extras.get("License Agreement", package['license_title'])),
             ("spatial", extras.get('spatial', extras.get("Geographic Scope", None))),
@@ -73,8 +73,9 @@ def make_datajson_entry(package):
              #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
              [
                  OrderedDict([
-                     ("accessURL", r["url"]),
-                     ("format", r["format"]),
+                     ('@type', 'dcat:Distribution'),    #optional
+                     ("accessURL", r["url"]),  #required-if-applicable
+                     ("format", r["format"]),  #optional
                  ])
                  for r in package["resources"]
              ])]
@@ -147,17 +148,18 @@ def extra(package, key, default=None):
 
 
 def get_publisher_tree(package, extras):
+    # Sorry guys
+    # TODO refactor that to recursion? any refactor would be nice though
     tree = [
         ('@type', 'org:Organization'),  # optional
         ('name', extras.get('publisher', package['author'])),  # required
     ]
-
-    if 'publisher_1' in extras and extras['publisher_1']: 
+    if 'publisher_1' in extras and extras['publisher_1']:
         publisher1 = [
             ('@type', 'org:Organization'),  # optional
             ('name', extras['publisher_1']),  # required
         ]
-        if 'publisher_2' in extras and extras['publisher_2']: 
+        if 'publisher_2' in extras and extras['publisher_2']:
             publisher2 = [
                 ('@type', 'org:Organization'),  # optional
                 ('name', extras['publisher_2']),  # required
@@ -167,7 +169,6 @@ def get_publisher_tree(package, extras):
                     ('@type', 'org:Organization'),  # optional
                     ('name', extras['publisher_3']),  # required
                 ]
-        
                 if 'publisher_4' in extras and extras['publisher_4']:
                     publisher4 = [
                         ('@type', 'org:Organization'),  # optional
@@ -178,7 +179,6 @@ def get_publisher_tree(package, extras):
                             ('@type', 'org:Organization'),  # optional
                             ('name', extras['publisher_5']),  # required
                         ]
-        
                         publisher4 += [('subOrganizationOf', publisher5)]
                     publisher3 += [('subOrganizationOf', publisher4)]
                 publisher2 += [('subOrganizationOf', publisher3)]
