@@ -13,7 +13,7 @@ def make_datajson_catalog(datasets):
     catalog = OrderedDict([
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
         ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  # optional
-        ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  #optional
+        ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  # optional
         ('@type', 'dcat:Catalog'),  #optional
         ('dataset', datasets),  #required
     ])
@@ -34,21 +34,18 @@ def make_datajson_entry(package):
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
-            ("title", package["title"]),  #required
+            ("title", package["title"]),  # required
             ("description", package["notes"]),  #required
             ("keyword", [t["display_name"] for t in package["tags"]]),  #required
             #("modified", package["metadata_modified"]), #required
             ("modified", extras.get("modified", package["metadata_modified"])),  #required
             ("publisher", extras.get('publisher', package['author'])),  #required
             # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
-            ('contactPoint', OrderedDict(
-                [
-                    ('@type', 'vcard:Contact'),  #optional
-                    ('fn', extras['contact_name']),  #required
-                    ('hasEmail', 'mailto:' + extras['contact_email']),  #required
-
-                ]
-            )),  #required
+            ('contactPoint', OrderedDict([
+                ('@type', 'vcard:Contact'),  #optional
+                ('fn', extras['contact_name']),  #required
+                ('hasEmail', 'mailto:' + extras['contact_email']),  #required
+            ])),  #required
             # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
             ("identifier", extras['unique_id']),  #required
             ("accessLevel", extras['public_access_level']),  #required
@@ -103,7 +100,7 @@ def make_datajson_entry(package):
                             'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
                             'extrasRollup', 'format', 'accessURL']
 
-    #Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
+    # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
     #TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
     #generate a list of keys to ignore by calling a specific function to get the extras
     retlist_keys = [x for x, y in retlist]
@@ -119,7 +116,7 @@ def make_datajson_entry(package):
     striped_retlist_keys = [x for x, y in striped_retlist]
 
     # If a required metadata field was removed, return empty string
-    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint", "mbox",
+    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint",
                            "identifier", "accessLevel"]:
         if required_field not in striped_retlist_keys:
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
