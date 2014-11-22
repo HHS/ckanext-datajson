@@ -14,8 +14,8 @@ def make_datajson_catalog(datasets):
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
         ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  # optional
         ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  # optional
-        ('@type', 'dcat:Catalog'),  #optional
-        ('dataset', datasets),  #required
+        ('@type', 'dcat:Catalog'),  # optional
+        ('dataset', datasets),  # required
     ])
     return catalog
 
@@ -35,11 +35,12 @@ def make_datajson_entry(package):
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
             ("title", package["title"]),  # required
-            ("description", package["notes"]),  #required
-            ("keyword", [t["display_name"] for t in package["tags"]]),  #required
-            #("modified", package["metadata_modified"]), #required
-            ("modified", extras.get("modified", package["metadata_modified"])),  #required
-            ("publisher", extras.get('publisher', package['author'])),  #required
+            ("description", package["notes"]),  # required
+            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
+            # ("modified", package["metadata_modified"]), #required
+            ("modified", extras.get("modified", package["metadata_modified"])),  # required
+            # ("publisher", extras.get('publisher', package['author'])),  #required #json schema changed since 1.1
+            ("publisher", get_publisher_tree(package, extras)),     #required
             # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
             ('contactPoint', OrderedDict([
                 ('@type', 'vcard:Contact'),  #optional
@@ -101,8 +102,8 @@ def make_datajson_entry(package):
                             'extrasRollup', 'format', 'accessURL']
 
     # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
-    #TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
-    #generate a list of keys to ignore by calling a specific function to get the extras
+    # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
+    # generate a list of keys to ignore by calling a specific function to get the extras
     retlist_keys = [x for x, y in retlist]
     extras_keys = set(extras.keys()) - set(extras_to_filter_out)
 
@@ -143,6 +144,48 @@ def extra(package, key, default=None):
         if extra["key"] == key:
             return extra["value"]
     return default
+
+
+def get_publisher_tree(package, extras):
+    tree = [
+        ('@type', 'org:Organization'),  # optional
+        ('name', extras.get('publisher', package['author'])),  # required
+    ]
+
+    if 'publisher_1' in extras and extras['publisher_1']: 
+        publisher1 = [
+            ('@type', 'org:Organization'),  # optional
+            ('name', extras['publisher_1']),  # required
+        ]
+        if 'publisher_2' in extras and extras['publisher_2']: 
+            publisher2 = [
+                ('@type', 'org:Organization'),  # optional
+                ('name', extras['publisher_2']),  # required
+            ]
+            if 'publisher_3' in extras and extras['publisher_3']:
+                publisher3 = [
+                    ('@type', 'org:Organization'),  # optional
+                    ('name', extras['publisher_3']),  # required
+                ]
+        
+                if 'publisher_4' in extras and extras['publisher_4']:
+                    publisher4 = [
+                        ('@type', 'org:Organization'),  # optional
+                        ('name', extras['publisher_4']),  # required
+                    ]
+                    if 'publisher_5' in extras and extras['publisher_5']:
+                        publisher5 = [
+                            ('@type', 'org:Organization'),  # optional
+                            ('name', extras['publisher_5']),  # required
+                        ]
+        
+                        publisher4 += [('subOrganizationOf', publisher5)]
+                    publisher3 += [('subOrganizationOf', publisher4)]
+                publisher2 += [('subOrganizationOf', publisher3)]
+            publisher1 += [('subOrganizationOf', publisher2)]
+        tree += [('subOrganizationOf', publisher1)]
+
+    return OrderedDict(tree)
 
 
 def underscore_to_camelcase(value):
