@@ -10,15 +10,13 @@ log = logging.getLogger('datajson.builder')
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
 def make_datajson_catalog(datasets):
-
-    catalog = {
-        '@context':'https://project-open-data.cio.gov/v1.1/schema/data.jsonld',
-        '@type':'dcat:Catalog',
-        'conformsTo':'https://project-open-data.cio.gov/v1.1/schema',
-        'describedBy':'https://project-open-data.cio.gov/v1.1/schema/catalog.json',
-        'dataset':datasets
-    }
-
+    catalog = OrderedDict([
+        ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
+        ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  #optional
+        ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  #optional
+        ('@type', 'dcat:Catalog'),  #optional
+        ('dataset', datasets),  #required
+    ])
     return catalog
 
 
@@ -27,14 +25,15 @@ def make_datajson_entry(package):
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
     retlist = []
-    #if resource format is CSV then convert it to text/csv
-    #Resource format has to be in 'csv' format for automatic datastore push.
+    # if resource format is CSV then convert it to text/csv
+    # Resource format has to be in 'csv' format for automatic datastore push.
     for r in package["resources"]:
         if r["format"].lower() == "csv":
             r["format"] = "text/csv"
 
     try:
         retlist = [
+            ("@type", "dcat:Dataset"),  #optional
             ("title", package["title"]),  #required
             ("description", package["notes"]),  #required
             ("keyword", [t["display_name"] for t in package["tags"]]),  #required
