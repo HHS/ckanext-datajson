@@ -1,18 +1,29 @@
 try:
-    from collections import OrderedDict # 2.7
+    from collections import OrderedDict  # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
-
 
 import logging, string
 
 log = logging.getLogger('datajson.builder')
 
-#TODO this file is pretty sloppy, needs cleanup and redundancies removed
+# TODO this file is pretty sloppy, needs cleanup and redundancies removed
+
+def make_datajson_catalog(datasets):
+
+    catalog = {
+        '@context':'https://project-open-data.cio.gov/v1.1/schema/data.jsonld',
+        '@type':'dcat:Catalog',
+        'conformsTo':'https://project-open-data.cio.gov/v1.1/schema',
+        'describedBy':'https://project-open-data.cio.gov/v1.1/schema/catalog.json',
+        'dataset':datasets
+    }
+
+    return catalog
+
 
 def make_datajson_entry(package):
-
-    #extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
+    # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
     retlist = []
@@ -24,43 +35,44 @@ def make_datajson_entry(package):
 
     try:
         retlist = [
-        ("title", package["title"]), #required
-        ("description", package["notes"]), #required
-        ("keyword", [t["display_name"] for t in package["tags"]]),#required
-        #("modified", package["metadata_modified"]), #required
-        ("modified", extras.get("modified", package["metadata_modified"])), #required
-        ("publisher", extras.get('publisher', package['author'])), #required
-        ('contactPoint', extras['contact_name']), #required
-        ('mbox', extras['contact_email']), #required
-        ("identifier", extras['unique_id']), #required
-        ("accessLevel", extras['public_access_level']), #required
-        ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
-        # ("bureauCode", extras.get("bureau_code", None)),
-        # ("programCode", extras.get("program_code", None)),
-        ("accessLevelComment", extras.get("access_level_comment", None)),
-#DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
-        ("webService", get_api_resource(package).get("endpoint", None)),
-#DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
-        ("license", extras.get("License Agreement", package['license_title'])),
-        ("spatial", extras.get('spatial', extras.get("Geographic Scope", None))),
-        ("temporal", extras.get('temporal', build_temporal(package))),
-        ("issued", extras.get('release_date', extras.get("Date Released", None))),
-        ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
-        # ('language', extras.get('language', None)),
-        ("dataQuality", extras.get('data_quality', None)),
-        ("landingPage", extras.get('homepage_url', package["url"])),
-         ('rssFeed', extras.get('rss_feed', None)),
-         ('systemOfRecords', extras.get('system_of_records', None)),
-         ('systemOfRecordsNoneRelatedToThisDataset', extras.get('system_of_records_none_related_to_this_dataset', None)),
-         ("distribution",
-          #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
-         [
-              OrderedDict([
-                  ("accessURL", r["url"]),
-                  ("format", r["format"]),
-              ])
-              for r in package["resources"]
-         ])]
+            ("title", package["title"]),  #required
+            ("description", package["notes"]),  #required
+            ("keyword", [t["display_name"] for t in package["tags"]]),  #required
+            #("modified", package["metadata_modified"]), #required
+            ("modified", extras.get("modified", package["metadata_modified"])),  #required
+            ("publisher", extras.get('publisher', package['author'])),  #required
+            ('contactPoint', extras['contact_name']),  #required
+            ('mbox', extras['contact_email']),  #required
+            ("identifier", extras['unique_id']),  #required
+            ("accessLevel", extras['public_access_level']),  #required
+            ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
+            # ("bureauCode", extras.get("bureau_code", None)),
+            # ("programCode", extras.get("program_code", None)),
+            ("accessLevelComment", extras.get("access_level_comment", None)),
+            #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
+            ("webService", get_api_resource(package).get("endpoint", None)),
+            #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
+            ("license", extras.get("License Agreement", package['license_title'])),
+            ("spatial", extras.get('spatial', extras.get("Geographic Scope", None))),
+            ("temporal", extras.get('temporal', build_temporal(package))),
+            ("issued", extras.get('release_date', extras.get("Date Released", None))),
+            ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
+            # ('language', extras.get('language', None)),
+            ("dataQuality", extras.get('data_quality', None)),
+            ("landingPage", extras.get('homepage_url', package["url"])),
+            ('rssFeed', extras.get('rss_feed', None)),
+            ('systemOfRecords', extras.get('system_of_records', None)),
+            ('systemOfRecordsNoneRelatedToThisDataset',
+             extras.get('system_of_records_none_related_to_this_dataset', None)),
+            ("distribution",
+             #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
+             [
+                 OrderedDict([
+                     ("accessURL", r["url"]),
+                     ("format", r["format"]),
+                 ])
+                 for r in package["resources"]
+             ])]
 
         for pair in [
             ('program_code', 'programCode'),
@@ -72,11 +84,12 @@ def make_datajson_entry(package):
             split_multiple_entries(retlist, extras, pair)
 
     except KeyError as e:
-        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), e)
+        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None),
+                 package.get('title', None), e)
         return
 
     #TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
-    extras_to_filter_out = ['publisher', 'contact_name','contact_email', 'unique_id', 'public_access_level',
+    extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
                             'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
                             'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
                             'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
@@ -86,7 +99,7 @@ def make_datajson_entry(package):
     #Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
     #TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
     #generate a list of keys to ignore by calling a specific function to get the extras
-    retlist_keys = [x for x,y in retlist]
+    retlist_keys = [x for x, y in retlist]
     extras_keys = set(extras.keys()) - set(extras_to_filter_out)
 
     for key in extras_keys:
@@ -95,13 +108,15 @@ def make_datajson_entry(package):
             retlist.append((convertedKey, extras[key]))
 
     # Remove entries where value is None, "", or empty list []
-    striped_retlist = [(x, y) for x,y in retlist if y != None and y != "" and y != []]
-    striped_retlist_keys = [x for x,y in striped_retlist]
+    striped_retlist = [(x, y) for x, y in retlist if y != None and y != "" and y != []]
+    striped_retlist_keys = [x for x, y in striped_retlist]
 
     # If a required metadata field was removed, return empty string
-    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint", "mbox", "identifier", "accessLevel"]:
+    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint", "mbox",
+                           "identifier", "accessLevel"]:
         if required_field not in striped_retlist_keys:
-            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None), package.get('title', None), required_field)
+            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
+                     package.get('id', None), package.get('title', None), required_field)
             return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
@@ -117,7 +132,7 @@ def make_datajson_entry(package):
 
     return striped_retlist_dict
 
-    
+
 def extra(package, key, default=None):
     # Retrieves the value of an extras field.
     for extra in package["extras"]:
@@ -125,30 +140,37 @@ def extra(package, key, default=None):
             return extra["value"]
     return default
 
+
 def underscore_to_camelcase(value):
     """
     Convert underscored strings to camel case, e.g. one_two_three to oneTwoThree
     """
+
     def camelcase():
         yield unicode.lower
         while True:
             yield unicode.capitalize
+
     c = camelcase()
     return "".join(c.next()(x) if x else '_' for x in value.split("_"))
 
+
 def get_best_resource(package, acceptable_formats):
     resources = list(r for r in package["resources"] if r["format"].lower() in acceptable_formats)
-    if len(resources) == 0: return { }
-    resources.sort(key = lambda r : acceptable_formats.index(r["format"].lower()))
+    if len(resources) == 0: return {}
+    resources.sort(key=lambda r: acceptable_formats.index(r["format"].lower()))
     return resources[0]
+
 
 def get_primary_resource(package):
     # Return info about a "primary" resource. Select a good one.
     return get_best_resource(package, ("csv", "xls", "xml", "text", "zip", "rdf"))
 
+
 def get_api_resource(package):
     # Return info about an API resource.
     return get_best_resource(package, ("api", "query tool"))
+
 
 def build_temporal(package):
     # Build one dataset entry of the data.json file.
@@ -165,9 +187,10 @@ def build_temporal(package):
     if temporal == "Unknown/Unknown": return None
     return temporal
 
+
 def split_multiple_entries(retlist, extras, names):
-        found_element = string.strip(extras.get(names[0], ""))
-        if found_element:
-            retlist.append(
-                (names[1], [string.strip(x) for x in string.split(found_element, ',')])
-            )
+    found_element = string.strip(extras.get(names[0], ""))
+    if found_element:
+        retlist.append(
+            (names[1], [string.strip(x) for x in string.split(found_element, ',')])
+        )
