@@ -12,7 +12,7 @@ log = logging.getLogger('datajson.builder')
 def make_datajson_catalog(datasets):
     catalog = OrderedDict([
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
-        ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  #optional
+        ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  # optional
         ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  #optional
         ('@type', 'dcat:Catalog'),  #optional
         ('dataset', datasets),  #required
@@ -33,15 +33,23 @@ def make_datajson_entry(package):
 
     try:
         retlist = [
-            ("@type", "dcat:Dataset"),  #optional
+            ("@type", "dcat:Dataset"),  # optional
             ("title", package["title"]),  #required
             ("description", package["notes"]),  #required
             ("keyword", [t["display_name"] for t in package["tags"]]),  #required
             #("modified", package["metadata_modified"]), #required
             ("modified", extras.get("modified", package["metadata_modified"])),  #required
             ("publisher", extras.get('publisher', package['author'])),  #required
-            ('contactPoint', extras['contact_name']),  #required
-            ('mbox', extras['contact_email']),  #required
+            # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
+            ('contactPoint', OrderedDict(
+                [
+                    ('@type', 'vcard:Contact'),  #optional
+                    ('fn', extras['contact_name']),  #required
+                    ('hasEmail', 'mailto:' + extras['contact_email']),  #required
+
+                ]
+            )),  #required
+            # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
             ("identifier", extras['unique_id']),  #required
             ("accessLevel", extras['public_access_level']),  #required
             ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
@@ -87,7 +95,7 @@ def make_datajson_entry(package):
                  package.get('title', None), e)
         return
 
-    #TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
+    # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
     extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
                             'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
                             'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
