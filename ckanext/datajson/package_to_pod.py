@@ -60,11 +60,11 @@ def make_datajson_entry(package):
             #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
             # ("webService", get_api_resource(package).get("endpoint", None)),  #deprecated since 1.1
             #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
-            ("license", extras.get("License Agreement", package['license_title'])),
-            ("spatial", extras.get('spatial', extras.get("Geographic Scope", None))),
+            ("license", extras.get("license_new", package['license_title'])),
+            ("spatial", extras.get('spatial', extras.get("spatial", None))),
             ("temporal", extras.get('temporal', build_temporal(package))),
             ("issued", extras.get('release_date', extras.get("Date Released", None))),
-            ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
+            #('accrualPeriodicity', extras.get('accrual_periodicity', None)),
             # ('language', extras.get('language', None)),
             ("dataQuality", extras.get('data_quality', None)),
             ("primaryITInvestmentUII", extras.get('primary_it_investment_uii', None)),
@@ -83,6 +83,7 @@ def make_datajson_entry(package):
                      ("downloadURL", r["url"]),  #required-if-applicable  #renamed from `accessURL` since 1.1
                      # ("format", r["format"]),  #optional    #deprecated since 1.1
                      ("mediaType", r["formatReadable"]),  #optional    #renamed from `format` since 1.1
+                     ("accessURL", r["accessURL_new"]),  #optional since 1.1
                      ("format", r["format"]),  #optional    #added since 1.1
                      ("title", r["name"]),  #optional    #added since 1.1
                      ("description", r["notes"]),  #optional    #added since 1.1
