@@ -50,10 +50,12 @@ def make_datajson_entry(package):
             # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
             ("identifier", extras['unique_id']),  #required
             ("accessLevel", extras['public_access_level']),  #required
-            ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),
+            # ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),   #deprecated since 1.1
+            # ("describedBy", extras.get('data_dictionary', extras.get("Data Dictionary"))),
             # ("bureauCode", extras.get("bureau_code", None)),
             # ("programCode", extras.get("program_code", None)),
-            ("rights", extras.get("access_level_comment", None)),   #renamed from accessLevelComment since 1.1
+            # ("accessLevelComment", extras.get("access_level_comment", None)),   #deprecated since 1.1
+            ("rights", extras.get("access_level_comment", None)),       #renamed from accessLevelComment since 1.1
             #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
             # ("webService", get_api_resource(package).get("endpoint", None)),  #deprecated since 1.1
             #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
@@ -74,8 +76,10 @@ def make_datajson_entry(package):
              [
                  OrderedDict([
                      ('@type', 'dcat:Distribution'),    #optional
-                     ("accessURL", r["url"]),  #required-if-applicable
-                     ("format", r["format"]),  #optional
+                     # ("accessURL", r["url"]),  #required-if-applicable    #deprecated since 1.1
+                     ("downloadURL", r["url"]),  #required-if-applicable  #renamed from `accessURL` since 1.1
+                     # ("format", r["format"]),  #optional    #deprecated since 1.1
+                     ("mediaType", r["format"]),  #optional    #renamed from `format` since 1.1
                  ])
                  for r in package["resources"]
              ])]
