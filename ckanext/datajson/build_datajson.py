@@ -49,6 +49,7 @@ def make_datajson_entry(package):
             ])),  #required
             # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
             ("identifier", extras['unique_id']),  #required
+            ("isPartOf", extras.get('parent_dataset', None)),  #optional  since 1.1
             ("accessLevel", extras['public_access_level']),  #required
             # ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),   #deprecated since 1.1
             # ("describedBy", extras.get('data_dictionary', extras.get("Data Dictionary"))),
@@ -66,6 +67,8 @@ def make_datajson_entry(package):
             ('accrualPeriodicity', extras.get('accrual_periodicity', None)),
             # ('language', extras.get('language', None)),
             ("dataQuality", extras.get('data_quality', None)),
+            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii', None)),
+            # ("describedByType", extras.get('describedByType', None)),
             ("landingPage", extras.get('homepage_url', package["url"])),
             ('rssFeed', extras.get('rss_feed', None)),
             ('systemOfRecords', extras.get('system_of_records', None)),
@@ -79,7 +82,13 @@ def make_datajson_entry(package):
                      # ("accessURL", r["url"]),  #required-if-applicable    #deprecated since 1.1
                      ("downloadURL", r["url"]),  #required-if-applicable  #renamed from `accessURL` since 1.1
                      # ("format", r["format"]),  #optional    #deprecated since 1.1
-                     ("mediaType", r["format"]),  #optional    #renamed from `format` since 1.1
+                     ("mediaType", r["formatReadable"]),  #optional    #renamed from `format` since 1.1
+                     ("format", r["format"]),  #optional    #added since 1.1
+                     ("title", r["name"]),  #optional    #added since 1.1
+                     ("description", r["notes"]),  #optional    #added since 1.1
+                     ("conformsTo", r["conformsTo"]),  #optional    #added since 1.1
+                     ("describedBy", r["describedBy"]),  #optional    #added since 1.1
+                     ("describedByType", r["describedByType"]),  #optional    #added since 1.1
                  ])
                  for r in package["resources"]
              ])]
