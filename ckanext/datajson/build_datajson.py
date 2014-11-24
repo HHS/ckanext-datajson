@@ -35,7 +35,7 @@ def make_datajson_entry(package):
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
             ("title", package["title"]),  # required
-            ("description", package["notes"]),  # required
+            ("description", extras["notes"]),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
             # ("modified", package["metadata_modified"]), #required
             ("modified", extras.get("modified", package["metadata_modified"])),  # required
@@ -43,12 +43,12 @@ def make_datajson_entry(package):
             ("publisher", get_publisher_tree(package, extras)),  # required
             # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
             ('contactPoint', OrderedDict([
-                ('@type', 'vcard:Contact'),  #optional
-                ('fn', extras['contact_name']),  #required
+                ('@type', 'vcard:Contact'),  # optional
+                ('fn', extras['contact_name']),  # required
                 ('hasEmail', 'mailto:' + extras['contact_email']),  #required
-            ])),  #required
+            ])),  # required
             # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
-            ("identifier", extras['unique_id']),  #required
+            ("identifier", extras['unique_id']),  # required
             ("isPartOf", extras.get('parent_dataset', None)),  #optional  since 1.1
             ("accessLevel", extras['public_access_level']),  #required
             # ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),   #deprecated since 1.1
@@ -56,7 +56,7 @@ def make_datajson_entry(package):
             # ("bureauCode", extras.get("bureau_code", None)),
             # ("programCode", extras.get("program_code", None)),
             # ("accessLevelComment", extras.get("access_level_comment", None)),   #deprecated since 1.1
-            ("rights", extras.get("access_level_comment", None)),       #renamed from accessLevelComment since 1.1
+            ("rights", extras.get("access_level_comment", None)),  #renamed from accessLevelComment since 1.1
             #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
             # ("webService", get_api_resource(package).get("endpoint", None)),  #deprecated since 1.1
             #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
@@ -78,7 +78,7 @@ def make_datajson_entry(package):
              #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
              [
                  OrderedDict([
-                     ('@type', 'dcat:Distribution'),    #optional
+                     ('@type', 'dcat:Distribution'),  #optional
                      # ("accessURL", r["url"]),  #required-if-applicable    #deprecated since 1.1
                      ("downloadURL", r["url"]),  #required-if-applicable  #renamed from `accessURL` since 1.1
                      # ("format", r["format"]),  #optional    #deprecated since 1.1
@@ -113,7 +113,8 @@ def make_datajson_entry(package):
                             'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
                             'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
                             'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
-                            'extrasRollup', 'format', 'accessURL']
+                            'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
+                            'publisher_4', 'publisher_5']
 
     # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
     # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
