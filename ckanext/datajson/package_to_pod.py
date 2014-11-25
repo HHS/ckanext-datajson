@@ -3,7 +3,8 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-import logging, string
+import logging, string, pprint
+
 
 log = logging.getLogger('datajson.builder')
 
@@ -34,72 +35,85 @@ def make_datajson_entry(package):
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
+
             ("title", package["title"]),  # required
-            ("description", extras["notes"]),  # required
+
+            # ("accessLevel", 'public'),  # required
+            ("accessLevel", extras.get('public_access_level')),  # required
+
+            # ("accrualPeriodicity", "R/P1Y"),  # optional
+            # ('accrualPeriodicity', 'accrual_periodicity'),
+
+            # ('contactPoint', OrderedDict([
+            # ("@type", "vcard:Contact"),
+            # ("fn", "Jane Doe"),
+            # ("hasEmail", "mailto:jane.doe@agency.gov")
+            # ])),  # required
+            ('contactPoint', get_contact_point(extras, package)),  # required
+
+            # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
-            # ("modified", package["metadata_modified"]), #required
-            ("modified", extras.get("modified", package["metadata_modified"])),  # required
-            # ("publisher", extras.get('publisher', package['author'])),  #required #json schema changed since 1.1
-            ("publisher", get_publisher_tree(package, extras)),  # required
-            # ('contactPoint', extras['contact_name']),  #required  #json schema changed since 1.1
-            ('contactPoint', OrderedDict([
-                ('@type', 'vcard:Contact'),  # optional
-                ('fn', extras['contact_name']),  # required
-                ('hasEmail', 'mailto:' + extras['contact_email']),  #required
-            ])),  # required
-            # ('mbox', extras['contact_email']),  #required     # deprecated since json schema 1.1
-            ("identifier", extras['unique_id']),  # required
-            ("isPartOf", extras.get('parent_dataset', None)),  #optional  since 1.1
-            ("accessLevel", extras['public_access_level']),  #required
-            # ("dataDictionary", extras.get('data_dictionary', extras.get("Data Dictionary"))),   #deprecated since 1.1
-            # ("describedBy", extras.get('data_dictionary', extras.get("Data Dictionary"))),
-            # ("bureauCode", extras.get("bureau_code", None)),
-            # ("programCode", extras.get("program_code", None)),
-            # ("accessLevelComment", extras.get("access_level_comment", None)),   #deprecated since 1.1
-            ("rights", extras.get("access_level_comment", None)),  #renamed from accessLevelComment since 1.1
-            #DWC: why is this here? should be under distribution          ("accessURL", get_primary_resource(package).get("url", None)),
-            # ("webService", get_api_resource(package).get("endpoint", None)),  #deprecated since 1.1
-            #DWC: why is this here? should be under distribution        ("format", get_primary_resource(package).get("format", None)),
-            ("license", extras.get("license_new", package['license_title'])),
-            ("spatial", extras.get('spatial', extras.get("spatial", None))),
-            ("temporal", extras.get('temporal', build_temporal(package))),
-            ("issued", extras.get('release_date', extras.get("Date Released", None))),
-            #('accrualPeriodicity', extras.get('accrual_periodicity', None)),
-            # ('language', extras.get('language', None)),
-            ("dataQuality", extras.get('data_quality', None)),
-            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii', None)),
-            # ("describedByType", extras.get('describedByType', None)),
+
+
+
+            ("dataQuality", extras.get('data_quality')),  # required
+
+            ("description", extras.get('notes')),  # required
+
+
+            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
+
+
+            # ("description", 'asdfasdf'),  # required
+
+            ("identifier", extras.get('unique_id')),  # required
+            # ("identifier", 'asdfasdfasdf'),  # required
+
+            ("isPartOf", extras.get('parent_dataset')),  # required
+            ("issued", extras.get('release_date')),  # required
+
+            # ('publisher', OrderedDict([
+            #     ("@type", "org:Organization"),
+            #     ("name", "Widget Services")
+            # ])),  # required
+
             ("landingPage", extras.get('homepage_url', package["url"])),
-            ('rssFeed', extras.get('rss_feed', None)),
-            ('systemOfRecords', extras.get('system_of_records', None)),
-            ('systemOfRecordsNoneRelatedToThisDataset',
-             extras.get('system_of_records_none_related_to_this_dataset', None)),
-            ("distribution",
-             #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
-             [
-                 OrderedDict([
-                     ('@type', 'dcat:Distribution'),  #optional
-                     # ("accessURL", r["url"]),  #required-if-applicable    #deprecated since 1.1
-                     ("downloadURL", r["url"]),  #required-if-applicable  #renamed from `accessURL` since 1.1
-                     # ("format", r["format"]),  #optional    #deprecated since 1.1
-                     ("mediaType", r["formatReadable"]),  #optional    #renamed from `format` since 1.1
-                     ("accessURL", r["accessURL_new"]),  #optional since 1.1
-                     ("format", r["format"]),  #optional    #added since 1.1
-                     ("title", r["name"]),  #optional    #added since 1.1
-                     ("description", r["notes"]),  #optional    #added since 1.1
-                     ("conformsTo", r["conformsTo"]),  #optional    #added since 1.1
-                     ("describedBy", r["describedBy"]),  #optional    #added since 1.1
-                     ("describedByType", r["describedByType"]),  #optional    #added since 1.1
-                 ])
-                 for r in package["resources"]
-             ])]
+
+            ("license", extras.get("license_new", package['license_title'])),
+
+            ("modified", extras.get("modified", package["metadata_modified"])),  # required
+
+            ("publisher", get_publisher_tree(package, extras)),  # required
+
+            ("rights", extras.get('access_level_comment')),  # required
+            ("rss_feed", extras.get('rss_feed')),  # required
+
+            ("spatial", extras.get('spatial')),  # optional
+
+            ('systemOfRecords', extras.get('system_of_records')),
+            ('systemOfRecordsNoneRelatedToThisDataset', extras.get('system_of_records_none_related_to_this_dataset')),
+
+            ("temporal", extras.get('temporal', build_temporal(package))),
+
+            # ("distribution", generate_distribution(package)),
+
+            # ("distribution",
+            #  #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
+            #  [
+            #      OrderedDict([
+            #          ("downloadURL", r["url"]),
+            #          ("mediaType", r["formatReadable"]),
+            #      ])
+            #      for r in package["resources"]
+            #  ])
+        ]
 
         for pair in [
-            ('program_code', 'programCode'),
-            ('bureau_code', 'bureauCode'),
-            ('category', 'theme'),
-            ('related_documents', 'references'),
-            ('language', 'language')
+            ('bureauCode', 'bureau_code'),
+            ('language', 'language'),
+            ('programCode', 'program_code'),
+            ('references', 'related_documents'),
+            ('theme', 'category'),
         ]:
             split_multiple_entries(retlist, extras, pair)
 
@@ -108,37 +122,38 @@ def make_datajson_entry(package):
                  package.get('title', None), e)
         return
 
-    # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
-    extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
-                            'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
-                            'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
-                            'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
-                            'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
-                            'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
-                            'publisher_4', 'publisher_5']
-
-    # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
-    # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
-    # generate a list of keys to ignore by calling a specific function to get the extras
-    retlist_keys = [x for x, y in retlist]
-    extras_keys = set(extras.keys()) - set(extras_to_filter_out)
-
-    for key in extras_keys:
-        convertedKey = underscore_to_camelcase(key)
-        if convertedKey not in retlist_keys:
-            retlist.append((convertedKey, extras[key]))
+    # # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
+    # extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
+    # 'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
+    # 'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
+    # 'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
+    # 'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
+    # 'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
+    # 'publisher_4', 'publisher_5']
+    #
+    # # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
+    # # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
+    # # generate a list of keys to ignore by calling a specific function to get the extras
+    # retlist_keys = [x for x, y in retlist]
+    # extras_keys = set(extras.keys()) - set(extras_to_filter_out)
+    #
+    # for key in extras_keys:
+    # convertedKey = underscore_to_camelcase(key)
+    # if convertedKey not in retlist_keys:
+    # retlist.append((convertedKey, extras[key]))
 
     # Remove entries where value is None, "", or empty list []
     striped_retlist = [(x, y) for x, y in retlist if y != None and y != "" and y != []]
     striped_retlist_keys = [x for x, y in striped_retlist]
 
+
     # If a required metadata field was removed, return empty string
-    for required_field in ["title", "description", "keyword", "modified", "publisher", "contactPoint",
-                           "identifier", "accessLevel"]:
+    for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
+                           "modified", "programCode", "publisher", "title"]:
         if required_field not in striped_retlist_keys:
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
                      package.get('id', None), package.get('title', None), required_field)
-            return
+            # return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
     # Check if value is "on" and replace it with True.
@@ -152,6 +167,62 @@ def make_datajson_entry(package):
         striped_retlist_dict['dataQuality'] = False
 
     return striped_retlist_dict
+
+
+def generate_distribution(package):
+    arr = []
+    for r in package["resources"]:
+        resource = [("@type", "dcat:Distribution")]
+        rkeys = r.keys()
+        if 'url' in rkeys:
+            resource.append("downloadURL", r["url"])
+        else:
+            log.warn("Missing downloadUrl for resource in package ['%s']", package.get('id'))
+
+        if 'formatReadable' in rkeys:
+            resource.append("mediaType", r["formatReadable"])
+        else:
+            log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
+
+        if 'accessURL_new' in rkeys:
+            resource.append("accessURL", r["accessURL_new"])
+
+        if 'format' in rkeys:
+            resource.append("format", r["format"])
+
+        if 'name' in rkeys:
+            resource.append("title", r["name"])
+
+        if 'notes' in rkeys:
+            resource.append("description", r["notes"])
+
+        if 'conformsTo' in rkeys:
+            resource.append("conformsTo", r["conformsTo"])
+
+        if 'describedBy' in rkeys:
+            resource.append("describedBy", r["describedBy"])
+
+        if 'describedByType' in rkeys:
+            resource.append("describedByType", r["describedByType"])
+
+        arr.append(OrderedDict(resource))
+
+    return arr
+
+
+def get_contact_point(extras, package):
+    for required_field in ["contact_name", "contact_email"]:
+        if required_field not in extras.keys():
+            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
+                     package.get('id', None), package.get('title', None), required_field)
+            raise KeyError(required_field)
+
+    contact_point = OrderedDict([
+        ('@type', 'vcard:Contact'),  # optional
+        ('fn', extras['contact_name']),  # required
+        ('hasEmail', 'mailto:' + extras['contact_email']),  # required
+    ])
+    return contact_point
 
 
 def extra(package, key, default=None):
@@ -194,11 +265,11 @@ def get_publisher_tree(package, extras):
                             ('@type', 'org:Organization'),  # optional
                             ('name', extras['publisher_5']),  # required
                         ]
-                        publisher4 += [('subOrganizationOf', publisher5)]
-                    publisher3 += [('subOrganizationOf', publisher4)]
-                publisher2 += [('subOrganizationOf', publisher3)]
-            publisher1 += [('subOrganizationOf', publisher2)]
-        tree += [('subOrganizationOf', publisher1)]
+                        publisher4 += [('subOrganizationOf', OrderedDict(publisher5))]
+                    publisher3 += [('subOrganizationOf', OrderedDict(publisher4))]
+                publisher2 += [('subOrganizationOf', OrderedDict(publisher3))]
+            publisher1 += [('subOrganizationOf', OrderedDict(publisher2))]
+        tree += [('subOrganizationOf', OrderedDict(publisher1))]
 
     return OrderedDict(tree)
 
@@ -251,8 +322,8 @@ def build_temporal(package):
 
 
 def split_multiple_entries(retlist, extras, names):
-    found_element = string.strip(extras.get(names[0], ""))
+    found_element = string.strip(extras.get(names[1], ""))
     if found_element:
         retlist.append(
-            (names[1], [string.strip(x) for x in string.split(found_element, ',')])
+            (names[0], [string.strip(x) for x in string.split(found_element, ',')])
         )
