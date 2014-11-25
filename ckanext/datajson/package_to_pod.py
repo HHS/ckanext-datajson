@@ -31,8 +31,6 @@ def make_datajson_entry(package):
     for r in package["resources"]:
         if r["format"].lower() == "csv":
             r["format"] = "text/csv"
-
-    for r in package["resources"]:
         if r["format"].lower() == "json":
             r["format"] = "application/json"
 
