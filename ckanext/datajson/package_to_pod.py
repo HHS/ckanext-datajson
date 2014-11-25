@@ -3,7 +3,7 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-import logging, string, pprint
+import logging, string
 
 
 log = logging.getLogger('datajson.builder')
@@ -43,6 +43,9 @@ def make_datajson_entry(package):
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
+            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
+
+            ("conformsTo", extras.get('conforms_to')),  # required
 
             # ('contactPoint', OrderedDict([
             # ("@type", "vcard:Contact"),
@@ -51,18 +54,12 @@ def make_datajson_entry(package):
             # ])),  # required
             ('contactPoint', get_contact_point(extras, package)),  # required
 
-            # ("keyword", ['a', 'b']),  # required
-            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
-
-
-
             ("dataQuality", extras.get('data_quality')),  # required
 
+            ("describedBy", extras.get('data_dictionary')),  # required
+            ("describedByType", extras.get('data_dictionary_type')),  # required
+
             ("description", extras.get('notes')),  # required
-
-
-            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
-
 
             # ("description", 'asdfasdf'),  # required
 
@@ -73,9 +70,12 @@ def make_datajson_entry(package):
             ("issued", extras.get('release_date')),  # required
 
             # ('publisher', OrderedDict([
-            #     ("@type", "org:Organization"),
-            #     ("name", "Widget Services")
+            # ("@type", "org:Organization"),
+            # ("name", "Widget Services")
             # ])),  # required
+
+            # ("keyword", ['a', 'b']),  # required
+            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
 
             ("landingPage", extras.get('homepage_url', package["url"])),
 
@@ -83,10 +83,10 @@ def make_datajson_entry(package):
 
             ("modified", extras.get("modified", package["metadata_modified"])),  # required
 
+            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
             ("publisher", get_publisher_tree(package, extras)),  # required
 
             ("rights", extras.get('access_level_comment')),  # required
-            ("rss_feed", extras.get('rss_feed')),  # required
 
             ("spatial", extras.get('spatial')),  # optional
 
@@ -95,10 +95,10 @@ def make_datajson_entry(package):
 
             ("temporal", extras.get('temporal', build_temporal(package))),
 
-            # ("distribution", generate_distribution(package)),
+            ("distribution", generate_distribution(package)),
 
             # ("distribution",
-            #  #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
+            # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
             #  [
             #      OrderedDict([
             #          ("downloadURL", r["url"]),
@@ -169,43 +169,71 @@ def make_datajson_entry(package):
     return striped_retlist_dict
 
 
+# used by get_accrual_periodicity
+accrual_periodicity_dict = {
+    'decennial': 'R/P10Y',
+    'quadrennial': 'R/P4Y',
+    'annual': 'R/P1Y',
+    'bimonthly': 'R/P2M',
+    'semiweekly': 'R/P3.5D',
+    'daily': 'R/P1D',
+    'biweekly': 'R/P2W',
+    'semiannual': 'R/P6M',
+    'biennial': 'R/P2Y',
+    'triennial': 'R/P3Y',
+    'three times a week': 'R/P0.33W',
+    'three times a month': 'R/P0.33M',
+    'continuously updated': 'R/PT1S',
+    'monthly': 'R/P1M',
+    'quarterly': 'R/P3M',
+    'semimonthly': 'R/P0.5M',
+    'three times a year': 'R/P4M',
+    'weekly': 'R/P1W'
+}
+
+
+def get_accrual_periodicity(frequency):
+    return accrual_periodicity_dict.get(str(frequency).lower(), frequency)
+
+
 def generate_distribution(package):
     arr = []
     for r in package["resources"]:
         resource = [("@type", "dcat:Distribution")]
         rkeys = r.keys()
-        if 'url' in rkeys:
-            resource.append("downloadURL", r["url"])
+        if 'url' in rkeys and '' != r["url"]:
+            resource += [("downloadURL", r["url"])]
         else:
             log.warn("Missing downloadUrl for resource in package ['%s']", package.get('id'))
 
-        if 'formatReadable' in rkeys:
-            resource.append("mediaType", r["formatReadable"])
+        if 'formatReadable' in rkeys and '' != r["formatReadable"]:
+            resource += [("mediaType", r["formatReadable"])]
         else:
+            resource += [("mediaType", r["format"])]
             log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
 
-        if 'accessURL_new' in rkeys:
-            resource.append("accessURL", r["accessURL_new"])
+        if 'accessURL_new' in rkeys and '' != r["accessURL_new"]:
+            resource += [("accessURL", r["accessURL_new"])]
 
-        if 'format' in rkeys:
-            resource.append("format", r["format"])
+        if 'format' in rkeys and '' != r["format"]:
+            resource += [("format", r["format"])]
 
-        if 'name' in rkeys:
-            resource.append("title", r["name"])
+        if 'name' in rkeys and '' != r["name"]:
+            resource += [("title", r["name"])]
 
-        if 'notes' in rkeys:
-            resource.append("description", r["notes"])
+        if 'notes' in rkeys and '' != r["notes"]:
+            resource += [("description", r["notes"])]
 
-        if 'conformsTo' in rkeys:
-            resource.append("conformsTo", r["conformsTo"])
+        if 'conformsTo' in rkeys and '' != r["conformsTo"]:
+            resource += [("conformsTo", r["conformsTo"])]
 
-        if 'describedBy' in rkeys:
-            resource.append("describedBy", r["describedBy"])
+        if 'describedBy' in rkeys and '' != r["describedBy"]:
+            resource += [("describedBy", r["describedBy"])]
 
-        if 'describedByType' in rkeys:
-            resource.append("describedByType", r["describedByType"])
+        if 'describedByType' in rkeys and '' != r["describedByType"]:
+            resource += [("describedByType", r["describedByType"])]
 
-        arr.append(OrderedDict(resource))
+        arr += [OrderedDict(resource)]
 
     return arr
 
