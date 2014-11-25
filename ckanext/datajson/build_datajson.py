@@ -32,6 +32,10 @@ def make_datajson_entry(package):
         if r["format"].lower() == "csv":
             r["format"] = "text/csv"
 
+    for r in package["resources"]:
+        if r["format"].lower() == "json":
+            r["format"] = "application/json"
+
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
@@ -91,7 +95,6 @@ def make_datajson_entry(package):
             ("spatial", extras.get('spatial')),  # optional
 
             ('systemOfRecords', extras.get('system_of_records')),
-            ('systemOfRecordsNoneRelatedToThisDataset', extras.get('system_of_records_none_related_to_this_dataset')),
 
             ("temporal", extras.get('temporal', build_temporal(package))),
 
@@ -99,7 +102,7 @@ def make_datajson_entry(package):
 
             # ("distribution",
             # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
-            #  [
+            # [
             #      OrderedDict([
             #          ("downloadURL", r["url"]),
             #          ("mediaType", r["formatReadable"]),
@@ -206,17 +209,16 @@ def generate_distribution(package):
         else:
             log.warn("Missing downloadUrl for resource in package ['%s']", package.get('id'))
 
-        if 'formatReadable' in rkeys and '' != r["formatReadable"]:
-            resource += [("mediaType", r["formatReadable"])]
-        else:
+        if 'format' in rkeys and '' != r["format"]:
             resource += [("mediaType", r["format"])]
+        else:
             log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
 
         if 'accessURL_new' in rkeys and '' != r["accessURL_new"]:
             resource += [("accessURL", r["accessURL_new"])]
 
-        if 'format' in rkeys and '' != r["format"]:
-            resource += [("format", r["format"])]
+        if 'formatReadable' in rkeys and '' != r["formatReadable"]:
+            resource += [("format", r["formatReadable"])]
 
         if 'name' in rkeys and '' != r["name"]:
             resource += [("title", r["name"])]
