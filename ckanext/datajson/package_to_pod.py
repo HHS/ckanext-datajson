@@ -33,6 +33,8 @@ def make_datajson_entry(package):
             r["format"] = "text/csv"
         if r["format"].lower() == "json":
             r["format"] = "application/json"
+        if r["format"].lower() == "pdf":
+            r["format"] = "application/pdf"
 
     try:
         retlist = [
