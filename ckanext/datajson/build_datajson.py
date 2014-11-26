@@ -187,6 +187,7 @@ accrual_periodicity_dict = {
     'three times a week': 'R/P0.33W',
     'three times a month': 'R/P0.33M',
     'continuously updated': 'R/PT1S',
+    'completely irregular': 'R/PT1S',
     'monthly': 'R/P1M',
     'quarterly': 'R/P3M',
     'semimonthly': 'R/P0.5M',
