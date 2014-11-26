@@ -3,7 +3,10 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-import logging, string
+import logging
+import string
+
+import ckan.model as model
 
 
 log = logging.getLogger('datajson.builder')
@@ -24,6 +27,13 @@ def make_datajson_catalog(datasets):
 def make_datajson_entry(package):
     # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
+
+    parent_dataset_id = extras.get('parent_dataset')
+    if parent_dataset_id:
+        parent = model.Package.get(parent_dataset_id)
+        parent_uid = parent.extras.col.target['unique_id'].value
+        if parent_uid:
+            parent_dataset_id = parent_uid
 
     retlist = []
     # if resource format is CSV then convert it to text/csv
@@ -70,7 +80,7 @@ def make_datajson_entry(package):
             ("identifier", extras.get('unique_id')),  # required
             # ("identifier", 'asdfasdfasdf'),  # required
 
-            ("isPartOf", extras.get('parent_dataset')),  # required
+            ("isPartOf", parent_dataset_id),  # required
             ("issued", extras.get('release_date')),  # required
 
             # ('publisher', OrderedDict([
@@ -103,10 +113,10 @@ def make_datajson_entry(package):
             # ("distribution",
             # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
             # [
-            #      OrderedDict([
-            #          ("downloadURL", r["url"]),
-            #          ("mediaType", r["formatReadable"]),
-            #      ])
+            # OrderedDict([
+            # ("downloadURL", r["url"]),
+            # ("mediaType", r["formatReadable"]),
+            # ])
             #      for r in package["resources"]
             #  ])
         ]
