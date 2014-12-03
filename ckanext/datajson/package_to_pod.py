@@ -13,6 +13,14 @@ log = logging.getLogger('datajson.builder')
 
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
+def get_facet_fields():
+    # Return fields that we'd like to add to default CKAN faceting. This really has
+    # nothing to do with exporting data.json but it's probably a common consideration.
+    facets = OrderedDict()
+    facets["Agency"] = "Publishers" # using "author" produces weird results because the Solr schema indexes it as "text" rather than "string"
+    facets["SubjectArea1"] = "Subjects" # search facets remove spaces from field names
+    return facets
+
 def make_datajson_catalog(datasets):
     catalog = OrderedDict([
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
