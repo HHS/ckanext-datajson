@@ -50,16 +50,16 @@ def make_datajson_entry(package):
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
 
-            ("title", package["title"].strip()),  # required
+            ("title", strip_if_string(package["title"])),  # required
 
             # ("accessLevel", 'public'),  # required
-            ("accessLevel", extras.get('public_access_level').strip()),  # required
+            ("accessLevel", strip_if_string(extras.get('public_access_level'))),  # required
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
             ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
 
-            ("conformsTo", extras.get('conforms_to').strip()),  # required
+            ("conformsTo", strip_if_string(extras.get('conforms_to'))),  # required
 
             # ('contactPoint', OrderedDict([
             # ("@type", "vcard:Contact"),
@@ -68,20 +68,20 @@ def make_datajson_entry(package):
             # ])),  # required
             ('contactPoint', get_contact_point(extras, package)),  # required
 
-            ("dataQuality", extras.get('data_quality').strip()),  # required
+            ("dataQuality", strip_if_string(extras.get('data_quality'))),  # required
 
-            ("describedBy", extras.get('data_dictionary').strip()),  # required
-            ("describedByType", extras.get('data_dictionary_type').strip()),  # required
+            ("describedBy", strip_if_string(extras.get('data_dictionary'))),  # required
+            ("describedByType", strip_if_string(extras.get('data_dictionary_type'))),  # required
 
-            ("description", package["notes"].strip()),  # required
+            ("description", strip_if_string(package["notes"])),  # required
 
             # ("description", 'asdfasdf'),  # required
 
-            ("identifier", extras.get('unique_id').strip()),  # required
+            ("identifier", strip_if_string(extras.get('unique_id'))),  # required
             # ("identifier", 'asdfasdfasdf'),  # required
 
             ("isPartOf", parent_dataset_id),  # required
-            ("issued", extras.get('release_date').strip()),  # required
+            ("issued", strip_if_string(extras.get('release_date'))),  # required
 
             # ('publisher', OrderedDict([
             # ("@type", "org:Organization"),
@@ -91,20 +91,20 @@ def make_datajson_entry(package):
             # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
 
-            ("landingPage", extras.get('homepage_url', package["url"]).strip()),
+            ("landingPage", strip_if_string(extras.get('homepage_url', package["url"]))),
 
-            ("license", extras.get("license_new").strip()),
+            ("license", strip_if_string(extras.get("license_new"))),
 
-            ("modified", extras.get("modified", package["metadata_modified"]).strip()),  # required
+            ("modified", strip_if_string(extras.get("modified", package["metadata_modified"]))),  # required
 
-            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii').strip()),  # required
+            ("primaryITInvestmentUII", strip_if_string(extras.get('primary_it_investment_uii'))),  # required
             ("publisher", get_publisher_tree(package, extras)),  # required
 
-            ("rights", extras.get('access_level_comment').strip()),  # required
+            ("rights", strip_if_string(extras.get('access_level_comment'))),  # required
 
-            ("spatial", extras.get('spatial').strip()),  # optional
+            ("spatial", strip_if_string(extras.get('spatial'))),  # optional
 
-            ('systemOfRecords', extras.get('system_of_records').strip()),
+            ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),
 
             ("temporal", extras.get('temporal', build_temporal(package))),
 
@@ -260,8 +260,8 @@ def get_contact_point(extras, package):
 
     contact_point = OrderedDict([
         ('@type', 'vcard:Contact'),  # optional
-        ('fn', extras['contact_name'].strip()),  # required
-        ('hasEmail', 'mailto:' + extras['contact_email'].strip()),  # required
+        ('fn', strip_if_string(extras['contact_name'])),  # required
+        ('hasEmail', 'mailto:' + strip_if_string(extras['contact_email'])),  # required
     ])
     return contact_point
 
@@ -334,6 +334,12 @@ def get_best_resource(package, acceptable_formats):
     if len(resources) == 0: return {}
     resources.sort(key=lambda r: acceptable_formats.index(r["format"].lower()))
     return resources[0]
+
+
+def strip_if_string(val):
+    if isinstance(val, (str, unicode)):
+        return val.strip()
+    return val
 
 
 def get_primary_resource(package):
