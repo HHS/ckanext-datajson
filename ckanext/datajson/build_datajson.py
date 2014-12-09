@@ -50,16 +50,16 @@ def make_datajson_entry(package):
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
 
-            ("title", package["title"]),  # required
+            ("title", package["title"].strip()),  # required
 
             # ("accessLevel", 'public'),  # required
-            ("accessLevel", extras.get('public_access_level')),  # required
+            ("accessLevel", extras.get('public_access_level').strip()),  # required
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
             ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
 
-            ("conformsTo", extras.get('conforms_to')),  # required
+            ("conformsTo", extras.get('conforms_to').strip()),  # required
 
             # ('contactPoint', OrderedDict([
             # ("@type", "vcard:Contact"),
@@ -68,20 +68,20 @@ def make_datajson_entry(package):
             # ])),  # required
             ('contactPoint', get_contact_point(extras, package)),  # required
 
-            ("dataQuality", extras.get('data_quality')),  # required
+            ("dataQuality", extras.get('data_quality').strip()),  # required
 
-            ("describedBy", extras.get('data_dictionary')),  # required
-            ("describedByType", extras.get('data_dictionary_type')),  # required
+            ("describedBy", extras.get('data_dictionary').strip()),  # required
+            ("describedByType", extras.get('data_dictionary_type').strip()),  # required
 
-            ("description", extras.get('notes')),  # required
+            ("description", extras.get('notes').strip()),  # required
 
             # ("description", 'asdfasdf'),  # required
 
-            ("identifier", extras.get('unique_id')),  # required
+            ("identifier", extras.get('unique_id').strip()),  # required
             # ("identifier", 'asdfasdfasdf'),  # required
 
             ("isPartOf", parent_dataset_id),  # required
-            ("issued", extras.get('release_date')),  # required
+            ("issued", extras.get('release_date').strip()),  # required
 
             # ('publisher', OrderedDict([
             # ("@type", "org:Organization"),
@@ -91,20 +91,20 @@ def make_datajson_entry(package):
             # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
 
-            ("landingPage", extras.get('homepage_url', package["url"])),
+            ("landingPage", extras.get('homepage_url', package["url"]).strip()),
 
-            ("license", extras.get("license_new")),
+            ("license", extras.get("license_new").strip()),
 
-            ("modified", extras.get("modified", package["metadata_modified"])),  # required
+            ("modified", extras.get("modified", package["metadata_modified"]).strip()),  # required
 
-            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
+            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii').strip()),  # required
             ("publisher", get_publisher_tree(package, extras)),  # required
 
-            ("rights", extras.get('access_level_comment')),  # required
+            ("rights", extras.get('access_level_comment').strip()),  # required
 
-            ("spatial", extras.get('spatial')),  # optional
+            ("spatial", extras.get('spatial').strip()),  # optional
 
-            ('systemOfRecords', extras.get('system_of_records')),
+            ('systemOfRecords', extras.get('system_of_records').strip()),
 
             ("temporal", extras.get('temporal', build_temporal(package))),
 
@@ -184,6 +184,7 @@ def make_datajson_entry(package):
 
 # used by get_accrual_periodicity
 accrual_periodicity_dict = {
+    'completely irregular': 'irregular',
     'decennial': 'R/P10Y',
     'quadrennial': 'R/P4Y',
     'annual': 'R/P1Y',
@@ -197,7 +198,6 @@ accrual_periodicity_dict = {
     'three times a week': 'R/P0.33W',
     'three times a month': 'R/P0.33M',
     'continuously updated': 'R/PT1S',
-    'completely irregular': 'R/PT1S',
     'monthly': 'R/P1M',
     'quarterly': 'R/P3M',
     'semimonthly': 'R/P0.5M',
@@ -207,7 +207,7 @@ accrual_periodicity_dict = {
 
 
 def get_accrual_periodicity(frequency):
-    return accrual_periodicity_dict.get(str(frequency).lower(), frequency)
+    return accrual_periodicity_dict.get(str(frequency).lower().strip(), frequency)
 
 
 def generate_distribution(package):
@@ -260,8 +260,8 @@ def get_contact_point(extras, package):
 
     contact_point = OrderedDict([
         ('@type', 'vcard:Contact'),  # optional
-        ('fn', extras['contact_name']),  # required
-        ('hasEmail', 'mailto:' + extras['contact_email']),  # required
+        ('fn', extras['contact_name'].strip()),  # required
+        ('hasEmail', 'mailto:' + extras['contact_email'].strip()),  # required
     ])
     return contact_point
 
