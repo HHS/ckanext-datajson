@@ -57,9 +57,9 @@ def make_datajson_entry(package):
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
-            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
+            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))), # optional
 
-            ("conformsTo", strip_if_string(extras.get('conforms_to'))),  # required
+            ("conformsTo", strip_if_string(extras.get('conforms_to'))),  # optional
 
             # ('contactPoint', OrderedDict([
             # ("@type", "vcard:Contact"),
@@ -68,10 +68,10 @@ def make_datajson_entry(package):
             # ])),  # required
             ('contactPoint', get_contact_point(extras, package)),  # required
 
-            ("dataQuality", strip_if_string(extras.get('data_quality'))),  # required
+            ("dataQuality", strip_if_string(extras.get('data_quality'))),  # required-if-applicable
 
-            ("describedBy", strip_if_string(extras.get('data_dictionary'))),  # required
-            ("describedByType", strip_if_string(extras.get('data_dictionary_type'))),  # required
+            ("describedBy", strip_if_string(extras.get('data_dictionary'))),  # optional
+            ("describedByType", strip_if_string(extras.get('data_dictionary_type'))),  # optional
 
             ("description", strip_if_string(package["notes"])),  # required
 
@@ -80,35 +80,36 @@ def make_datajson_entry(package):
             ("identifier", strip_if_string(extras.get('unique_id'))),  # required
             # ("identifier", 'asdfasdfasdf'),  # required
 
-            ("isPartOf", parent_dataset_id),  # required
-            ("issued", strip_if_string(extras.get('release_date'))),  # required
+            ("isPartOf", parent_dataset_id),  # optional
+            ("issued", strip_if_string(extras.get('release_date'))),  # optional
+
+            # ("keyword", ['a', 'b']),  # required
+            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
+
+            ("landingPage", strip_if_string(extras.get('homepage_url'))),   # optional
+
+            ("license", strip_if_string(extras.get("license_new"))),    # required-if-applicable
+
+            ("modified", strip_if_string(extras.get("modified"))),  # required
+
+            ("primaryITInvestmentUII", strip_if_string(extras.get('primary_it_investment_uii'))),  # optional
 
             # ('publisher', OrderedDict([
             # ("@type", "org:Organization"),
             # ("name", "Widget Services")
             # ])),  # required
-
-            # ("keyword", ['a', 'b']),  # required
-            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
-
-            ("landingPage", strip_if_string(extras.get('homepage_url', package["url"]))),
-
-            ("license", strip_if_string(extras.get("license_new"))),
-
-            ("modified", strip_if_string(extras.get("modified", package["metadata_modified"]))),  # required
-
-            ("primaryITInvestmentUII", strip_if_string(extras.get('primary_it_investment_uii'))),  # required
-            ("publisher", get_publisher_tree(package, extras)),  # required
+            ("publisher", get_publisher_tree(extras)),  # required
 
             ("rights", strip_if_string(extras.get('access_level_comment'))),  # required
 
-            ("spatial", strip_if_string(extras.get('spatial'))),  # optional
+            ("spatial", strip_if_string(package.get("spatial"))),  # required-if-applicable
 
-            ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),
+            ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),  # optional
 
-            ("temporal", extras.get('temporal', build_temporal(package))),
+            # ("temporal", extras.get('temporal', build_temporal(package))),  # required-if-applicable
+            ("temporal", package.get('temporal')),  # required-if-applicable
 
-            ("distribution", generate_distribution(package)),
+            ("distribution", generate_distribution(package)),   # required-if-applicable
 
             # ("distribution",
             # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
@@ -122,17 +123,17 @@ def make_datajson_entry(package):
         ]
 
         for pair in [
-            ('bureauCode', 'bureau_code'),
-            ('language', 'language'),
-            ('programCode', 'program_code'),
-            ('references', 'related_documents'),
-            ('theme', 'category'),
+            ('bureauCode', 'bureau_code'),  # required
+            ('language', 'language'),   # optional
+            ('programCode', 'program_code'),    # required
+            ('references', 'related_documents'),    # optional
+            ('theme', 'category'),  # optional
         ]:
             split_multiple_entries(retlist, extras, pair)
 
     except KeyError as e:
-        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None),
-                 package.get('title', None), e)
+        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id'),
+                 package.get('title'), e)
         return
 
     # # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
@@ -165,7 +166,7 @@ def make_datajson_entry(package):
                            "modified", "programCode", "publisher", "title"]:
         if required_field not in striped_retlist_keys:
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id', None), package.get('title', None), required_field)
+                     package.get('id'), package.get('title'), required_field)
             # return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
@@ -255,7 +256,7 @@ def get_contact_point(extras, package):
     for required_field in ["contact_name", "contact_email"]:
         if required_field not in extras.keys():
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id', None), package.get('title', None), required_field)
+                     package.get('id'), package.get('title'), required_field)
             raise KeyError(required_field)
 
     contact_point = OrderedDict([
@@ -274,37 +275,37 @@ def extra(package, key, default=None):
     return default
 
 
-def get_publisher_tree(package, extras):
+def get_publisher_tree(extras):
     # Sorry guys
     # TODO refactor that to recursion? any refactor would be nice though
     tree = [
         ('@type', 'org:Organization'),  # optional
-        ('name', extras.get('publisher', package['author'])),  # required
+        ('name', strip_if_string(extras.get('publisher'))),  # required
     ]
     if 'publisher_1' in extras and extras['publisher_1']:
         publisher1 = [
             ('@type', 'org:Organization'),  # optional
-            ('name', extras['publisher_1']),  # required
+            ('name', strip_if_string(extras['publisher_1'])),  # required
         ]
         if 'publisher_2' in extras and extras['publisher_2']:
             publisher2 = [
                 ('@type', 'org:Organization'),  # optional
-                ('name', extras['publisher_2']),  # required
+                ('name', strip_if_string(extras['publisher_2'])),  # required
             ]
             if 'publisher_3' in extras and extras['publisher_3']:
                 publisher3 = [
                     ('@type', 'org:Organization'),  # optional
-                    ('name', extras['publisher_3']),  # required
+                    ('name', strip_if_string(extras['publisher_3'])),  # required
                 ]
                 if 'publisher_4' in extras and extras['publisher_4']:
                     publisher4 = [
                         ('@type', 'org:Organization'),  # optional
-                        ('name', extras['publisher_4']),  # required
+                        ('name', strip_if_string(extras['publisher_4'])),  # required
                     ]
                     if 'publisher_5' in extras and extras['publisher_5']:
                         publisher5 = [
                             ('@type', 'org:Organization'),  # optional
-                            ('name', extras['publisher_5']),  # required
+                            ('name', strip_if_string(extras['publisher_5'])),  # required
                         ]
                         publisher4 += [('subOrganizationOf', OrderedDict(publisher5))]
                     publisher3 += [('subOrganizationOf', OrderedDict(publisher4))]
