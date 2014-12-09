@@ -73,7 +73,7 @@ def make_datajson_entry(package):
             ("describedBy", extras.get('data_dictionary').strip()),  # required
             ("describedByType", extras.get('data_dictionary_type').strip()),  # required
 
-            ("description", extras.get('notes').strip()),  # required
+            ("description", package["notes"].strip()),  # required
 
             # ("description", 'asdfasdf'),  # required
 
@@ -188,10 +188,10 @@ accrual_periodicity_dict = {
     'decennial': 'R/P10Y',
     'quadrennial': 'R/P4Y',
     'annual': 'R/P1Y',
-    'bimonthly': 'R/P2M',
+    'bimonthly': 'R/P2M',   # or R/P0.5M
     'semiweekly': 'R/P3.5D',
     'daily': 'R/P1D',
-    'biweekly': 'R/P2W',
+    'biweekly': 'R/P2W',    # or R/P0.5W
     'semiannual': 'R/P6M',
     'biennial': 'R/P2Y',
     'triennial': 'R/P3Y',

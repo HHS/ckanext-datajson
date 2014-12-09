@@ -19,7 +19,7 @@ IANA_MIME_REGEX = re.compile(r"^[-\w]+/[-\w]+(\.[-\w]+)*([+][-\w]+)?$")
 PRIMARY_IT_INVESTMENT_UII_REGEX = re.compile(r"$[0-9]{3}-[0-9]{9}^")
 
 ACCRUAL_PERIODICITY_VALUES = (
-    None, "R/P10Y", "R/P4Y", "R/P1Y", "R/P2M", "R/P3.5D", "R/P1D", "R/P2W", "R/P6M",
+    None, "R/P10Y", "R/P4Y", "R/P1Y", "R/P2M", "R/P3.5D", "R/P1D", "R/P2W", "R/P0.5W", "R/P6M",
     "R/P2Y", "R/P3Y", "R/P0.33W", "R/P0.33M", "R/PT1S", "R/PT1S", "R/P1M", "R/P3M",
     "R/P0.5M", "R/P4M", "R/P1W", "irregular")
 
