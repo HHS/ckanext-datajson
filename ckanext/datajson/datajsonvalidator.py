@@ -23,7 +23,13 @@ ACCRUAL_PERIODICITY_VALUES = (
     "R/P2Y", "R/P3Y", "R/P0.33W", "R/P0.33M", "R/PT1S", "R/PT1S", "R/P1M", "R/P3M",
     "R/P0.5M", "R/P4M", "R/P1W", "irregular")
 
-LANGUAGE_REGEX = re.compile("^[A-Za-z]{2}([A-Za-z]{2})?$")
+LANGUAGE_REGEX = re.compile(
+    r'^(((([A-Za-z]{2,3}(-([A-Za-z]{3}(-[A-Za-z]{3}){0,2}))?)|[A-Za-z]{4}|[A-Za-z]{5,8})(-([A-Za-z]{4}))?'
+    r'(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-([0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*'
+    r'(-(x(-[A-Za-z0-9]{1,8})+))?)|(x(-[A-Za-z0-9]{1,8})+)|'
+    r'((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|'
+    r'(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$'
+)
 
 # load the OMB bureau codes on first load of this module
 import urllib, csv
@@ -75,24 +81,24 @@ def do_validation(doc, errors_array):
                                   dataset_name)
                     elif bc not in omb_burueau_codes:
                         add_error(errs, 5, "Invalid Required Field Value",
-                                  "The bureau code \"%s\" was not found in our list." % bc, dataset_name)
+                                  "The bureau code \"%s\" was not found in our list (https://project-open-data.cio.gov/data/omb_bureau_codes.csv)." % bc, dataset_name)
 
             # contactPoint # required
-            if check_required_field(item, "contactPoint", list, dataset_name, errs):
-                for cp in item["contactPoint"]:
-                    # contactPoint → fn # required
-                    check_string_field(cp, "fn", 1, dataset_name, errs)
+            if check_required_field(item, "contactPoint", dict, dataset_name, errs):
+                cp = item["contactPoint"]
+                # contactPoint - fn # required
+                check_string_field(cp, "fn", 1, dataset_name, errs)
 
-                    # contactPoint → hasEmail # required
-                    if check_string_field(cp, "hasEmail", 9, dataset_name, errs):
-                        import lepl.apps.rfc3696
+                # contactPoint - hasEmail # required
+                if check_string_field(cp, "hasEmail", 9, dataset_name, errs):
+                    import lepl.apps.rfc3696
 
-                        email_validator = lepl.apps.rfc3696.Email()
-                        email = cp["hasEmail"].replace('mailto:', '')
-                        if not email_validator(email):
-                            add_error(errs, 5, "Invalid Required Field Value",
-                                      "The email address \"%s\" is not a valid email address." % email,
-                                      dataset_name)
+                    email_validator = lepl.apps.rfc3696.Email()
+                    email = cp["hasEmail"].replace('mailto:', '')
+                    if not email_validator(email):
+                        add_error(errs, 5, "Invalid Required Field Value",
+                                  "The email address \"%s\" is not a valid email address." % email,
+                                  dataset_name)
 
             # description # required
             check_string_field(item, "description", 1, dataset_name, errs)
@@ -127,15 +133,14 @@ def do_validation(doc, errors_array):
                     if not isinstance(pc, (str, unicode)):
                         add_error(errs, 5, "Invalid Required Field Value",
                                   "Each programCode in the programCode array must be a string", dataset_name)
-                    elif PROGRAM_CODE_REGEX.match(pc):
+                    elif not PROGRAM_CODE_REGEX.match(pc):
                         add_error(errs, 50, "Invalid Field Value (Optional Fields)",
                                   "One of programCodes is not in valid format (ex. 018:001): \"%s\"" % pc, dataset_name)
 
             # publisher # required
-            if check_required_field(item, "publisher", list, dataset_name, errs):
-                for pb in item["publisher"]:
-                    # publisher → name # required
-                    check_string_field(pb, "name", 1, dataset_name, errs)
+            if check_required_field(item, "publisher", dict, dataset_name, errs):
+                # publisher - name # required
+                check_string_field(item["publisher"], "name", 1, dataset_name, errs)
 
             # Required-If-Applicable
 
@@ -156,26 +161,26 @@ def do_validation(doc, errors_array):
             else:
                 for j, dt in enumerate(item["distribution"]):
                     distribution_name = dataset_name + (" distribution %d" % (j + 1))
-                    # distribution → downloadURL # Required-If-Applicable
+                    # distribution - downloadURL # Required-If-Applicable
                     check_url_field(False, dt, "downloadURL", distribution_name, errs)
 
-                    # distribution → mediaType # Required-If-Applicable
+                    # distribution - mediaType # Required-If-Applicable
                     if check_string_field(dt, "mediaType", 1, distribution_name, errs):
                         if not IANA_MIME_REGEX.match(dt["mediaType"]):
                             add_error(errs, 5, "Invalid Field Value",
                                       "The distribution mediaType \"%s\" is invalid. It must be in IANA MIME format." % dt["mediaType"],
                                       distribution_name)
 
-                    # distribution → accessURL # optional
+                    # distribution - accessURL # optional
                     check_url_field(False, dt, "accessURL", distribution_name, errs)
 
-                    # distribution → conformsTo # optional
+                    # distribution - conformsTo # optional
                     check_url_field(False, dt, "conformsTo", distribution_name, errs)
 
-                    # distribution → describedBy # optional
+                    # distribution - describedBy # optional
                     check_url_field(False, dt, "describedBy", distribution_name, errs)
 
-                    # distribution → describedByType # optional
+                    # distribution - describedByType # optional
                     if dt.get("describedByType") is None:
                         pass  # not required
                     elif not IANA_MIME_REGEX.match(dt["describedByType"]):
@@ -183,15 +188,15 @@ def do_validation(doc, errors_array):
                                   "The describedByType \"%s\" is invalid. It must be in IANA MIME format." % dt["describedByType"],
                                   distribution_name)
 
-                    # distribution → description # optional
+                    # distribution - description # optional
                     if dt.get("description") is not None:
                         check_string_field(dt, "description", 1, distribution_name, errs)
 
-                    # distribution → format # optional
+                    # distribution - format # optional
                     if dt.get("format") is not None:
                         check_string_field(dt, "format", 1, distribution_name, errs)
 
-                    # distribution → title # optional
+                    # distribution - title # optional
                     if dt.get("title") is not None:
                         check_string_field(dt, "title", 1, distribution_name, errs)
 
@@ -354,8 +359,8 @@ def check_string_field(obj, field_name, min_length, dataset_name, errs):
         add_error(errs, 10, "Missing Required Fields", "The '%s' field is present but empty." % field_name,
                   dataset_name)
         return False
-    elif len(obj[field_name].strip()) <= min_length:
-        add_error(errs, 100, "Are These Okay?", "The '%s' field is very short: \"%s\"" % (field_name, obj[field_name]),
+    elif len(obj[field_name].strip()) < min_length:
+        add_error(errs, 100, "Invalid Field Value", "The '%s' field is very short (min. %d): \"%s\"" % (field_name, min_length, obj[field_name]),
                   dataset_name)
         return False
     return True

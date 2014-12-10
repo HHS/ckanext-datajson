@@ -5,11 +5,12 @@ except ImportError:
 
 import logging
 import string
+import json
 
 import ckan.model as model
 
 
-log = logging.getLogger('datajson.builder')
+log = logging.getLogger('datajson')
 
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
@@ -35,7 +36,6 @@ def make_datajson_entry(package):
         if parent_uid:
             parent_dataset_id = parent_uid
 
-    retlist = []
     # if resource format is CSV then convert it to text/csv
     # Resource format has to be in 'csv' format for automatic datastore push.
     for r in package["resources"]:
@@ -162,12 +162,12 @@ def make_datajson_entry(package):
 
 
     # If a required metadata field was removed, return empty string
-    for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
-                           "modified", "programCode", "publisher", "title"]:
-        if required_field not in striped_retlist_keys:
-            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id'), package.get('title'), required_field)
-            # return
+    # for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
+    #                        "modified", "programCode", "publisher", "title"]:
+    #     if required_field not in striped_retlist_keys:
+    #         log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
+    #                  package.get('id'), package.get('title'), required_field)
+    #         return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
     # Check if value is "on" and replace it with True.
@@ -179,6 +179,20 @@ def make_datajson_entry(package):
     elif striped_retlist_dict.get('dataQuality') == "false" \
             or striped_retlist_dict.get('dataQuality') == "False":
         striped_retlist_dict['dataQuality'] = False
+
+    # catalog = make_datajson_catalog([striped_retlist_dict])
+    # import json
+    # log.warn(json.dumps(catalog, ensure_ascii=False).encode('utf8'))
+    from datajsonvalidator import do_validation
+    errors = []
+    try:
+        do_validation([json.loads(json.dumps(striped_retlist_dict))], errors)
+    except Exception as e:
+        errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
+    if len(errors) > 0:
+        for error in errors:
+            log.warn(error)
+        return
 
     return striped_retlist_dict
 
@@ -275,14 +289,20 @@ def generate_distribution(package):
 def get_contact_point(extras, package):
     for required_field in ["contact_name", "contact_email"]:
         if required_field not in extras.keys():
-            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id'), package.get('title'), required_field)
             raise KeyError(required_field)
+
+    email = strip_if_string(extras['contact_email'])
+    if email is None or '@' not in email:
+        raise KeyError(required_field)
+
+    fn = strip_if_string(extras['contact_name'])
+    if fn is None:
+        raise KeyError(required_field)
 
     contact_point = OrderedDict([
         ('@type', 'vcard:Contact'),  # optional
-        ('fn', strip_if_string(extras['contact_name'])),  # required
-        ('hasEmail', 'mailto:' + strip_if_string(extras['contact_email'])),  # required
+        ('fn', fn),  # required
+        ('hasEmail', 'mailto:' + email),  # required
     ])
     return contact_point
 
@@ -298,9 +318,13 @@ def extra(package, key, default=None):
 def get_publisher_tree(extras):
     # Sorry guys
     # TODO refactor that to recursion? any refactor would be nice though
+    publisher = strip_if_string(extras.get('publisher'))
+    if publisher is None:
+        raise KeyError('publisher')
+
     tree = [
         ('@type', 'org:Organization'),  # optional
-        ('name', strip_if_string(extras.get('publisher'))),  # required
+        ('name', publisher),  # required
     ]
     if 'publisher_1' in extras and extras['publisher_1']:
         publisher1 = [
