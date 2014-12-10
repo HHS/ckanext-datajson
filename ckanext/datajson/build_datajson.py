@@ -216,36 +216,54 @@ def generate_distribution(package):
     for r in package["resources"]:
         resource = [("@type", "dcat:Distribution")]
         rkeys = r.keys()
-        if 'url' in rkeys and '' != r["url"]:
-            resource += [("downloadURL", r["url"])]
+        if 'url' in rkeys:
+            res_url = strip_if_string(r.get('url'))
+            if res_url:
+                resource += [("downloadURL", res_url)]
         else:
-            log.warn("Missing downloadUrl for resource in package ['%s']", package.get('id'))
+            log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
 
-        if 'format' in rkeys and '' != r["format"]:
-            resource += [("mediaType", r["format"])]
+        if 'format' in rkeys:
+            res_format = strip_if_string(r.get('format'))
+            if res_format:
+                resource += [("mediaType", res_format)]
         else:
             log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
 
-        if 'accessURL_new' in rkeys and '' != r["accessURL_new"]:
-            resource += [("accessURL", r["accessURL_new"])]
+        if 'accessURL_new' in rkeys:
+            res_access_url = strip_if_string(r.get('accessURL_new'))
+            if res_access_url:
+                resource += [("accessURL", res_access_url)]
 
-        if 'formatReadable' in rkeys and '' != r["formatReadable"]:
-            resource += [("format", r["formatReadable"])]
+        if 'formatReadable' in rkeys:
+            res_attr = strip_if_string(r.get('formatReadable'))
+            if res_attr:
+                resource += [("format", res_attr)]
 
-        if 'name' in rkeys and '' != r["name"]:
-            resource += [("title", r["name"])]
+        if 'name' in rkeys:
+            res_attr = strip_if_string(r.get('name'))
+            if res_attr:
+                resource += [("title", res_attr)]
 
-        if 'notes' in rkeys and '' != r["notes"]:
-            resource += [("description", r["notes"])]
+        if 'notes' in rkeys:
+            res_attr = strip_if_string(r.get('notes'))
+            if res_attr:
+                resource += [("description", res_attr)]
 
-        if 'conformsTo' in rkeys and '' != r["conformsTo"]:
-            resource += [("conformsTo", r["conformsTo"])]
+        if 'conformsTo' in rkeys:
+            res_attr = strip_if_string(r.get('conformsTo'))
+            if res_attr:
+                resource += [("conformsTo", res_attr)]
 
-        if 'describedBy' in rkeys and '' != r["describedBy"]:
-            resource += [("describedBy", r["describedBy"])]
+        if 'describedBy' in rkeys:
+            res_attr = strip_if_string(r.get('describedBy'))
+            if res_attr:
+                resource += [("describedBy", res_attr)]
 
-        if 'describedByType' in rkeys and '' != r["describedByType"]:
-            resource += [("describedByType", r["describedByType"])]
+        if 'describedByType' in rkeys:
+            res_attr = strip_if_string(r.get('describedByType'))
+            if res_attr:
+                resource += [("describedByType", res_attr)]
 
         arr += [OrderedDict(resource)]
 
@@ -339,7 +357,9 @@ def get_best_resource(package, acceptable_formats):
 
 def strip_if_string(val):
     if isinstance(val, (str, unicode)):
-        return val.strip()
+        val = val.strip()
+        if '' == val:
+            val = None
     return val
 
 
@@ -355,7 +375,6 @@ def get_api_resource(package):
 
 def build_temporal(package):
     # Build one dataset entry of the data.json file.
-    temporal = ""
     if extra(package, "Coverage Period Fiscal Year Start"):
         temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
     else:
@@ -365,7 +384,8 @@ def build_temporal(package):
         temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
     else:
         temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    if temporal == "Unknown/Unknown": return None
+    if temporal == "Unknown/Unknown":
+        temporal = None
     return temporal
 
 
