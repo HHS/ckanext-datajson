@@ -157,7 +157,7 @@ def make_datajson_entry(package):
     # retlist.append((convertedKey, extras[key]))
 
     # Remove entries where value is None, "", or empty list []
-    striped_retlist = [(x, y) for x, y in retlist if y != None and y != "" and y != []]
+    striped_retlist = [(x, y) for x, y in retlist if y is not None and y != "" and y != []]
     striped_retlist_keys = [x for x, y in striped_retlist]
 
 
@@ -265,7 +265,9 @@ def generate_distribution(package):
             if res_attr:
                 resource += [("describedByType", res_attr)]
 
-        arr += [OrderedDict(resource)]
+        striped_resource = [(x, y) for x, y in resource if y is not None and y != "" and y != []]
+
+        arr += [OrderedDict(striped_resource)]
 
     return arr
 
