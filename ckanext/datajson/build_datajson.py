@@ -5,7 +5,6 @@ except ImportError:
 
 import logging
 import string
-import json
 
 import ckan.model as model
 
@@ -180,13 +179,10 @@ def make_datajson_entry(package):
             or striped_retlist_dict.get('dataQuality') == "False":
         striped_retlist_dict['dataQuality'] = False
 
-    # catalog = make_datajson_catalog([striped_retlist_dict])
-    # import json
-    # log.warn(json.dumps(catalog, ensure_ascii=False).encode('utf8'))
     from datajsonvalidator import do_validation
     errors = []
     try:
-        do_validation([json.loads(json.dumps(striped_retlist_dict))], errors)
+        do_validation([dict(striped_retlist_dict)], errors)
     except Exception as e:
         errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
     if len(errors) > 0:
