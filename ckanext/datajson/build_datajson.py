@@ -93,7 +93,7 @@ def make_datajson_entry(package):
 
             ("landingPage", extras.get('homepage_url', package["url"])),
 
-            ("license", extras.get("license_new", package['license_title'])),
+            ("license", extras.get("license_new")),
 
             ("modified", extras.get("modified", package["metadata_modified"])),  # required
 
