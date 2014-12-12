@@ -105,8 +105,7 @@ def make_datajson_entry(package):
 
             ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),  # optional
 
-            # ("temporal", extras.get('temporal', build_temporal(package))),  # required-if-applicable
-            ("temporal", package.get('temporal')),  # required-if-applicable
+            ("temporal", strip_if_string(extras.get('temporal'))),  # required-if-applicable
 
             ("distribution", generate_distribution(package)),   # required-if-applicable
 
@@ -393,22 +392,6 @@ def get_primary_resource(package):
 def get_api_resource(package):
     # Return info about an API resource.
     return get_best_resource(package, ("api", "query tool"))
-
-
-def build_temporal(package):
-    # Build one dataset entry of the data.json file.
-    if extra(package, "Coverage Period Fiscal Year Start"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal = extra(package, "Coverage Period Start", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    temporal += "/"
-    if extra(package, "Coverage Period Fiscal Year End"):
-        temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    if temporal == "Unknown/Unknown":
-        temporal = None
-    return temporal
 
 
 def split_multiple_entries(retlist, extras, names):
