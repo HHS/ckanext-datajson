@@ -224,12 +224,13 @@ def do_validation(doc, errors_array):
                     check_url_field(False, dt, "downloadURL", distribution_name, errs)
 
                     # distribution - mediaType # Required-If-Applicable
-                    if check_string_field(dt, "mediaType", 1, distribution_name, errs):
-                        if not IANA_MIME_REGEX.match(dt["mediaType"]):
-                            add_error(errs, 5, "Invalid Field Value",
-                                      "The distribution mediaType \"%s\" is invalid. "
-                                      "It must be in IANA MIME format." % dt["mediaType"],
-                                      distribution_name)
+                    if 'downloadURL' in dt:
+                        if check_string_field(dt, "mediaType", 1, distribution_name, errs):
+                            if not IANA_MIME_REGEX.match(dt["mediaType"]):
+                                add_error(errs, 5, "Invalid Field Value",
+                                          "The distribution mediaType \"%s\" is invalid. "
+                                          "It must be in IANA MIME format." % dt["mediaType"],
+                                          distribution_name)
 
                     # distribution - accessURL # optional
                     check_url_field(False, dt, "accessURL", distribution_name, errs)
