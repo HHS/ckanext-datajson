@@ -228,7 +228,10 @@ def generate_distribution(package):
         if 'url' in rkeys:
             res_url = strip_if_string(r.get('url'))
             if res_url:
-                resource += [("downloadURL", res_url)]
+                if 'api' == r.get('resource_type') or 'accessurl' == r.get('resource_type'):
+                    resource += [("accessURL", res_url)]
+                else:
+                    resource += [("downloadURL", res_url)]
         else:
             log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
 
@@ -239,10 +242,10 @@ def generate_distribution(package):
         else:
             log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
 
-        if 'accessURL_new' in rkeys:
-            res_access_url = strip_if_string(r.get('accessURL_new'))
-            if res_access_url:
-                resource += [("accessURL", res_access_url)]
+        # if 'accessURL_new' in rkeys:
+        #     res_access_url = strip_if_string(r.get('accessURL_new'))
+        #     if res_access_url:
+        #         resource += [("accessURL", res_access_url)]
 
         if 'formatReadable' in rkeys:
             res_attr = strip_if_string(r.get('formatReadable'))
