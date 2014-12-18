@@ -266,8 +266,9 @@ def do_validation(doc, errors_array):
             check_url_field(False, item, "license", dataset_name, errs)
 
             # rights # Required-If-Applicable
-            if item.get("accessLevel") != "public":
-                check_string_field(item, "rights", 1, dataset_name, errs)
+            # TODO move to warnings
+            # if item.get("accessLevel") != "public":
+            #     check_string_field(item, "rights", 1, dataset_name, errs)
 
             # spatial # Required-If-Applicable
             # TODO: There are more requirements than it be a string.
