@@ -9,7 +9,7 @@ import string
 import ckan.model as model
 
 
-log = logging.getLogger('datajson.builder')
+log = logging.getLogger('datajson')
 
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
@@ -35,7 +35,6 @@ def make_datajson_entry(package):
         if parent_uid:
             parent_dataset_id = parent_uid
 
-    retlist = []
     # if resource format is CSV then convert it to text/csv
     # Resource format has to be in 'csv' format for automatic datastore push.
     for r in package["resources"]:
@@ -50,16 +49,16 @@ def make_datajson_entry(package):
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
 
-            ("title", package["title"]),  # required
+            ("title", strip_if_string(package["title"])),  # required
 
             # ("accessLevel", 'public'),  # required
-            ("accessLevel", extras.get('public_access_level')),  # required
+            ("accessLevel", strip_if_string(extras.get('public_access_level'))),  # required
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
-            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
+            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))), # optional
 
-            ("conformsTo", extras.get('conforms_to')),  # required
+            ("conformsTo", strip_if_string(extras.get('conforms_to'))),  # optional
 
             # ('contactPoint', OrderedDict([
             # ("@type", "vcard:Contact"),
@@ -68,47 +67,47 @@ def make_datajson_entry(package):
             # ])),  # required
             ('contactPoint', get_contact_point(extras, package)),  # required
 
-            ("dataQuality", extras.get('data_quality')),  # required
+            ("dataQuality", strip_if_string(extras.get('data_quality'))),  # required-if-applicable
 
-            ("describedBy", extras.get('data_dictionary')),  # required
-            ("describedByType", extras.get('data_dictionary_type')),  # required
+            ("describedBy", strip_if_string(extras.get('data_dictionary'))),  # optional
+            ("describedByType", strip_if_string(extras.get('data_dictionary_type'))),  # optional
 
-            ("description", extras.get('notes')),  # required
+            ("description", strip_if_string(package["notes"])),  # required
 
             # ("description", 'asdfasdf'),  # required
 
-            ("identifier", extras.get('unique_id')),  # required
+            ("identifier", strip_if_string(extras.get('unique_id'))),  # required
             # ("identifier", 'asdfasdfasdf'),  # required
 
-            ("isPartOf", parent_dataset_id),  # required
-            ("issued", extras.get('release_date')),  # required
+            ("isPartOf", parent_dataset_id),  # optional
+            ("issued", strip_if_string(extras.get('release_date'))),  # optional
+
+            # ("keyword", ['a', 'b']),  # required
+            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
+
+            ("landingPage", strip_if_string(extras.get('homepage_url'))),   # optional
+
+            ("license", strip_if_string(extras.get("license_new"))),    # required-if-applicable
+
+            ("modified", strip_if_string(extras.get("modified"))),  # required
+
+            ("primaryITInvestmentUII", strip_if_string(extras.get('primary_it_investment_uii'))),  # optional
 
             # ('publisher', OrderedDict([
             # ("@type", "org:Organization"),
             # ("name", "Widget Services")
             # ])),  # required
+            ("publisher", get_publisher_tree(extras)),  # required
 
-            # ("keyword", ['a', 'b']),  # required
-            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
+            ("rights", strip_if_string(extras.get('access_level_comment'))),  # required
 
-            ("landingPage", extras.get('homepage_url', package["url"])),
+            ("spatial", strip_if_string(package.get("spatial"))),  # required-if-applicable
 
-            ("license", extras.get("license_new")),
+            ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),  # optional
 
-            ("modified", extras.get("modified", package["metadata_modified"])),  # required
+            ("temporal", strip_if_string(extras.get('temporal'))),  # required-if-applicable
 
-            ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
-            ("publisher", get_publisher_tree(package, extras)),  # required
-
-            ("rights", extras.get('access_level_comment')),  # required
-
-            ("spatial", extras.get('spatial')),  # optional
-
-            ('systemOfRecords', extras.get('system_of_records')),
-
-            ("temporal", extras.get('temporal', build_temporal(package))),
-
-            ("distribution", generate_distribution(package)),
+            ("distribution", generate_distribution(package)),   # required-if-applicable
 
             # ("distribution",
             # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
@@ -122,17 +121,17 @@ def make_datajson_entry(package):
         ]
 
         for pair in [
-            ('bureauCode', 'bureau_code'),
-            ('language', 'language'),
-            ('programCode', 'program_code'),
-            ('references', 'related_documents'),
-            ('theme', 'category'),
+            ('bureauCode', 'bureau_code'),  # required
+            ('language', 'language'),   # optional
+            ('programCode', 'program_code'),    # required
+            ('references', 'related_documents'),    # optional
+            ('theme', 'category'),  # optional
         ]:
             split_multiple_entries(retlist, extras, pair)
 
     except KeyError as e:
-        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None),
-                 package.get('title', None), e)
+        log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id'),
+                 package.get('title'), e)
         return
 
     # # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
@@ -156,17 +155,17 @@ def make_datajson_entry(package):
     # retlist.append((convertedKey, extras[key]))
 
     # Remove entries where value is None, "", or empty list []
-    striped_retlist = [(x, y) for x, y in retlist if y != None and y != "" and y != []]
+    striped_retlist = [(x, y) for x, y in retlist if y is not None and y != "" and y != []]
     striped_retlist_keys = [x for x, y in striped_retlist]
 
 
     # If a required metadata field was removed, return empty string
-    for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
-                           "modified", "programCode", "publisher", "title"]:
-        if required_field not in striped_retlist_keys:
-            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id', None), package.get('title', None), required_field)
-            # return
+    # for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
+    #                        "modified", "programCode", "publisher", "title"]:
+    #     if required_field not in striped_retlist_keys:
+    #         log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
+    #                  package.get('id'), package.get('title'), required_field)
+    #         return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
     # Check if value is "on" and replace it with True.
@@ -179,25 +178,36 @@ def make_datajson_entry(package):
             or striped_retlist_dict.get('dataQuality') == "False":
         striped_retlist_dict['dataQuality'] = False
 
+    from datajsonvalidator import do_validation
+    errors = []
+    try:
+        do_validation([dict(striped_retlist_dict)], errors)
+    except Exception as e:
+        errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
+    if len(errors) > 0:
+        for error in errors:
+            log.warn(error)
+        return
+
     return striped_retlist_dict
 
 
 # used by get_accrual_periodicity
 accrual_periodicity_dict = {
+    'completely irregular': 'irregular',
     'decennial': 'R/P10Y',
     'quadrennial': 'R/P4Y',
     'annual': 'R/P1Y',
-    'bimonthly': 'R/P2M',
+    'bimonthly': 'R/P2M',   # or R/P0.5M
     'semiweekly': 'R/P3.5D',
     'daily': 'R/P1D',
-    'biweekly': 'R/P2W',
+    'biweekly': 'R/P2W',    # or R/P0.5W
     'semiannual': 'R/P6M',
     'biennial': 'R/P2Y',
     'triennial': 'R/P3Y',
     'three times a week': 'R/P0.33W',
     'three times a month': 'R/P0.33M',
     'continuously updated': 'R/PT1S',
-    'completely irregular': 'R/PT1S',
     'monthly': 'R/P1M',
     'quarterly': 'R/P3M',
     'semimonthly': 'R/P0.5M',
@@ -207,7 +217,7 @@ accrual_periodicity_dict = {
 
 
 def get_accrual_periodicity(frequency):
-    return accrual_periodicity_dict.get(str(frequency).lower(), frequency)
+    return accrual_periodicity_dict.get(str(frequency).lower().strip(), frequency)
 
 
 def generate_distribution(package):
@@ -215,38 +225,60 @@ def generate_distribution(package):
     for r in package["resources"]:
         resource = [("@type", "dcat:Distribution")]
         rkeys = r.keys()
-        if 'url' in rkeys and '' != r["url"]:
-            resource += [("downloadURL", r["url"])]
+        if 'url' in rkeys:
+            res_url = strip_if_string(r.get('url'))
+            if res_url:
+                if 'api' == r.get('resource_type') or 'accessurl' == r.get('resource_type'):
+                    resource += [("accessURL", res_url)]
+                else:
+                    resource += [("downloadURL", res_url)]
+                    if 'format' in rkeys:
+                        res_format = strip_if_string(r.get('format'))
+                        if res_format:
+                            resource += [("mediaType", res_format)]
+                    else:
+                        log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
         else:
-            log.warn("Missing downloadUrl for resource in package ['%s']", package.get('id'))
+            log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
 
-        if 'format' in rkeys and '' != r["format"]:
-            resource += [("mediaType", r["format"])]
-        else:
-            log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
+        # if 'accessURL_new' in rkeys:
+        #     res_access_url = strip_if_string(r.get('accessURL_new'))
+        #     if res_access_url:
+        #         resource += [("accessURL", res_access_url)]
 
-        if 'accessURL_new' in rkeys and '' != r["accessURL_new"]:
-            resource += [("accessURL", r["accessURL_new"])]
+        if 'formatReadable' in rkeys:
+            res_attr = strip_if_string(r.get('formatReadable'))
+            if res_attr:
+                resource += [("format", res_attr)]
 
-        if 'formatReadable' in rkeys and '' != r["formatReadable"]:
-            resource += [("format", r["formatReadable"])]
+        if 'name' in rkeys:
+            res_attr = strip_if_string(r.get('name'))
+            if res_attr:
+                resource += [("title", res_attr)]
 
-        if 'name' in rkeys and '' != r["name"]:
-            resource += [("title", r["name"])]
+        if 'notes' in rkeys:
+            res_attr = strip_if_string(r.get('notes'))
+            if res_attr:
+                resource += [("description", res_attr)]
 
-        if 'notes' in rkeys and '' != r["notes"]:
-            resource += [("description", r["notes"])]
+        if 'conformsTo' in rkeys:
+            res_attr = strip_if_string(r.get('conformsTo'))
+            if res_attr:
+                resource += [("conformsTo", res_attr)]
 
-        if 'conformsTo' in rkeys and '' != r["conformsTo"]:
-            resource += [("conformsTo", r["conformsTo"])]
+        if 'describedBy' in rkeys:
+            res_attr = strip_if_string(r.get('describedBy'))
+            if res_attr:
+                resource += [("describedBy", res_attr)]
 
-        if 'describedBy' in rkeys and '' != r["describedBy"]:
-            resource += [("describedBy", r["describedBy"])]
+        if 'describedByType' in rkeys:
+            res_attr = strip_if_string(r.get('describedByType'))
+            if res_attr:
+                resource += [("describedByType", res_attr)]
 
-        if 'describedByType' in rkeys and '' != r["describedByType"]:
-            resource += [("describedByType", r["describedByType"])]
+        striped_resource = [(x, y) for x, y in resource if y is not None and y != "" and y != []]
 
-        arr += [OrderedDict(resource)]
+        arr += [OrderedDict(striped_resource)]
 
     return arr
 
@@ -254,14 +286,20 @@ def generate_distribution(package):
 def get_contact_point(extras, package):
     for required_field in ["contact_name", "contact_email"]:
         if required_field not in extras.keys():
-            log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-                     package.get('id', None), package.get('title', None), required_field)
             raise KeyError(required_field)
+
+    email = strip_if_string(extras['contact_email'])
+    if email is None or '@' not in email:
+        raise KeyError(required_field)
+
+    fn = strip_if_string(extras['contact_name'])
+    if fn is None:
+        raise KeyError(required_field)
 
     contact_point = OrderedDict([
         ('@type', 'vcard:Contact'),  # optional
-        ('fn', extras['contact_name']),  # required
-        ('hasEmail', 'mailto:' + extras['contact_email']),  # required
+        ('fn', fn),  # required
+        ('hasEmail', 'mailto:' + email),  # required
     ])
     return contact_point
 
@@ -274,37 +312,41 @@ def extra(package, key, default=None):
     return default
 
 
-def get_publisher_tree(package, extras):
+def get_publisher_tree(extras):
     # Sorry guys
     # TODO refactor that to recursion? any refactor would be nice though
+    publisher = strip_if_string(extras.get('publisher'))
+    if publisher is None:
+        raise KeyError('publisher')
+
     tree = [
         ('@type', 'org:Organization'),  # optional
-        ('name', extras.get('publisher', package['author'])),  # required
+        ('name', publisher),  # required
     ]
     if 'publisher_1' in extras and extras['publisher_1']:
         publisher1 = [
             ('@type', 'org:Organization'),  # optional
-            ('name', extras['publisher_1']),  # required
+            ('name', strip_if_string(extras['publisher_1'])),  # required
         ]
         if 'publisher_2' in extras and extras['publisher_2']:
             publisher2 = [
                 ('@type', 'org:Organization'),  # optional
-                ('name', extras['publisher_2']),  # required
+                ('name', strip_if_string(extras['publisher_2'])),  # required
             ]
             if 'publisher_3' in extras and extras['publisher_3']:
                 publisher3 = [
                     ('@type', 'org:Organization'),  # optional
-                    ('name', extras['publisher_3']),  # required
+                    ('name', strip_if_string(extras['publisher_3'])),  # required
                 ]
                 if 'publisher_4' in extras and extras['publisher_4']:
                     publisher4 = [
                         ('@type', 'org:Organization'),  # optional
-                        ('name', extras['publisher_4']),  # required
+                        ('name', strip_if_string(extras['publisher_4'])),  # required
                     ]
                     if 'publisher_5' in extras and extras['publisher_5']:
                         publisher5 = [
                             ('@type', 'org:Organization'),  # optional
-                            ('name', extras['publisher_5']),  # required
+                            ('name', strip_if_string(extras['publisher_5'])),  # required
                         ]
                         publisher4 += [('subOrganizationOf', OrderedDict(publisher5))]
                     publisher3 += [('subOrganizationOf', OrderedDict(publisher4))]
@@ -336,6 +378,14 @@ def get_best_resource(package, acceptable_formats):
     return resources[0]
 
 
+def strip_if_string(val):
+    if isinstance(val, (str, unicode)):
+        val = val.strip()
+        if '' == val:
+            val = None
+    return val
+
+
 def get_primary_resource(package):
     # Return info about a "primary" resource. Select a good one.
     return get_best_resource(package, ("csv", "xls", "xml", "text", "zip", "rdf"))
@@ -344,22 +394,6 @@ def get_primary_resource(package):
 def get_api_resource(package):
     # Return info about an API resource.
     return get_best_resource(package, ("api", "query tool"))
-
-
-def build_temporal(package):
-    # Build one dataset entry of the data.json file.
-    temporal = ""
-    if extra(package, "Coverage Period Fiscal Year Start"):
-        temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal = extra(package, "Coverage Period Start", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    temporal += "/"
-    if extra(package, "Coverage Period Fiscal Year End"):
-        temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
-    else:
-        temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
-    if temporal == "Unknown/Unknown": return None
-    return temporal
 
 
 def split_multiple_entries(retlist, extras, names):

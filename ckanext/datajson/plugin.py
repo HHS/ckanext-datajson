@@ -199,7 +199,7 @@ def make_json():
                 if datajson_entry:
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
         except KeyError:
             logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None),
                         pkg.get('title', None))
@@ -225,7 +225,7 @@ def make_edi(owner_org):
             if datajson_entry and is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
-                logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
     # Get the error log
     eh.flush()
@@ -263,7 +263,7 @@ def make_pdl(owner_org):
                 if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
         except KeyError:
             logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
