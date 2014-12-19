@@ -116,9 +116,6 @@ def do_validation(doc, errors_array):
                     add_error(errs, 5, "Invalid Required Field Value",
                               "The field 'accessLevel' had an invalid value: \"%s\"" % item["accessLevel"],
                               dataset_name)
-                elif item["accessLevel"] == "non-public":
-                    add_error(errs, 1, "Possible Private Data Leakage",
-                              "A dataset appears with accessLevel set to \"non-public\".", dataset_name)
 
             # bureauCode # required
             if check_required_field(item, "bureauCode", list, dataset_name, errs):
