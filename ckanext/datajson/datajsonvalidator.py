@@ -1,10 +1,5 @@
 import re
 
-# from the iso8601 package, plus ^ and $ on the edges
-ISO8601_REGEX = re.compile(r"^([0-9]{4})(-([0-9]{1,2})(-([0-9]{1,2})"
-                           r"((.)([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?"
-                           r"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?$")
-
 TEMPORAL_REGEX_1 = re.compile(
     r'^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?'
     r'|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]'
@@ -265,7 +260,7 @@ def do_validation(doc, errors_array):
             # rights # Required-If-Applicable
             # TODO move to warnings
             # if item.get("accessLevel") != "public":
-            #     check_string_field(item, "rights", 1, dataset_name, errs)
+            # check_string_field(item, "rights", 1, dataset_name, errs)
 
             # spatial # Required-If-Applicable
             # TODO: There are more requirements than it be a string.
@@ -428,23 +423,6 @@ def check_string_field(obj, field_name, min_length, dataset_name, errs):
                   "The '%s' field is very short (min. %d): \"%s\"" % (field_name, min_length, obj[field_name]),
                   dataset_name)
         return False
-    return True
-
-
-def check_date_field(obj, field_name, dataset_name, errs):
-    # checks that a required date field exists and looks like a date
-    if not check_required_field(obj, field_name, (str, unicode), dataset_name, errs):
-        return False
-    elif len(obj[field_name].strip()) == 0:
-        add_error(errs, 10, "Missing Required Fields", "The '%s' field is present but empty." % field_name,
-                  dataset_name)
-        return False
-    else:
-        if not ISO8601_REGEX.match(obj[field_name]):
-            add_error(errs, 5, "Invalid Required Field Value",
-                      "The '%s' field has an invalid ISO 8601 date or date-time value: \"%s\"." % (
-                          field_name, obj[field_name]), dataset_name)
-            return False
     return True
 
 
