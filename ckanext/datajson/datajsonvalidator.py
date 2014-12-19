@@ -102,11 +102,11 @@ def do_validation(doc, errors_array):
             dataset_name = "dataset %d" % (i + 1)
 
             # title
-            if check_string_field(item, "title", 1, dataset_name, errs):
+            if check_required_string_field(item, "title", 1, dataset_name, errs):
                 dataset_name = '"%s"' % item.get("title", "").strip()
 
             # accessLevel # required
-            if check_string_field(item, "accessLevel", 3, dataset_name, errs):
+            if check_required_string_field(item, "accessLevel", 3, dataset_name, errs):
                 if item["accessLevel"] not in ("public", "restricted public", "non-public"):
                     add_error(errs, 5, "Invalid Required Field Value",
                               "The field 'accessLevel' had an invalid value: \"%s\"" % item["accessLevel"],
@@ -132,10 +132,10 @@ def do_validation(doc, errors_array):
             if check_required_field(item, "contactPoint", dict, dataset_name, errs):
                 cp = item["contactPoint"]
                 # contactPoint - fn # required
-                check_string_field(cp, "fn", 1, dataset_name, errs)
+                check_required_string_field(cp, "fn", 1, dataset_name, errs)
 
                 # contactPoint - hasEmail # required
-                if check_string_field(cp, "hasEmail", 9, dataset_name, errs):
+                if check_required_string_field(cp, "hasEmail", 9, dataset_name, errs):
                     import lepl.apps.rfc3696
 
                     email_validator = lepl.apps.rfc3696.Email()
@@ -146,10 +146,10 @@ def do_validation(doc, errors_array):
                                   dataset_name)
 
             # description # required
-            check_string_field(item, "description", 1, dataset_name, errs)
+            check_required_string_field(item, "description", 1, dataset_name, errs)
 
             # identifier #required
-            if check_string_field(item, "identifier", 1, dataset_name, errs):
+            if check_required_string_field(item, "identifier", 1, dataset_name, errs):
                 if item["identifier"] in seen_identifiers:
                     add_error(errs, 5, "Invalid Required Field Value",
                               "The dataset identifier \"%s\" is used more than once." % item["identifier"],
@@ -170,7 +170,7 @@ def do_validation(doc, errors_array):
                                   "A keyword in the keyword array was an empty string.", dataset_name)
 
             # modified # required
-            if check_string_field(item, "modified", 1, dataset_name, errs):
+            if check_required_string_field(item, "modified", 1, dataset_name, errs):
                 if not MODIFIED_REGEX_1.match(item['modified']) \
                         and not MODIFIED_REGEX_2.match(item['modified']) \
                         and not MODIFIED_REGEX_3.match(item['modified']):
@@ -190,7 +190,7 @@ def do_validation(doc, errors_array):
             # publisher # required
             if check_required_field(item, "publisher", dict, dataset_name, errs):
                 # publisher - name # required
-                check_string_field(item["publisher"], "name", 1, dataset_name, errs)
+                check_required_string_field(item["publisher"], "name", 1, dataset_name, errs)
 
             # Required-If-Applicable
 
@@ -217,7 +217,7 @@ def do_validation(doc, errors_array):
 
                     # distribution - mediaType # Required-If-Applicable
                     if 'downloadURL' in dt:
-                        if check_string_field(dt, "mediaType", 1, distribution_name, errs):
+                        if check_required_string_field(dt, "mediaType", 1, distribution_name, errs):
                             if not IANA_MIME_REGEX.match(dt["mediaType"]):
                                 add_error(errs, 5, "Invalid Field Value",
                                           "The distribution mediaType \"%s\" is invalid. "
@@ -244,15 +244,15 @@ def do_validation(doc, errors_array):
 
                     # distribution - description # optional
                     if dt.get("description") is not None:
-                        check_string_field(dt, "description", 1, distribution_name, errs)
+                        check_required_string_field(dt, "description", 1, distribution_name, errs)
 
                     # distribution - format # optional
                     if dt.get("format") is not None:
-                        check_string_field(dt, "format", 1, distribution_name, errs)
+                        check_required_string_field(dt, "format", 1, distribution_name, errs)
 
                     # distribution - title # optional
                     if dt.get("title") is not None:
-                        check_string_field(dt, "title", 1, distribution_name, errs)
+                        check_required_string_field(dt, "title", 1, distribution_name, errs)
 
             # license # Required-If-Applicable
             check_url_field(False, item, "license", dataset_name, errs)
@@ -307,7 +307,7 @@ def do_validation(doc, errors_array):
 
             # isPartOf # optional
             if item.get("isPartOf"):
-                check_string_field(item, "isPartOf", 1, dataset_name, errs)
+                check_required_string_field(item, "isPartOf", 1, dataset_name, errs)
 
             # issued # optional
             if item.get("issued") is not None:
@@ -410,7 +410,7 @@ def check_required_field(obj, field_name, data_type, dataset_name, errs):
     return True
 
 
-def check_string_field(obj, field_name, min_length, dataset_name, errs):
+def check_required_string_field(obj, field_name, min_length, dataset_name, errs):
     # checks that a required field exists, is typed as a string, and has a minimum length
     if not check_required_field(obj, field_name, (str, unicode), dataset_name, errs):
         return False
