@@ -32,7 +32,7 @@ def make_datajson_catalog(datasets):
     return catalog
 
 
-def make_datajson_entry(package):
+def make_datajson_entry(package, plugin):
     # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
@@ -54,63 +54,51 @@ def make_datajson_entry(package):
         if r["format"].lower() == "pdf":
             r["format"] = "application/pdf"
 
+    # The 'modified' field needs to be populated somehow, try all the date
+    # fields we can think of.
+    modified = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601", default=extra(package, "harvest_last_updated", datatype="iso8601", default=extra(package, "Coverage Period Start", datatype="iso8601", default=package["revision_timestamp"]))))
+
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
 
             ("title", package["title"]),  # required
 
-            # ("accessLevel", 'public'),  # required
-            ("accessLevel", extras.get('Access Level')),  # required
+            ("accessLevel", extras.get('Access Level', 'public')),  # required
 
-            # ("accrualPeriodicity", "R/P1Y"),  # optional
-            # ('accrualPeriodicity', 'accrual_periodicity'),
-            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),
+            ('accrualPeriodicity', get_accrual_periodicity(extras.get('Publish Frequency'))),
 
-            ("conformsTo", extras.get('conforms_to')),  # required
+            ("conformsTo", extras.get('conforms_to')),
 
-            # ('contactPoint', OrderedDict([
-            # ("@type", "vcard:Contact"),
-            # ("fn", "Jane Doe"),
-            # ("hasEmail", "mailto:jane.doe@agency.gov")
-            # ])),  # required
             ('contactPoint', get_contact_point(extras, package, plugin)),  # required
 
-            ("dataQuality", extras.get('data_quality')),  # required
+            ("dataQuality", extras.get('Data Quality Met')),  # required
 
             ("describedBy", extras.get('data_dictionary')),  # required
             ("describedByType", extras.get('data_dictionary_type')),  # required
 
-            ("description", extras.get('notes')),  # required
+            ("description", package['notes']),  # required
 
-            # ("description", 'asdfasdf'),  # required
-
-            ("identifier", extras.get('unique_id')),  # required
-            # ("identifier", 'asdfasdfasdf'),  # required
+            ("identifier", package["id"]),  # required
 
             ("isPartOf", parent_dataset_id),  # required
-            ("issued", extras.get('release_date')),  # required
+            
+            ("issued", extras.get('Date Released')),  # required
 
-            # ('publisher', OrderedDict([
-            # ("@type", "org:Organization"),
-            # ("name", "Widget Services")
-            # ])),  # required
-
-            # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
 
             ("landingPage", extras.get('homepage_url', package["url"])),
 
-            ("license", extras.get("license_new", package['license_title'])),
+            ("license", extras.get('License Agreement')),
 
-            ("modified", extras.get("modified", package["metadata_modified"])),  # required
+            ("modified", modified),  # required
 
             ("primaryITInvestmentUII", extras.get('primary_it_investment_uii')),  # required
             ("publisher", get_publisher_tree(package, extras)),  # required
 
-            ("rights", extras.get('access_level_comment')),  # required
+            ("rights", extras.get('Access Level Comment')),  # required
 
-            ("spatial", extras.get('spatial')),  # optional
+            ("spatial", extras.get('Geographic Scope')),  # optional
 
             ('systemOfRecords', extras.get('system_of_records')),
 
@@ -118,22 +106,13 @@ def make_datajson_entry(package):
 
             ("distribution", generate_distribution(package)),
 
-            # ("distribution",
-            # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
-            # [
-            # OrderedDict([
-            # ("downloadURL", r["url"]),
-            # ("mediaType", r["formatReadable"]),
-            # ])
-            #      for r in package["resources"]
-            #  ])
         ]
 
         for pair in [
-            ('bureauCode', 'bureau_code'),
-            ('language', 'language'),
-            ('programCode', 'program_code'),
-            ('references', 'related_documents'),
+            ('bureauCode', 'Bureau Code'),
+            ('language', 'Language'),
+            ('programCode', 'Program Code'),
+            ('references', 'Technical Documentation'),
             ('theme', 'category'),
         ]:
             split_multiple_entries(retlist, extras, pair)
@@ -282,11 +261,24 @@ def get_contact_point(extras, package, plugin):
     return contact_point
 
 
-def extra(package, key, default=None):
+def extra(package, key, default=None, datatype=None):
     # Retrieves the value of an extras field.
     for extra in package["extras"]:
         if extra["key"] == key:
-            return extra["value"]
+            value = extra["value"]
+            if key == "Access Level" and value == "Public":
+                value = "public"
+            if key == "Data Dictionary" and " " in value:
+                return default
+
+            if datatype == "iso8601":
+                # Hack: If this value is a date, convert Drupal style dates to ISO 8601
+                # dates by replacing the space date/time separator with a T. Also if it
+                # looks like a plain date (midnight time), remove the time component.
+                value = value.replace(" ", "T")
+                value = value.replace("T00:00:00", "")
+
+            return value
     return default
 
 
