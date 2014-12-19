@@ -9,7 +9,7 @@ import string
 import ckan.model as model
 
 
-log = logging.getLogger('datajson.builder')
+log = logging.getLogger('ckanext')
 
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
@@ -61,7 +61,7 @@ def make_datajson_entry(package):
             ("title", package["title"]),  # required
 
             # ("accessLevel", 'public'),  # required
-            ("accessLevel", extras.get('public_access_level')),  # required
+            ("accessLevel", extras.get('Access Level')),  # required
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
@@ -74,7 +74,7 @@ def make_datajson_entry(package):
             # ("fn", "Jane Doe"),
             # ("hasEmail", "mailto:jane.doe@agency.gov")
             # ])),  # required
-            ('contactPoint', get_contact_point(extras, package)),  # required
+            ('contactPoint', get_contact_point(extras, package, plugin)),  # required
 
             ("dataQuality", extras.get('data_quality')),  # required
 
@@ -259,7 +259,15 @@ def generate_distribution(package):
     return arr
 
 
-def get_contact_point(extras, package):
+def get_contact_point(extras, package, plugin):
+    log.debug('get_contact_point beginning')
+	# set default contact point
+    mbox = extra(package, "Contact Email", default=plugin.default_mbox)
+    fn = extra(package, "Contact Name", default=plugin.default_contactpoint)
+    extras.setdefault("contact_email", mbox)
+    extras.setdefault("contact_name", fn)
+    log.debug("get_contact_point extras: %s", extras)
+
     for required_field in ["contact_name", "contact_email"]:
         if required_field not in extras.keys():
             log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",

@@ -9,7 +9,7 @@ import logging
 from jsonschema.exceptions import best_match
 import StringIO
 
-logger = logging.getLogger('datajson')
+logger = logging.getLogger('ckanext')
 
 
 def get_validator():
@@ -35,6 +35,7 @@ except ImportError:
 import ckan.model
 
 from package_to_pod import make_datajson_entry, get_facet_fields, make_datajson_catalog
+from package_to_pod_10 import make_datajson_entry as make_datajson_entry_10, get_facet_fields as get_facet_fields_10
 from pod_jsonld import dataset_to_jsonld
 
 # from build_enterprisedatajson import make_enterprisedatajson_entry
@@ -57,6 +58,8 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
         DataJsonPlugin.route_hhs_path = config.get("ckanext.datajsonhhs.path", re.sub(r"\.json$", ".jsonhhs", DataJsonPlugin.route_path))
+        DataJsonPlugin.route_10_path = config.get("ckanext.datajson10.path", re.sub(r"\.json$", ".json10", DataJsonPlugin.route_path))
+        DataJsonPlugin.route_hhs10_path = config.get("ckanext.datajsonhhs10.path", re.sub(r"\.json$", ".jsonhhs10", DataJsonPlugin.route_path))
         #EnterpriseDataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path", re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
@@ -81,12 +84,13 @@ class DataJsonPlugin(p.SingletonPlugin):
     def after_map(self, m):
         if DataJsonPlugin.route_enabled:
             # /data.json and /data.jsonld (or other path as configured by user)
-            m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController',
-                      action='generate_json')
+            m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
             # TODO commenting out enterprise data inventory for right now
             # m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
             #m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
             m.connect('datajsonhhs', DataJsonPlugin.route_hhs_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonhhs')
+            m.connect('datajson10', DataJsonPlugin.route_10_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json_10')
+            m.connect('datajsonhhs10', DataJsonPlugin.route_hhs10_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonhhs_10')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -133,6 +137,10 @@ class DataJsonController(BaseController):
         # output
         if format == 'json-hhs':
             data = make_json_hhs()
+        elif format == 'json-hhs-10':
+            data = make_json_hhs_10()
+        elif format == 'json-10':
+            data = make_json_10()
         else:
             data = make_json()
         
@@ -163,7 +171,14 @@ class DataJsonController(BaseController):
 
     def generate_jsonhhs(self):
         return self.generate_output('json-hhs')
-        
+
+    def generate_json_10(self):
+        logger.debug("generate_json_10 beginning")
+        return self.generate_output('json-10')
+
+    def generate_jsonhhs_10(self):
+        return self.generate_output('json-hhs-10')
+
     def generate_jsonld(self):
         return self.generate_output('json-ld')
 
@@ -214,10 +229,6 @@ class DataJsonController(BaseController):
 
         return render('html_rendition.html')
 
-def make_json_hhs():
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in ["Administration for Children and Families", "Administration for Community Living", "Agency for Healthcare Research and Quality", "Centers for Disease Control and Prevention", "Centers for Medicare & Medicaid Services", "Department of Health & Human Services", "Health Resources and Services Administration", "Indian Health Service", "National Cancer Institute", "National Institute on Drug Abuse", "National Institutes of Health", "National Library of Medicine", "Substance Abuse & Mental Health Services Administration", "U.S. Food and Drug Administration"] ]
-
     def generate_pdl(self):
         # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/data.json", request.path)
@@ -254,7 +265,7 @@ def make_json():
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
         try:
             if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                datajson_entry = make_datajson_entry(pkg)
+                datajson_entry = make_datajson_entry(pkg, DataJsonPlugin )
                 if datajson_entry:
                     output.append(datajson_entry)
                 else:
@@ -265,6 +276,24 @@ def make_json():
             pass
     return output
 
+hhs_authors = ["Administration for Children and Families", "Administration for Community Living", "Agency for Healthcare Research and Quality", "Centers for Disease Control and Prevention", "Centers for Medicare & Medicaid Services", "Department of Health & Human Services", "Health Resources and Services Administration", "Indian Health Service", "National Cancer Institute", "National Institute on Drug Abuse", "National Institutes of Health", "National Library of Medicine", "Substance Abuse & Mental Health Services Administration", "U.S. Food and Drug Administration"]
+
+def make_json_hhs():
+    logger.debug("make_json_hhs beginning")
+    #packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    packages = [p.toolkit.get_action("package_show")(None,{'id': "9d65837e-328d-4889-b460-57426c992e0d"})] #custom contact point
+    #packages = [p.toolkit.get_action("package_show")(None,{'id': "ce278f9e-5a27-4b73-b028-86792071d3af"})] #default contact point
+    logger.debug("make_json_hhs packages: %s", packages )
+    return [make_datajson_entry(next(pkg for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors), DataJsonPlugin ) ]
+
+def make_json_hhs_10():
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    return [make_datajson_entry_10(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors ]
+
+def make_json_10():
+    # Build the data.json file.
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    return [make_datajson_entry_10(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset"]
 
 def make_edi(owner_org):
     # Error handler for creating error log
@@ -280,7 +309,7 @@ def make_edi(owner_org):
     output = []
     for pkg in packages:
         if pkg['owner_org'] == owner_org:
-            datajson_entry = make_datajson_entry(pkg)
+            datajson_entry = make_datajson_entry(pkg, DataJsonPlugin)
             if datajson_entry and is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
@@ -318,7 +347,7 @@ def make_pdl(owner_org):
             if pkg['owner_org'] == owner_org \
                     and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
 
-                datajson_entry = make_datajson_entry(pkg)
+                datajson_entry = make_datajson_entry(pkg, DataJsonPlugin)
                 if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
