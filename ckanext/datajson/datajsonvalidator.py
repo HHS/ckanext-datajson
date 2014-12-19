@@ -204,7 +204,7 @@ def do_validation(doc, errors_array):
                 pass  # not required
             elif not isinstance(item["dataQuality"], bool):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)",
-                          "The field 'theme' must be true or false, "
+                          "The field 'dataQuality' must be true or false, "
                           "as a JSON boolean literal (not the string \"true\" or \"false\").",
                           dataset_name)
 
