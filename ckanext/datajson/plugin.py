@@ -173,7 +173,7 @@ class DataJsonController(BaseController):
         return self.generate_output('json-hhs')
 
     def generate_json_10(self):
-        logger.debug("generate_json_10 beginning")
+        #logger.debug("generate_json_10 beginning")
         return self.generate_output('json-10')
 
     def generate_jsonhhs_10(self):
@@ -280,11 +280,12 @@ hhs_authors = ["Administration for Children and Families", "Administration for C
 
 def make_json_hhs():
     logger.debug("make_json_hhs beginning")
-    #packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    packages = [p.toolkit.get_action("package_show")(None,{'id': "9d65837e-328d-4889-b460-57426c992e0d"})] #custom contact point
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    #packages = [p.toolkit.get_action("package_show")(None,{'id': "9d65837e-328d-4889-b460-57426c992e0d"})] #custom contact point
     #packages = [p.toolkit.get_action("package_show")(None,{'id': "ce278f9e-5a27-4b73-b028-86792071d3af"})] #default contact point
-    logger.debug("make_json_hhs packages: %s", packages )
-    return [make_datajson_entry(next(pkg for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors), DataJsonPlugin ) ]
+    #logger.debug("make_json_hhs packages: %s", packages )
+    #return [make_datajson_entry(pkg for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors, DataJsonPlugin ) ]
+    return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors ]
 
 def make_json_hhs_10():
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
