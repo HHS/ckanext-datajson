@@ -283,7 +283,8 @@ def get_packages(owner_org):
     packages = get_all_group_packages(group_id=owner_org)
     #get packages for sub-agencies.
     sub_agency = model.Group.get(owner_org)
-    if 'sub-agencies' in sub_agency.extras.col.target:
+    if 'sub-agencies' in sub_agency.extras.col.target and \
+                    sub_agency.extras.col.target['sub-agencies'].state == 'active':
         sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
         sub_agencies_list = sub_agencies.split(",")
         for sub in sub_agencies_list:
