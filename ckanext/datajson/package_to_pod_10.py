@@ -1,8 +1,8 @@
 import re
 import sys
-import validator
-from validator import URL_REGEX
-from validator import email_validator
+import validator_10
+from validator_10 import URL_REGEX
+from validator_10 import email_validator
 from pprint import pprint
 
 try:
