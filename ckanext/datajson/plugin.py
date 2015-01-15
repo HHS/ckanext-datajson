@@ -182,11 +182,9 @@ class DataJsonController(BaseController):
         # Validates that a URL is a good data.json file.
         if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
             c.source_url = request.POST["url"]
-            c.number_of_records = None
             c.errors = []
 
             import urllib, json
-            from validator import do_validation
             from datajsonvalidator import do_validation
 
             body = None
@@ -203,9 +201,7 @@ class DataJsonController(BaseController):
 
             if body:
                 try:
-                    do_validation(body, c.source_url, c.errors)
-                    if type(body) == list:
-                        c.number_of_records = len(body)
+                    do_validation(body, c.errors)
                 except Exception as e:
                     c.errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
                 if len(c.errors) == 0:

@@ -116,9 +116,6 @@ def do_validation(doc, errors_array):
                     add_error(errs, 5, "Invalid Required Field Value",
                               "The field 'accessLevel' had an invalid value: \"%s\"" % item["accessLevel"],
                               dataset_name)
-                elif item["accessLevel"] == "non-public":
-                    add_error(errs, 1, "Possible Private Data Leakage",
-                              "A dataset appears with accessLevel set to \"non-public\".", dataset_name)
 
             # bureauCode # required
             if check_required_field(item, "bureauCode", list, dataset_name, errs):
@@ -207,7 +204,7 @@ def do_validation(doc, errors_array):
                 pass  # not required
             elif not isinstance(item["dataQuality"], bool):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)",
-                          "The field 'theme' must be true or false, "
+                          "The field 'dataQuality' must be true or false, "
                           "as a JSON boolean literal (not the string \"true\" or \"false\").",
                           dataset_name)
 
@@ -283,68 +280,52 @@ def do_validation(doc, errors_array):
                 add_error(errs, 10, "Invalid Field Value (Optional Fields)",
                           "The field 'temporal' must be a string value if specified.", dataset_name)
             elif "/" not in item["temporal"]:
-                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' must be two dates separated by a forward slash.", dataset_name)
-            else:
-                d1, d2 = item["temporal"].split("/", 1)
-                if not ISO8601_REGEX.match(d1):
-                    add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' has an invalid start date: %s." % d1, dataset_name)
-                if not ISO8601_REGEX.match(d2):
-                    add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'temporal' has an invalid end date: %s." % d2, dataset_name)
-            
+                add_error(errs, 10, "Invalid Field Value (Optional Fields)",
+                          "The field 'temporal' must be two dates separated by a forward slash.", dataset_name)
+            elif not TEMPORAL_REGEX_1.match(item['temporal']) \
+                    and not TEMPORAL_REGEX_2.match(item['temporal']) \
+                    and not TEMPORAL_REGEX_3.match(item['temporal']):
+                add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                          "The field 'temporal' has an invalid start or end date.", dataset_name)
+
             # Expanded Fields
-            
-            # theme
-            if item.get("theme") is None:
-                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'theme' field to datasets.", dataset_name)
-            elif not isinstance(item["theme"], list):
-                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'theme' must be an array.", dataset_name)
-            else:
-                for s in item["theme"]:
-                    if not isinstance(s, (str, unicode)):
-                        add_error(errs, 50, "Invalid Field Value (Optional Fields)", "Each value in the theme array must be a string", dataset_name)
-                    elif len(s.strip()) == 0:
-                        add_error(errs, 50, "Invalid Field Value (Optional Fields)", "A value in the theme array was an empty string.", dataset_name)
-            
-            # dataDictionary
-            if check_url_field(False, item, "dataDictionary", dataset_name, errs):
-                if item.get("dataDictionary") is None:
-                    add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'dataDictionary' field to datasets.", dataset_name)
-            
-            # dataQuality
-            if item.get("dataQuality") is None:
-                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'dataQuality' field to datasets.", dataset_name)
-            elif not isinstance(item["dataQuality"], bool):
-                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'theme' must be true or false, as a JSON boolean literal (not the string \"true\" or \"false\").", dataset_name)
-                
-            # distribution
-            if item.get("distribution") is None:
-                pass # not required, and missing just means there's only one access URL and it's in the accessURL field
-            elif not isinstance(item["distribution"], list):
-                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'distribution' must be an array, if present.", dataset_name)
-            else:
-                if len(item["distribution"]) > 0 and item.get("accessURL") is None:
-                    add_error(errs, 10, "Missing Required Fields", "The 'accessURL' field is missing on a dataset with one or more distributions.", dataset_name)
-                    
-                for j, d in enumerate(item["distribution"]):
-                    resource_name = dataset_name + (" distribution %d" % (j+1))
-                    check_url_field(True, d, "distribution accessURL", resource_name, errs)
-                    if check_string_field(d, "format", 1, resource_name, errs):
-                        check_mime_type(d["format"], "distribution format", resource_name, errs)
-                
-            # accrualPeriodicity
-            if item.get("accrualPeriodicity") is None:
-                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'accrualPeriodicity' field to datasets.", dataset_name)
-            elif item.get("accrualPeriodicity") not in ACCRUAL_PERIODICITY_VALUES:
-                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'accrualPeriodicity' had an invalid value.", dataset_name)
-            
-            # landingPage
-            if check_url_field(False, item, "landingPage", dataset_name, errs):
-                if item.get("landingPage") is None:
-                    add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'landingPage' field to datasets.", dataset_name)
-            
-            # language
+
+            # accrualPeriodicity # optional
+            if item.get("accrualPeriodicity") not in ACCRUAL_PERIODICITY_VALUES:
+                add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                          "The field 'accrualPeriodicity' had an invalid value.", dataset_name)
+
+            # conformsTo # optional
+            check_url_field(False, item, "conformsTo", dataset_name, errs)
+
+            # describedBy # optional
+            check_url_field(False, item, "describedBy", dataset_name, errs)
+
+            # describedByType # optional
+            if item.get("describedByType") is None:
+                pass  # not required
+            elif not IANA_MIME_REGEX.match(item["describedByType"]):
+                add_error(errs, 5, "Invalid Field Value",
+                          "The describedByType \"%s\" is invalid. "
+                          "It must be in IANA MIME format." % item["describedByType"],
+                          dataset_name)
+
+            # isPartOf # optional
+            if item.get("isPartOf"):
+                check_string_field(item, "isPartOf", 1, dataset_name, errs)
+
+            # issued # optional
+            if item.get("issued") is not None:
+                if not ISSUED_REGEX.match(item['issued']):
+                    add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                              "The field 'issued' is not in a valid format.", dataset_name)
+
+            # landingPage # optional
+            check_url_field(False, item, "landingPage", dataset_name, errs)
+
+            # language # optional
             if item.get("language") is None:
-                add_error(errs, 120, "Add Other Optional Fields (Suggested)", "Add a 'language' field to datasets.", dataset_name)
+                pass  # not required
             elif not isinstance(item["language"], list):
                 add_error(errs, 50, "Invalid Field Value (Optional Fields)",
                           "The field 'language' must be an array, if present.", dataset_name)
@@ -371,17 +352,27 @@ def do_validation(doc, errors_array):
             else:
                 for s in item["references"]:
                     if not URL_REGEX.match(s):
-                        add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'references' had an invalid URL: \"%s\"" % s, dataset_name)
-            
-            # issued
-            if item.get("issued") is None:
-                add_error(errs, 90, "Add Suggested Fields to Improve Data Quality", "Add a 'issued' field to datasets.", dataset_name)
+                        add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                                  "The field 'references' had an invalid URL: \"%s\"" % s, dataset_name)
+
+            # systemOfRecords # optional
+            check_url_field(False, item, "systemOfRecords", dataset_name, errs)
+
+            # theme #optional
+            if item.get("theme") is None:
+                pass  # not required
+            elif not isinstance(item["theme"], list):
+                add_error(errs, 50, "Invalid Field Value (Optional Fields)", "The field 'theme' must be an array.",
+                          dataset_name)
             else:
-                check_date_field(item, "issued", dataset_name, errs)
-            
-            # systemOfRecords
-            # TODO: No details in the schema!
-    
+                for s in item["theme"]:
+                    if not isinstance(s, (str, unicode)):
+                        add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                                  "Each value in the theme array must be a string", dataset_name)
+                    elif len(s.strip()) == 0:
+                        add_error(errs, 50, "Invalid Field Value (Optional Fields)",
+                                  "A value in the theme array was an empty string.", dataset_name)
+
     # Form the output data.
     for err_type in sorted(errs):
         errors_array.append((
@@ -398,21 +389,20 @@ def add_error(errs, severity, heading, description, context=None):
 
 def nice_type_name(data_type):
     if data_type == (str, unicode) or data_type in (str, unicode):
-        return "a string"
+        return "string"
     elif data_type == list:
-        return "an array"
+        return "array"
     else:
-        return "a " + str(data_type)
+        return str(data_type)
 
 
 def check_required_field(obj, field_name, data_type, dataset_name, errs):
     # checks that a field exists and has the right type
-    if not display_field_name: display_field_name = field_name
     if field_name not in obj:
-        add_error(errs, 10, "Missing Required Fields", "The '%s' field is missing." % display_field_name, dataset_name)
+        add_error(errs, 10, "Missing Required Fields", "The '%s' field is missing." % field_name, dataset_name)
         return False
     elif obj[field_name] is None:
-        add_error(errs, 10, "Missing Required Fields", "The '%s' field is set to null." % display_field_name, dataset_name)
+        add_error(errs, 10, "Missing Required Fields", "The '%s' field is set to null." % field_name, dataset_name)
         return False
     elif not isinstance(obj[field_name], data_type):
         add_error(errs, 5, "Invalid Required Field Value",
@@ -420,7 +410,7 @@ def check_required_field(obj, field_name, data_type, dataset_name, errs):
                       field_name, nice_type_name(data_type), nice_type_name(type(obj[field_name]))), dataset_name)
         return False
     elif isinstance(obj[field_name], list) and len(obj[field_name]) == 0:
-        add_error(errs, 10, "Missing Required Fields", "The '%s' field is an empty array." % display_field_name, dataset_name)
+        add_error(errs, 10, "Missing Required Fields", "The '%s' field is an empty array." % field_name, dataset_name)
         return False
     return True
 
@@ -469,12 +459,4 @@ def check_url_field(required, obj, field_name, dataset_name, errs):
         return False
     return True
 
-def check_mime_type(format, field_name, dataset_name, errs):
-    if format.lower() in ("csv", "xls", "xml", "rdf", "json", "xlsx", "text", "api", "feed"):
-        add_error(errs, 5, "Update Your File!", "The '%s' field used to be a file extension but now it must be a MIME type." % field_name, dataset_name)
-    elif not MIMETYPE_REGEX.match(format):
-        add_error(errs, 5, "Invalid Required Field Value", "The '%s' field has an invalid MIME type: \"%s\"." % (field_name, format), dataset_name)
-    elif format.split(";")[0] not in COMMON_MIMETYPES:
-        # if there's an optional parameter like "; charset=UTF-8" chop it off before checking the COMMON_MIMETYPES list
-        add_error(errs, 100, "Are These Okay?", "The '%s' field has an unusual MIME type: \"%s\"" % (field_name, format), dataset_name)
-        
+
