@@ -32,7 +32,7 @@ def make_datajson_catalog(datasets):
     return catalog
 
 
-def make_datajson_entry(package):
+def make_datajson_entry(package, plugin):
     # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
@@ -42,6 +42,13 @@ def make_datajson_entry(package):
         parent_uid = parent.extras.col.target['unique_id'].value
         if parent_uid:
             parent_dataset_id = parent_uid
+
+    # Make a default program code value when a bureau code is none. The
+    # departmental component of a bureau code plus ":000" means
+    # "Primary Program Not Available".
+    defaultProgramCode = None
+    if extra(package, "Bureau Code"):
+        defaultProgramCode = [bcode.split(":")[0] + ":000" for bcode in extra(package, "Bureau Code").split(" ")]
 
     # if resource format is CSV then convert it to text/csv
     # Resource format has to be in 'csv' format for automatic datastore push.
@@ -74,6 +81,8 @@ def make_datajson_entry(package):
             # ("fn", "Jane Doe"),
             # ("hasEmail", "mailto:jane.doe@agency.gov")
             # ])),  # required
+            ("programCode", extra(package, "Program Code").split(" ") if extra(package, "Program Code") else defaultProgramCode),
+
             ('contactPoint', get_contact_point(extras, package, plugin)),  # required
 
             ("dataQuality", strip_if_string(extras.get('Data Quality Met'))),  # required-if-applicable
@@ -132,7 +141,6 @@ def make_datajson_entry(package):
         for pair in [
             ('bureauCode', 'Bureau Code'),  # required
             ('language', 'Language'),   # optional
-            ('programCode', 'Program Code'),  # required
             ('references', 'Technical Documentation'),  # optional
             ('theme', 'category'),   # optional
         ]:
