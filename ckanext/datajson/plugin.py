@@ -11,6 +11,11 @@ import StringIO
 
 logger = logging.getLogger('ckanext')
 
+from package_to_pod import make_datajson_entry, get_facet_fields, make_datajson_catalog
+from package_to_pod_10 import make_datajson_entry as make_datajson_entry_10, get_facet_fields as get_facet_fields_10
+from pod_jsonld import dataset_to_jsonld
+# from build_enterprisedatajson import make_enterprisedatajson_entry
+
 
 def get_validator():
     import os
@@ -31,14 +36,6 @@ try:
     from collections import OrderedDict  # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
-
-import ckan.model
-
-from package_to_pod import make_datajson_entry, get_facet_fields, make_datajson_catalog
-from package_to_pod_10 import make_datajson_entry as make_datajson_entry_10, get_facet_fields as get_facet_fields_10
-from pod_jsonld import dataset_to_jsonld
-
-# from build_enterprisedatajson import make_enterprisedatajson_entry
 
 
 class DataJsonPlugin(p.SingletonPlugin):
@@ -152,7 +149,6 @@ class DataJsonController(BaseController):
                     ("dcterms", "http://purl.org/dc/terms/"),
                     ("dcat", "http://www.w3.org/ns/dcat#"),
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
-                    ("pod", "http://project-open-data.github.io/schema/2013-09-20_1.0#"),
                 ])
                 ),
                 ("@id", DataJsonPlugin.ld_id),
@@ -191,6 +187,8 @@ class DataJsonController(BaseController):
 
             import urllib, json
             from validator import do_validation
+            from datajsonvalidator import do_validation
+
             body = None
             try:
                 body = json.load(urllib.urlopen(c.source_url))
@@ -269,7 +267,7 @@ def make_json():
                 if datajson_entry:
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
         except KeyError:
             logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None),
                         pkg.get('title', None))
@@ -314,7 +312,7 @@ def make_edi(owner_org):
             if datajson_entry and is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
-                logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
     # Get the error log
     eh.flush()
@@ -352,7 +350,7 @@ def make_pdl(owner_org):
                 if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted", pkg.get('id', None), pkg.get('title', None))
+                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
         except KeyError:
             logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
