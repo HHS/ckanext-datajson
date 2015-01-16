@@ -277,7 +277,7 @@ def make_datajson_entry(package,plugin):
             or striped_retlist_dict.get('dataQuality') == "False":
         striped_retlist_dict['dataQuality'] = False
 
-    log.warn("%s",striped_retlist_dict)
+    #log.warn("%s",striped_retlist_dict)
 
     from datajsonvalidator import do_validation
     errors = []

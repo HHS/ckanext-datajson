@@ -193,7 +193,7 @@ class DataJsonController(BaseController):
 def make_json():
     # Build the data.json file.
     log.debug("make_json top of function")
-    params = {'limit': 100, 'offset': 0}
+    params = {'limit': 100, 'page': 1}
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, params)
     log.debug("make_json got list of packages")
     while packages:
@@ -211,9 +211,9 @@ def make_json():
                 log.warning("Dataset id=[%s], title=[%s] missing required 'public_access_level' field '%s'", pkg.get('id', None),
                         pkg.get('title', None),e)
                 pass
-        params['offset']+=params['limit']
+        params['page']=params['page'] + 1
         packages = p.toolkit.get_action("current_package_list_with_resources")(None,params) 
-        log.debug("make_json got list of packages")
+        log.warning("make_json got list of packages page: %s",params['page'])
     return output
 
 
