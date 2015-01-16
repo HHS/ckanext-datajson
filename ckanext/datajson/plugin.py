@@ -217,15 +217,16 @@ def make_edi(owner_org):
     logger.addHandler(eh)
 
     # Build the data.json file.
-    packages = get_all_group_packages(group_id=owner_org)
+    packages = get_packages(owner_org)
+
     output = []
     for pkg in packages:
-        if pkg['owner_org'] == owner_org:
-            datajson_entry = make_datajson_entry(pkg)
-            if datajson_entry and is_valid(datajson_entry):
-                output.append(datajson_entry)
-            else:
-                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+        #if pkg['owner_org'] == owner_org:
+        datajson_entry = make_datajson_entry(pkg)
+        if datajson_entry and is_valid(datajson_entry):
+            output.append(datajson_entry)
+        else:
+            logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
     # Get the error log
     eh.flush()
@@ -247,18 +248,15 @@ def make_pdl(owner_org):
     eh.setFormatter(formatter)
     logger.addHandler(eh)
 
-
     # Build the data.json file.
-    packages = get_all_group_packages(group_id=owner_org)
+    packages = get_packages(owner_org)
 
     output = []
     #Create data.json only using public datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
         try:
-            if pkg['owner_org'] == owner_org \
-                    and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-
+            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
                 datajson_entry = make_datajson_entry(pkg)
                 if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
@@ -280,6 +278,21 @@ def make_pdl(owner_org):
     #return json.dumps(output)
     return write_zip(output, error, zip_name='pdl')
 
+def get_packages(owner_org):
+    # Build the data.json file.
+    packages = get_all_group_packages(group_id=owner_org)
+    #get packages for sub-agencies.
+    sub_agency = model.Group.get(owner_org)
+    if 'sub-agencies' in sub_agency.extras.col.target and \
+                    sub_agency.extras.col.target['sub-agencies'].state == 'active':
+        sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
+        sub_agencies_list = sub_agencies.split(",")
+        for sub in sub_agencies_list:
+            sub_packages = get_all_group_packages(group_id=sub)
+            for sub_package in sub_packages:
+                packages.append(sub_package)
+
+    return packages
 
 def get_all_group_packages(group_id):
     """
