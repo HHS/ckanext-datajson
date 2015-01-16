@@ -11,6 +11,9 @@ import StringIO
 
 logger = logging.getLogger('datajson')
 
+from logging import getLogger
+log = getLogger(__name__)
+
 
 def get_validator():
     import os
@@ -56,6 +59,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
+        DataJsonPlugin.default_contactpoint = config.get("ckanext.datajson.default_contactpoint")
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
@@ -188,22 +192,28 @@ class DataJsonController(BaseController):
 
 def make_json():
     # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    output = []
-    # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
-    for pkg in packages:
-        extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        try:
-            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                datajson_entry = make_datajson_entry(pkg)
+    log.debug("make_json top of function")
+    params = {'limit': 100, 'offset': 0}
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, params)
+    log.debug("make_json got list of packages")
+    while packages:
+        output = []
+        # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
+        for pkg in packages:
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            try:
+                datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
                 if datajson_entry:
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
-        except KeyError:
-            logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None),
-                        pkg.get('title', None))
-            pass
+                    log.warning("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+            except KeyError,e :
+                log.warning("Dataset id=[%s], title=[%s] missing required 'public_access_level' field '%s'", pkg.get('id', None),
+                        pkg.get('title', None),e)
+                pass
+        params['offset']+=params['limit']
+        packages = p.toolkit.get_action("current_package_list_with_resources")(None,params) 
+        log.debug("make_json got list of packages")
     return output
 
 
@@ -221,7 +231,7 @@ def make_edi(owner_org):
     output = []
     for pkg in packages:
         if pkg['owner_org'] == owner_org:
-            datajson_entry = make_datajson_entry(pkg)
+            datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
             if datajson_entry and is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
@@ -259,7 +269,7 @@ def make_pdl(owner_org):
             if pkg['owner_org'] == owner_org \
                     and not (re.match(r'[Nn]on-public', extras['public_access_level'])):
 
-                datajson_entry = make_datajson_entry(pkg)
+                datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
                 if datajson_entry and is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
