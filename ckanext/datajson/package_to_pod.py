@@ -60,10 +60,10 @@ def make_datajson_entry(package, plugin):
         if r["format"].lower() == "pdf":
             r["format"] = "application/pdf"
 
-    # The 'modified' field needs to be populated somehow, try all the date
-    # fields we can think of.
+    # The 'modified' field needs to be populated somehow,
+    # try all the date fields we can think of.
     modified = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601", default=extra(package, "harvest_last_updated", datatype="iso8601", default=extra(package, "Coverage Period Start", datatype="iso8601", default=package["revision_timestamp"]))))
-
+`
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional
@@ -98,7 +98,7 @@ def make_datajson_entry(package, plugin):
             # ("identifier", 'asdfasdfasdf'),  # required
 
             ("isPartOf", parent_dataset_id),  # optional
-            ("issued", strip_if_string(extras.get('Date Released'))),  # optional
+            ("issued", strip_if_string(extra(package, 'Date Released', datatype="iso8601"))),  # optional
 
             # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
