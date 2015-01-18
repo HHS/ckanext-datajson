@@ -67,7 +67,10 @@ def make_datajson_entry(package,plugin):
                     .filter(HarvestObject.current==True) \
                     .first()
           accessLevel =  extra(package, "Access Level", default="public")
-          accrualPeriodicity = extra(package,"Frequence of Update")
+          #log.warn("AJS: freq: %s", extra(package,"frequency-of-update"))
+          log.warn("AJS: freq: %s", extra(package,"Frequency Of Update"))
+          #accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"frequency-of-update"))
+          accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"Frequency Of Update"))
           dataQuality = extra(package,'Data Quality')
           conformsTo = strip_if_string(extra(package,'Data Standard'))
           describedBy = strip_if_string(extra(package,'Data Dictionary'))
@@ -98,7 +101,15 @@ def make_datajson_entry(package,plugin):
           rights = strip_if_string(extra(package,'Rights'))
           spatial = strip_if_string(extra(package,'Spatial'))
           systemOfRecords = strip_if_string(extra(package,'System of Records'))
-          temporal = extra(package,'Temporal',"")
+          #temporal = extra(package,'Temporal',"")
+          # how do we represent from a time, to present?
+          temporalbegin = extra(package,'Temporal Extent Begin')
+          temporalend = extra(package,'Temporal Extent End')
+          if temporalbegin and temporalend:
+             temporal = clean_date(temporalbegin) + '/' +  clean_date(temporalend)
+          else:
+             temporal=""
+
           bureauCode = [ bureau_code(package) ] 
           programCode = [ program_code(harvest_object) ]
 	  #
@@ -277,7 +288,7 @@ def make_datajson_entry(package,plugin):
             or striped_retlist_dict.get('dataQuality') == "False":
         striped_retlist_dict['dataQuality'] = False
 
-    log.warn("%s",striped_retlist_dict)
+    #log.warn("%s",striped_retlist_dict)
 
     from datajsonvalidator import do_validation
     errors = []
@@ -316,9 +327,28 @@ accrual_periodicity_dict = {
     'weekly': 'R/P1W'
 }
 
+# used by get_accrual_periodicity_spatial
+accrual_periodicity_spatial_dict = {
+    'continual': 'R/PT1S',
+    'daily': 'R/P1D',
+    'weekly': 'R/P1W',
+    'fortnightly': 'R/P0.5M',
+    'monthly': 'R/P1M',
+    'quarterly': 'R/P3M',
+    'biannualy': 'R/P0.5Y',
+    'asNeeded': 'irregular',
+    'irregular': 'irregular',
+    'notPlanned': 'irregular',
+    'unknown': 'irregular',
+    'NOT UPDATED': 'irregular'
+}
+
 
 def get_accrual_periodicity(frequency):
     return accrual_periodicity_dict.get(str(frequency).lower().strip(), frequency)
+
+def get_accrual_periodicity_spatial(frequency):
+    return accrual_periodicity_spatial_dict.get(str(frequency).lower().strip(), frequency)
 
 
 def generate_distribution(package):
@@ -583,6 +613,7 @@ def tags(package, default=None):
     for extra in package["extras"]:
         if extra["key"] == "tags":
             keywords = extra["value"].split(",")
+            keywords = map(unicode.strip, keywords)
             return keywords
 
 def extension_to_mime_type(file_ext):
