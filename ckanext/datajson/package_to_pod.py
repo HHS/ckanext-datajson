@@ -63,7 +63,7 @@ def make_datajson_entry(package, plugin):
     # The 'modified' field needs to be populated somehow,
     # try all the date fields we can think of.
     modified = extra(package, "Date Updated", datatype="iso8601", default=extra(package, "Date Released", datatype="iso8601", default=extra(package, "harvest_last_updated", datatype="iso8601", default=extra(package, "Coverage Period Start", datatype="iso8601", default=package["revision_timestamp"]))))
-`
+
     try:
         retlist = [
             ("@type", "dcat:Dataset"),  # optional

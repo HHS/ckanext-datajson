@@ -159,6 +159,9 @@ class DataJsonController(BaseController):
                 ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
             ])
             
+        if format in ['json','json-hhs']:
+            data = make_datajson_catalog(data)
+
         return p.toolkit.literal(json.dumps(data, indent=2))
 
 
