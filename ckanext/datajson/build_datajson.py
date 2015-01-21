@@ -57,18 +57,17 @@ def make_datajson_entry(package,plugin):
     # check to see if this is a spatial record
     # if so, we want to do a crosswalk out of the metadata extras
     #
-    log.warn("AJS determine spatial or not")
+    log.warn("determine spatial or not")
 
     date = extra(package, "Metadata Date")
     log.warn("date %s",date)
     if date:
+          log.warn("treating this as spatial data")
           harvest_object = model.Session.query(HarvestObject) \
                     .filter(HarvestObject.package_id==package['id']) \
                     .filter(HarvestObject.current==True) \
                     .first()
           accessLevel =  extra(package, "Access Level", default="public")
-          #log.warn("AJS: freq: %s", extra(package,"frequency-of-update"))
-          log.warn("AJS: freq: %s", extra(package,"Frequency Of Update"))
           #accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"frequency-of-update"))
           accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"Frequency Of Update"))
           dataQuality = extra(package,'Data Quality')
@@ -80,16 +79,23 @@ def make_datajson_entry(package,plugin):
               description = strip_if_string(extra(package,'Abstract' ))
           if not description:
               description = strip_if_string(package["notes"])
-          log.warn("description: %s",description)
-          identifier =  package["id"]
+          #log.warn("description: %s",description)
+          identifier = strip_if_string(extra(package,'Guid' ))
+          if not identifier:
+              identifier = strip_if_string(package["title"])
+          if not identifier:
+              identifier =  package["id"]
           issued =  get_reference_date(extra(package,"Release Date"))
           keyword =  tags(package)
           landingPage = strip_if_string(extra(package,"Homepage URL"))
           license = strip_if_string(extra(package,"License"))
-          modified =  clean_date(extra(package, "Last Update"))
+          referencedate = json.loads(extra(package,"Dataset Reference Date"))
+          modified = referencedate[0]['value']
+          if not modified:
+              modified =  clean_date(extra(package, "Last Update"))
           if not modified:
              modified =  clean_date(extra(package, "Metadata Date"))
-          log.warn("modified: %s",modified)
+          #log.warn("modified: %s",modified)
           primaryITInvestmentUII =  strip_if_string(extra(package,'Primary_IT_Investment_UII')) 
           #
           # this doesn't match crosswalk -- look at it 
@@ -101,7 +107,6 @@ def make_datajson_entry(package,plugin):
           rights = strip_if_string(extra(package,'Rights'))
           spatial = strip_if_string(extra(package,'Spatial'))
           systemOfRecords = strip_if_string(extra(package,'System of Records'))
-          #temporal = extra(package,'Temporal',"")
           # how do we represent from a time, to present?
           temporalbegin = extra(package,'Temporal Extent Begin')
           temporalend = extra(package,'Temporal Extent End')
@@ -111,7 +116,10 @@ def make_datajson_entry(package,plugin):
              temporal=""
 
           bureauCode = [ bureau_code(package) ] 
-          programCode = [ program_code(harvest_object) ]
+          programCodePart =  extra(package,'Program Code')
+          if not programCode:
+             programCodePart =  program_code(harvest_object) 
+          programCode = [ programCodePart  ]
 	  #
           # are these arrays in the ISO metadata? Should we be pulling them apart somehow?
           language =  [ convert_language(strip_if_string(extra(package,'Metadata Language',"")))]
@@ -127,6 +135,7 @@ def make_datajson_entry(package,plugin):
 
 
     else:
+       log.warn("treating this as non-spatial harvested data")
        date = extra(package, "Date Updated")
        accessLevel = strip_if_string(extras.get('public_access_level'))
        accrualPeriodicity = get_accrual_periodicity(extras.get('accrual_periodicity'))
