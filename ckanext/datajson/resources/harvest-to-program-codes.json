@@ -27,37 +27,37 @@
     "Harvest Source Code":"ngdc-nos-h02001-h04000-waf",
     "Harvest Source Name":"NGDC NOS H02001-H04000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H02001-H04000/iso/xml",
-    "Program Code":"006:060"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-h04001-h06000-waf",
     "Harvest Source Name":"NGDC NOS H04001-H06000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H04001-H06000/iso/xml",
-    "Program Code":"006:061"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-h08001-h10000-waf",
     "Harvest Source Name":"NGDC NOS H08001-H10000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H08001-H10000/iso/xml",
-    "Program Code":"006:062"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-h06001-h08000-waf",
     "Harvest Source Name":"NGDC NOS H06001-H08000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H06001-H08000/iso/xml",
-    "Program Code":"006:063"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-l00001-l02000-waf",
     "Harvest Source Name":"NGDC NOS L00001-L02000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/L00001-L02000/iso/xml",
-    "Program Code":"006:064"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-h10001-h12000-waf",
     "Harvest Source Name":"NGDC NOS H10001-H12000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H10001-H12000/iso/xml",
-    "Program Code":"006:065"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"nos-csc-waf",
@@ -87,13 +87,13 @@
     "Harvest Source Code":"ngdc-nos-h12001-h14000-waf",
     "Harvest Source Name":"NGDC NOS H12001-H14000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/H12001-H14000/iso/xml",
-    "Program Code":"006:060"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ngdc-nos-l02001-l04000-waf",
     "Harvest Source Name":"NGDC NOS L02001-L04000 WAF",
     "Harvest Source URL":"http://www.ngdc.noaa.gov/metadata/published/NOAA/NESDIS/NGDC/MGG/NOS/L02001-L04000/iso/xml",
-    "Program Code":"006:061"
+    "Program Code":"006:059"
   },
   {
     "Harvest Source Code":"ncdc-iso-waf",
