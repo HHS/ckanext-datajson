@@ -117,7 +117,7 @@ def make_datajson_entry(package,plugin):
 
           bureauCode = [ bureau_code(package) ] 
           programCodePart =  extra(package,'Program Code')
-          if not programCode:
+          if not programCodePart:
              programCodePart =  program_code(harvest_object) 
           programCode = [ programCodePart  ]
 	  #
