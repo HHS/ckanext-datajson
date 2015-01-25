@@ -85,9 +85,9 @@ def make_datajson_entry(package, plugin):
 
             ('contactPoint', get_contact_point(extras, package, plugin)),  # required
 
-            ("dataQuality", strip_if_string(extras.get('Data Quality Met'))),  # required-if-applicable
+            ("dataQuality", strip_if_string(extra(package, "Data Quality Met", default="true") == "true")),  # required-if-applicable
 
-            ("describedBy", strip_if_string(extras.get('data_dictionary'))),  # optional
+            ("describedBy", strip_if_string(extras.get('Data Dictionary'))),  # optional
             ("describedByType", strip_if_string(extras.get('data_dictionary_type'))),  # optional
 
             ("description", strip_if_string(package["notes"])),  # required
@@ -119,7 +119,7 @@ def make_datajson_entry(package, plugin):
 
             ("rights", strip_if_string(extras.get('Access Level Comment'))),  # required
 
-            ("spatial", strip_if_string(package.get('Geographic Scope'))),  # required-if-applicable
+            ("spatial", strip_if_string(extras.get('Geographic Scope'))),  # required-if-applicable
 
             ('systemOfRecords', strip_if_string(extras.get('system_of_records'))),  # optional
 
@@ -142,9 +142,11 @@ def make_datajson_entry(package, plugin):
             ('bureauCode', 'Bureau Code'),  # required
             ('language', 'Language'),   # optional
             ('references', 'Technical Documentation'),  # optional
-            ('theme', 'category'),   # optional
         ]:
             split_multiple_entries(retlist, extras, pair)
+        retlist.append(
+            ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None])
+        )
 
     except KeyError as e:
         log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None),
