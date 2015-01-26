@@ -17,7 +17,7 @@ def make_datajson_catalog(datasets):
     catalog = OrderedDict([
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
         ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  # optional
-        ('@context', 'https://project-open-data.cio.gov/v1.1/schema/data.jsonld'),  # optional
+        ('@context', 'https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld'),  # optional
         ('@type', 'dcat:Catalog'),  # optional
         ('dataset', datasets),  # required
     ])
