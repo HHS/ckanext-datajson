@@ -162,27 +162,33 @@ class DataJsonController(BaseController):
     def generate_pdl(self):
         # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/data.json", request.path)
-        if match:
-            # set content type (charset required or pylons throws an error)
-            response.content_type = 'application/json; charset=UTF-8'
 
-            # allow caching of response (e.g. by Apache)
-            del response.headers["Cache-Control"]
-            del response.headers["Pragma"]
-            return make_pdl(match.group(1))
+        #If user is not editor or admin of the organization then don't allow pdl download
+        if p.toolkit.check_access('package_create', {'model': model,'user':c.user}, {'owner_org': match.group(1)}):
+            if match:
+                # set content type (charset required or pylons throws an error)
+                response.content_type = 'application/json; charset=UTF-8'
+
+                # allow caching of response (e.g. by Apache)
+                del response.headers["Cache-Control"]
+                del response.headers["Pragma"]
+                return make_pdl(match.group(1))
         return "Invalid organization id"
 
     def generate_edi(self):
         # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/edi.json", request.path)
-        if match:
-            # set content type (charset required or pylons throws an error)
-            response.content_type = 'application/json; charset=UTF-8'
 
-            # allow caching of response (e.g. by Apache)
-            del response.headers["Cache-Control"]
-            del response.headers["Pragma"]
-            return make_edi(match.group(1))
+        #If user is not editor or admin of the organization then don't allow edi download
+        if p.toolkit.check_access('package_create', {'model': model,'user':c.user}, {'owner_org': match.group(1)}):
+            if match:
+                # set content type (charset required or pylons throws an error)
+                response.content_type = 'application/json; charset=UTF-8'
+
+                # allow caching of response (e.g. by Apache)
+                del response.headers["Cache-Control"]
+                del response.headers["Pragma"]
+                return make_edi(match.group(1))
         return "Invalid organization id"
 
 
