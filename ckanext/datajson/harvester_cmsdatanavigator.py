@@ -7,7 +7,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
     A Harvester for the CMS Data Navigator catalog.
     '''
 
-    HARVESTER_VERSION = "0.9ap" # increment to force an update even if nothing has changed
+    HARVESTER_VERSION = "0.9aq" # increment to force an update even if nothing has changed
 
     def info(self):
         return {
