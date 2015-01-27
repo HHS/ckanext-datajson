@@ -423,7 +423,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # Get default values.
         dataset_defaults = self.load_config(harvest_object.source)["defaults"]
 
-        source_config = json.loads(harvest_object.source.config or '{}')
+        source_config = self.load_config(harvest_object.source)
         validator_schema = source_config.get('validator_schema')
         if schema_version == '1.0' and validator_schema != 'non-federal':
             lowercase_conversion = True
