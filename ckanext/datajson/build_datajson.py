@@ -57,7 +57,7 @@ def make_datajson_entry(package,plugin):
     # check to see if this is a spatial record
     # if so, we want to do a crosswalk out of the metadata extras
     #
-    log.warn("determine spatial or not")
+    log.warn("determine spatial or not [%s]",strip_if_string(package["title"]))
 
     date = extra(package, "Metadata Date")
     log.warn("date %s",date)
@@ -111,7 +111,12 @@ def make_datajson_entry(package,plugin):
           temporalbegin = extra(package,'Temporal Extent Begin')
           temporalend = extra(package,'Temporal Extent End')
           if temporalbegin and temporalend:
-             temporal = clean_date(temporalbegin) + '/' +  clean_date(temporalend)
+             tb = clean_date(temporalbegin)
+             te = clean_date(temporalend)
+             if tb and te:
+                temporal = tb + '/' + te
+             else:
+                temporal = ""
           else:
              temporal=""
 
@@ -308,6 +313,7 @@ def make_datajson_entry(package,plugin):
     if len(errors) > 0:
         for error in errors:
             log.warn(error)
+            log.warn("ERROR: %s",striped_retlist_dict)
         return
 
     return striped_retlist_dict
@@ -345,11 +351,11 @@ accrual_periodicity_spatial_dict = {
     'monthly': 'R/P1M',
     'quarterly': 'R/P3M',
     'biannualy': 'R/P0.5Y',
-    'asNeeded': 'irregular',
+    'asneeded': 'irregular',
     'irregular': 'irregular',
-    'notPlanned': 'irregular',
+    'notplanned': 'irregular',
     'unknown': 'irregular',
-    'NOT UPDATED': 'irregular'
+    'not updated': 'irregular'
 }
 
 
@@ -435,16 +441,29 @@ def get_contact_point(extras, package):
     if extra(package, "Contact Email") is not None:
         extras['contact_email'] = extra(package, "Contact Email")
 
+    ce = strip_if_string(extras['contact_email'])
+    if ce is None:
+        log.debug("no contact_email, adding one")
+        #extras['contact_email'] = "unknown@unknown.gov";
+    cn = strip_if_string(extras['contact_name'])
+    if cn is None:
+        log.debug("no contact_name, adding one")
+        #extras['contact_name'] = "unknown";
+
+    log.debug("contact_name %s contact_email: %s ", extras["contact_name"],extras["contact_email"])
     for required_field in ["contact_name", "contact_email"]:
         if required_field not in extras.keys():
+            log.debug("contact_name %s contact_email: %s ", contact_name,contact_email)
             raise KeyError(required_field)
 
     email = strip_if_string(extras['contact_email'])
     if email is None or '@' not in email:
+        log.debug("no @ in email")
         raise KeyError(required_field)
 
     fn = strip_if_string(extras['contact_name'])
     if fn is None:
+        log.debug("contact_name is blank")
         raise KeyError(required_field)
 
     contact_point = OrderedDict([
@@ -548,11 +567,15 @@ def split_multiple_entries(retlist, extras, names):
         )
 
 def clean_date(val):
-    if isinstance(val, (str, unicode)):
+    try:
+       if isinstance(val, (str, unicode)):
+           log.debug("clean_date: val %s ",val)
     # 2014-03-18-06:00 needs to become "2014-03-18T06:00"
-        date = (parser.parse(val))
-        val = (date.isoformat())
-
+           date = (parser.parse(val))
+           val = (date.isoformat())
+    except Exception as e:
+           log.debug("clean_date: exception %s val  %s ",e,val)
+           val=""
     return val
 
 def extra(package, key, default=None):

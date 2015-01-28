@@ -191,22 +191,27 @@ class DataJsonController(BaseController):
 
 
 def make_json():
+    total = 0
+    good = 0
     # Build the data.json file.
     log.debug("make_json top of function")
     params = {'limit': 100, 'page': 1}
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, params)
     log.debug("make_json got list of packages")
+    output = []
     while packages:
-        output = []
         # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
         for pkg in packages:
+            total = total +1
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
                 if datajson_entry:
+                    #log.warning("Dataset id=[%s], title=[%s] added %s\n", pkg.get('id', None), pkg.get('title', None),datajson_entry )
                     output.append(datajson_entry)
+                    good = good + 1
                 else:
-                    log.warning("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+                    log.warning("Dataset id=[%s], title=[%s] omitted \n", pkg.get('id', None), pkg.get('title', None) )
             except KeyError,e :
                 log.warning("Dataset id=[%s], title=[%s] missing required 'public_access_level' field '%s'", pkg.get('id', None),
                         pkg.get('title', None),e)
@@ -214,6 +219,7 @@ def make_json():
         params['page']=params['page'] + 1
         packages = p.toolkit.get_action("current_package_list_with_resources")(None,params) 
         log.warning("make_json got list of packages page: %s",params['page'])
+    log.warning("make_json: %d of %d ( %f ) ", good,total, good/total*100)
     return output
 
 
