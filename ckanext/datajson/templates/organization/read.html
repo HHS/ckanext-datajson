@@ -1,11 +1,11 @@
 {% ckan_extends %}
 
 {% block page_primary_action %}
-    {% if h.check_access('package_create', {'organization_id': c.group_dict.id}) %}
+    {% if h.check_access('package_create', {'owner_org': c.group_dict.id}) %}
         {% link_for _('Add Dataset'), controller='package', action='new', group=c.group_dict.id, class_='btn btn-primary', icon='plus-sign-alt' %}
         <button id="btnEdi" class="btn btn-secondary">Enterprise Data Inventory</button>
 		<button id="btnPdl" class="btn btn-secondary">Public Data Listing</button>
-  {% endif %}        
+    {% endif %}
 
         <form id="formEdi" action="{{c.group_dict.id + '/edi.json' }}"></form>
         <form id="formPdl" action="{{c.group_dict.id + '/data.json' }}"></form>
