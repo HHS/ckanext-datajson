@@ -140,7 +140,11 @@ class DataJsonController(BaseController):
             data = make_json_10()
         else:
             data = make_json()
-        
+
+        # GSA doesn't like null values and empty lists so remove those now.
+        logger.warn('data is a %s')
+        data = [k for k in data if k is not None and (not isinstance(k, list) or len(k) > 0)]
+
         if format == 'json-ld':
             # Convert this to JSON-LD.
             data = OrderedDict([
@@ -280,6 +284,7 @@ def make_json_hhs():
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     #packages = [p.toolkit.get_action("package_show")(None,{'id': "9d65837e-328d-4889-b460-57426c992e0d"})] #custom contact point
     #packages = [p.toolkit.get_action("package_show")(None,{'id': "ce278f9e-5a27-4b73-b028-86792071d3af"})] #default contact point
+    #packages = [p.toolkit.get_action("package_show")(None,{'id': "7da562ad-6806-4f07-9452-517eeb723b91"})] #Missing
     #logger.debug("make_json_hhs packages: %s", packages )
     #return [make_datajson_entry(pkg for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors, DataJsonPlugin ) ]
     return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors ]
