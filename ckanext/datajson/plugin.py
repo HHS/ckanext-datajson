@@ -10,7 +10,6 @@ from jsonschema.exceptions import best_match
 import StringIO
 
 from package_to_pod import make_datajson_entry, get_facet_fields, make_datajson_catalog
-from package_to_pod_10 import make_datajson_entry as make_datajson_entry_10, get_facet_fields as get_facet_fields_10
 from pod_jsonld import dataset_to_jsonld
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 
@@ -129,15 +128,10 @@ class DataJsonController(BaseController):
         # output
         if format == 'json-hhs':
             data = make_json_hhs()
-        elif format == 'json-hhs-10':
-            data = make_json_hhs_10()
-        elif format == 'json-10':
-            data = make_json_10()
         else:
             data = make_json()
 
         # GSA doesn't like null values and empty lists so remove those now.
-        logger.warn('data is a %s')
         data = [k for k in data if k is not None and (not isinstance(k, list) or len(k) > 0)]
 
         if format == 'json-ld':
@@ -276,15 +270,6 @@ def make_json_hhs():
     #logger.debug("make_json_hhs packages: %s", packages )
     #return [make_datajson_entry(pkg for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors, DataJsonPlugin ) ]
     return [make_datajson_entry(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors ]
-
-def make_json_hhs_10():
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry_10(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset" and pkg["author"] in hhs_authors ]
-
-def make_json_10():
-    # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    return [make_datajson_entry_10(pkg, DataJsonPlugin) for pkg in packages if pkg["type"] == "dataset"]
 
 def make_edi(owner_org):
     # Error handler for creating error log
