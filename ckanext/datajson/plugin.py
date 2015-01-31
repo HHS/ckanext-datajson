@@ -9,13 +9,12 @@ import logging
 from jsonschema.exceptions import best_match
 import StringIO
 
-logger = logging.getLogger('ckanext')
-
 from package_to_pod import make_datajson_entry, get_facet_fields, make_datajson_catalog
 from package_to_pod_10 import make_datajson_entry as make_datajson_entry_10, get_facet_fields as get_facet_fields_10
 from pod_jsonld import dataset_to_jsonld
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 
+logger = logging.getLogger('ckanext')
 
 def get_validator():
     import os
@@ -55,8 +54,6 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
         DataJsonPlugin.route_hhs_path = config.get("ckanext.datajsonhhs.path", re.sub(r"\.json$", ".jsonhhs", DataJsonPlugin.route_path))
-        DataJsonPlugin.route_10_path = config.get("ckanext.datajson10.path", re.sub(r"\.json$", ".json10", DataJsonPlugin.route_path))
-        DataJsonPlugin.route_hhs10_path = config.get("ckanext.datajsonhhs10.path", re.sub(r"\.json$", ".jsonhhs10", DataJsonPlugin.route_path))
         #EnterpriseDataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path", re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
@@ -84,10 +81,8 @@ class DataJsonPlugin(p.SingletonPlugin):
             m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
             # TODO commenting out enterprise data inventory for right now
             # m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
-            #m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+            m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
             m.connect('datajsonhhs', DataJsonPlugin.route_hhs_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonhhs')
-            m.connect('datajson10', DataJsonPlugin.route_10_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_json_10')
-            m.connect('datajsonhhs10', DataJsonPlugin.route_hhs10_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonhhs_10')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -174,13 +169,6 @@ class DataJsonController(BaseController):
 
     def generate_jsonhhs(self):
         return self.generate_output('json-hhs')
-
-    def generate_json_10(self):
-        #logger.debug("generate_json_10 beginning")
-        return self.generate_output('json-10')
-
-    def generate_jsonhhs_10(self):
-        return self.generate_output('json-hhs-10')
 
     def generate_jsonld(self):
         return self.generate_output('json-ld')
