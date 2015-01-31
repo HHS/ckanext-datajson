@@ -246,17 +246,11 @@ def make_json():
     # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        try:
-            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                datajson_entry = make_datajson_entry(pkg, DataJsonPlugin )
-                if datajson_entry:
-                    output.append(datajson_entry)
-                else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
-        except KeyError:
-            logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None),
-                        pkg.get('title', None))
-            pass
+        datajson_entry = make_datajson_entry(pkg, DataJsonPlugin )
+        if datajson_entry:
+            output.append(datajson_entry)
+        else:
+            logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
     return output
 
 hhs_authors = ["Administration for Children and Families", "Administration for Community Living", "Agency for Healthcare Research and Quality", "Centers for Disease Control and Prevention", "Centers for Medicare & Medicaid Services", "Department of Health & Human Services", "Health Resources and Services Administration", "Indian Health Service", "National Cancer Institute", "National Institute on Drug Abuse", "National Institutes of Health", "National Library of Medicine", "Substance Abuse & Mental Health Services Administration", "U.S. Food and Drug Administration"]
