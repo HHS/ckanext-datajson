@@ -62,81 +62,87 @@ def make_datajson_entry(package,plugin):
     date = extra(package, "Metadata Date")
     log.warn("date %s",date)
     if date:
-          log.warn("treating this as spatial data")
-          harvest_object = model.Session.query(HarvestObject) \
-                    .filter(HarvestObject.package_id==package['id']) \
-                    .filter(HarvestObject.current==True) \
-                    .first()
-          accessLevel =  extra(package, "Access Level", default="public")
-          #accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"frequency-of-update"))
-          accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"Frequency Of Update"))
-          dataQuality = extra(package,'Data Quality')
-          conformsTo = strip_if_string(extra(package,'Data Standard'))
-          describedBy = strip_if_string(extra(package,'Data Dictionary'))
-          describedByType = strip_if_string(extra(package,'Data Dictionary Type'))
-          description = strip_if_string(extra(package,'Description' ))
-          if not description:
-              description = strip_if_string(extra(package,'Abstract' ))
-          if not description:
-              description = strip_if_string(package["notes"])
-          #log.warn("description: %s",description)
-          identifier = strip_if_string(extra(package,'Guid' ))
-          if not identifier:
-              identifier = strip_if_string(package["title"])
-          if not identifier:
-              identifier =  package["id"]
-          issued =  get_reference_date(extra(package,"Release Date"))
-          keyword =  tags(package)
-          landingPage = strip_if_string(extra(package,"Homepage URL"))
-          license = strip_if_string(extra(package,"License"))
-          referencedate = json.loads(extra(package,"Dataset Reference Date"))
-          modified = referencedate[0]['value']
-          if not modified:
-              modified =  clean_date(extra(package, "Last Update"))
-          if not modified:
-             modified =  clean_date(extra(package, "Metadata Date"))
-          #log.warn("modified: %s",modified)
-          primaryITInvestmentUII =  strip_if_string(extra(package,'Primary_IT_Investment_UII')) 
-          #
-          # this doesn't match crosswalk -- look at it 
-          #
-          publisher =  OrderedDict([
-            ("@type", "org:Organization"),
-            ("name", get_responsible_party(extra(package, "Responsible Party")))
-            ])  # required
-          rights = strip_if_string(extra(package,'Rights'))
-          spatial = strip_if_string(extra(package,'Spatial'))
-          systemOfRecords = strip_if_string(extra(package,'System of Records'))
-          # how do we represent from a time, to present?
-          temporalbegin = extra(package,'Temporal Extent Begin')
-          temporalend = extra(package,'Temporal Extent End')
-          if temporalbegin and temporalend:
-             tb = clean_date(temporalbegin)
-             te = clean_date(temporalend)
-             if tb and te:
-                temporal = tb + '/' + te
-             else:
-                temporal = ""
-          else:
-             temporal=""
+        log.warn("treating this as spatial data")
+        harvest_object = model.Session.query(HarvestObject) \
+                  .filter(HarvestObject.package_id==package['id']) \
+                  .filter(HarvestObject.current==True) \
+                  .first()
+        accessLevel =  extra(package, "Access Level", default="public")
+        #accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"frequency-of-update"))
+        accrualPeriodicity = get_accrual_periodicity_spatial(extra(package,"Frequency Of Update"))
+        dataQuality = extra(package,'Data Quality')
+        conformsTo = strip_if_string(extra(package,'Data Standard'))
+        describedBy = strip_if_string(extra(package,'Data Dictionary'))
+        describedByType = strip_if_string(extra(package,'Data Dictionary Type'))
+        description = strip_if_string(extra(package,'Description' ))
+        if not description:
+            description = strip_if_string(extra(package,'Abstract' ))
+        if not description:
+            description = strip_if_string(package["notes"])
+        #log.warn("description: %s",description)
+        identifier = strip_if_string(extra(package,'Guid' ))
+        if not identifier:
+            identifier = strip_if_string(package["title"])
+        if not identifier:
+            identifier =  package["id"]
+        issued =  get_reference_date(extra(package,"Release Date"))
+        keyword =  tags(package)
+        landingPage = strip_if_string(extra(package,"Homepage URL"))
+        license = strip_if_string(extra(package,"License"))
+        modified = None
+        referencedate = json.loads(extra(package,"Dataset Reference Date"))
+        if referencedate and isinstance(referencedate, list):
+            for date_type in ["revision","publication"]:
+                for ref in referencedate:
+                    modified = ref['value'] if ref['type'] == date_type else None
+            if not modified:
+                modified = referencedate[0]['value']
+        if not modified:
+            modified =  clean_date(extra(package, "Last Update"))
+        if not modified:
+           modified =  clean_date(extra(package, "Metadata Date"))
+        #log.warn("modified: %s",modified)
+        primaryITInvestmentUII =  strip_if_string(extra(package,'Primary_IT_Investment_UII')) 
+        #
+        # this doesn't match crosswalk -- look at it
+        #
+        publisher =  OrderedDict([
+          ("@type", "org:Organization"),
+          ("name", get_responsible_party(extra(package, "Responsible Party")))
+          ])  # required
+        rights = strip_if_string(extra(package,'Rights'))
+        spatial = strip_if_string(extra(package,'Spatial'))
+        systemOfRecords = strip_if_string(extra(package,'System of Records'))
+        # how do we represent from a time, to present?
+        temporalbegin = extra(package,'Temporal Extent Begin')
+        temporalend = extra(package,'Temporal Extent End')
+        if temporalbegin and temporalend:
+           tb = clean_date(temporalbegin)
+           te = clean_date(temporalend)
+           if tb and te:
+              temporal = tb + '/' + te
+           else:
+              temporal = ""
+        else:
+           temporal=""
 
-          bureauCode = [ bureau_code(package) ] 
-          programCodePart =  extra(package,'Program Code')
-          if not programCodePart:
-             programCodePart =  program_code(harvest_object) 
-          programCode = [ programCodePart  ]
-	  #
-          # are these arrays in the ISO metadata? Should we be pulling them apart somehow?
-          language =  [ convert_language(strip_if_string(extra(package,'Metadata Language',"")))]
-          log.warn("language = %s %s",language,strip_if_string(extra(package,'Metadata Language',"")))
-          if extra(package,'Related Documents'):
-             references = [ extra(package,'Related Documents',"") ]
-          else:
-             references = None
-          if extra(package,'Category'):
-             theme = [ extra(package,'Category',"") ]
-          else:
-             theme = None
+        bureauCode = [ bureau_code(package) ]
+        programCodePart =  extra(package,'Program Code')
+        if not programCodePart:
+           programCodePart =  program_code(harvest_object)
+        programCode = [ programCodePart  ]
+        #
+        # are these arrays in the ISO metadata? Should we be pulling them apart somehow?
+        language =  [ convert_language(strip_if_string(extra(package,'Metadata Language',"")))]
+        log.warn("language = %s %s",language,strip_if_string(extra(package,'Metadata Language',"")))
+        if extra(package,'Related Documents'):
+           references = [ extra(package,'Related Documents',"") ]
+        else:
+           references = None
+        if extra(package,'Category'):
+           theme = [ extra(package,'Category',"") ]
+        else:
+            theme = None
 
 
     else:
@@ -616,7 +622,7 @@ def extra(package, key, default=None):
     return default
 
 def program_code(harvest_object, default=None):
-    harvest_name= harvest_object.source.title
+    harvest_name= harvest_object.source.title if harvest_object else None
     #log.debug("harvest name: %s",harvest_name)
     file = open(os.path.join(os.path.dirname(__file__),"resources") + "/harvest-to-program-codes.json", 'r');
     codelist = json.load(file)
