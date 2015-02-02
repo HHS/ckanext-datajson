@@ -256,7 +256,7 @@ def make_json():
 hhs_authors = ["Administration for Children and Families", "Administration for Community Living", "Agency for Healthcare Research and Quality", "Centers for Disease Control and Prevention", "Centers for Medicare & Medicaid Services", "Department of Health & Human Services", "Health Resources and Services Administration", "Indian Health Service", "National Cancer Institute", "National Institute on Drug Abuse", "National Institutes of Health", "National Library of Medicine", "Substance Abuse & Mental Health Services Administration", "U.S. Food and Drug Administration"]
 
 def make_json_hhs():
-    logger.debug("make_json_hhs beginning")
+    #logger.debug("make_json_hhs beginning")
     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
     #packages = [p.toolkit.get_action("package_show")(None,{'id': "9d65837e-328d-4889-b460-57426c992e0d"})] #custom contact point
     #packages = [p.toolkit.get_action("package_show")(None,{'id': "ce278f9e-5a27-4b73-b028-86792071d3af"})] #default contact point
