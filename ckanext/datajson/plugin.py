@@ -8,6 +8,7 @@ import json, re
 import logging
 from jsonschema.exceptions import best_match
 import StringIO
+import tempfile
 
 logger = logging.getLogger('datajson')
 
@@ -127,7 +128,23 @@ class DataJsonController(BaseController):
         return p.toolkit.literal(json.dumps(data))
 
     def generate_json(self):
-        return self.generate_output('json')
+        #return self.generate_output('json')
+        # set content type (charset required or pylons throws an error)
+        response.content_type = 'application/json; charset=UTF-8'
+
+        # allow caching of response (e.g. by Apache)
+        del response.headers["Cache-Control"]
+        del response.headers["Pragma"]
+
+        # TODO special processing for enterprise
+        # output
+        tf = tempfile.NamedTemporaryFile()
+        log.debug("temporary file: %s", tf.name)
+        tf.write("[\n")
+        make_jsonlines_file(tf)
+        tf.write("\n]\n")
+        tf.seek(0)
+        return p.toolkit.literal(tf.read())
 
     def generate_jsonld(self):
         return self.generate_output('json-ld')
@@ -221,6 +238,41 @@ def make_json():
         log.warning("make_json got list of packages page: %s",params['page'])
     log.warning("make_json: %d of %d ( %f ) ", good,total, good/total*100)
     return output
+
+
+
+def make_jsonlines_file(tf):
+    total = 0
+    good = 0
+    # Build the data.json file.
+    log.debug("make_json top of function")
+    params = {'limit': 100, 'page': 1}
+    packages = p.toolkit.get_action("current_package_list_with_resources")(None, params)
+    log.debug("make_json got list of packages")
+    while packages:
+        # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
+        for pkg in packages:
+            total = total +1
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            try:
+                datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
+                if datajson_entry:
+                    #log.warning("Dataset id=[%s], title=[%s] added %s\n", pkg.get('id', None), pkg.get('title', None),datajson_entry )
+                    if good != 0:
+                         tf.write(",\n")
+                    tf.write(json.dumps(datajson_entry,indent=None))
+                    good = good + 1
+                else:
+                    log.warning("Dataset id=[%s], title=[%s] omitted \n", pkg.get('id', None), pkg.get('title', None) )
+            except KeyError,e :
+                log.warning("Dataset id=[%s], title=[%s] missing required 'public_access_level' field '%s'", pkg.get('id', None),
+                        pkg.get('title', None),e)
+                pass
+        params['page']=params['page'] + 1
+        packages = p.toolkit.get_action("current_package_list_with_resources")(None,params) 
+        log.warning("make_json got list of packages page: %s",params['page'])
+    log.warning("make_json: %d of %d ( %f ) ", good,total, good/total*100)
+    return None
 
 
 def make_edi(owner_org):

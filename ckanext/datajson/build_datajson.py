@@ -98,7 +98,7 @@ def make_datajson_entry(package,plugin):
             if not modified:
                 modified = referencedate[0]['value']
         if not modified:
-            modified =  clean_date(extra(package, "Last Update"))
+           modified =  clean_date(extra(package, "Last Update"))
         if not modified:
            modified =  clean_date(extra(package, "Metadata Date"))
         #log.warn("modified: %s",modified)
@@ -130,6 +130,8 @@ def make_datajson_entry(package,plugin):
         programCodePart =  extra(package,'Program Code')
         if not programCodePart:
            programCodePart =  program_code(harvest_object)
+        if not programCodePart:
+           programCodePart = "000:000"
         programCode = [ programCodePart  ]
         #
         # are these arrays in the ISO metadata? Should we be pulling them apart somehow?
