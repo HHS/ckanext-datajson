@@ -207,7 +207,7 @@ class DataJsonController(BaseController):
         except:
             c.catalog_data = []
                 
-        c.catalog_data.sort(key = lambda x : x.get("modified"), reverse=True)
+        #c.catalog_data.sort(key = lambda x : x.get("modified"), reverse=True)
 
         return render('html_rendition.html')
 
