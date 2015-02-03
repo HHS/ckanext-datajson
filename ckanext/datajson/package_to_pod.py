@@ -5,7 +5,9 @@ except ImportError:
 
 import logging
 import string
-
+import validator
+from validator import URL_REGEX
+import re
 import ckan.model as model
 
 
@@ -33,6 +35,11 @@ def make_datajson_catalog(datasets):
 
 
 def make_datajson_entry(package, plugin):
+    # keywords
+    keywords = [t["display_name"] for t in package["tags"]]
+    if len(keywords) == 0 and plugin.default_keywords is not None:
+        keywords = re.split("\s*,\s*", plugin.default_keywords)
+
     # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 
@@ -50,15 +57,17 @@ def make_datajson_entry(package, plugin):
     if extra(package, "Bureau Code"):
         defaultProgramCode = [bcode.split(":")[0] + ":000" for bcode in extra(package, "Bureau Code").split(" ")]
 
-    # if resource format is CSV then convert it to text/csv
-    # Resource format has to be in 'csv' format for automatic datastore push.
+    if package["url"] != None and not URL_REGEX.match(package["url"]):
+        package["url"] = None
+
     for r in package["resources"]:
-        if r["format"].lower() == "csv":
-            r["format"] = "text/csv"
-        if r["format"].lower() == "json":
-            r["format"] = "application/json"
-        if r["format"].lower() == "pdf":
-            r["format"] = "application/pdf"
+        if r["url"] != None and not URL_REGEX.match(r["url"]):
+            r["url"] = None
+        if r["mimetype"] != None:
+            r["mimetype"] = re.sub(r"[,\s].*", "", r["mimetype"])
+        # r.get doesn't get this right, so logic it here
+        if r["mimetype"] == None:
+            r["mimetype"] = extension_to_mime_type(r["format"])
 
     # The 'modified' field needs to be populated somehow,
     # try all the date fields we can think of.
@@ -70,7 +79,7 @@ def make_datajson_entry(package, plugin):
 
             ("title", strip_if_string(package["title"])),  # required
 
-            ("accessLevel", strip_if_string(extras.get('Access Level', 'public'))),  # required
+            ("accessLevel", strip_if_string(extra(package, 'Access Level', 'public'))),  # required
 
             ('accrualPeriodicity', get_accrual_periodicity(extras.get('Publish Frequency'))), # optional
 
@@ -101,7 +110,7 @@ def make_datajson_entry(package, plugin):
             ("issued", strip_if_string(extra(package, 'Date Released', datatype="iso8601"))),  # optional
 
             # ("keyword", ['a', 'b']),  # required
-            ("keyword", [t["display_name"] for t in package["tags"]]),  # required
+            ("keyword", keywords),  # required
 
             ("landingPage", strip_if_string(extras.get('homepage_url', package["url"]))),   # optional
 
@@ -148,6 +157,7 @@ def make_datajson_entry(package, plugin):
             ("theme", [s for s in (extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if s != None])
         )
 
+
     except KeyError as e:
         log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id', None),
                  package.get('title', None), e)
@@ -172,6 +182,10 @@ def make_datajson_entry(package, plugin):
     # convertedKey = underscore_to_camelcase(key)
     # if convertedKey not in retlist_keys:
     # retlist.append((convertedKey, extras[key]))
+
+    # Special case to help validation.
+    if extra(package, "Catalog Type") == "State Catalog":
+        retlist.append( ("_is_federal_dataset", False) )
 
     # Remove entries where value is None, "", or empty list []
     striped_retlist = [(x, y) for x, y in retlist if y is not None and y != "" and y != []]
@@ -252,7 +266,7 @@ def generate_distribution(package):
                 else:
                     resource += [("downloadURL", res_url)]
                     if 'format' in rkeys:
-                        res_format = strip_if_string(r.get('format'))
+                        res_format = strip_if_string(extension_to_mime_type(r["format"]))
                         if res_format:
                             resource += [("mediaType", res_format)]
                     else:
@@ -295,6 +309,11 @@ def generate_distribution(package):
             if res_attr:
                 resource += [("describedByType", res_attr)]
 
+        if 'id' in rkeys:
+            res_attr = strip_if_string(r.get('id'))
+            if res_attr:
+                resource += [("identifier", res_attr)] # NOT in POD standard, but useful for conversion to JSON-LD
+        
         striped_resource = [(x, y) for x, y in resource if y is not None and y != "" and y != []]
 
         arr += [OrderedDict(striped_resource)]
@@ -439,12 +458,12 @@ def build_temporal(package):
     if extra(package, "Coverage Period Fiscal Year Start"):
         temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
     else:
-        temporal = extra(package, "Coverage Period Start", "Unknown").replace(" ", "T").replace("T00:00:00", "")
+        temporal = extra(package, "Coverage Period Start", datatype="iso8601", default="Unknown")
     temporal += "/"
     if extra(package, "Coverage Period Fiscal Year End"):
         temporal += "FY" + extra(package, "Coverage Period Fiscal Year End").replace(" ", "T").replace("T00:00:00", "")
     else:
-        temporal += extra(package, "Coverage Period End", "Unknown").replace(" ", "T").replace("T00:00:00", "")
+        temporal += extra(package, "Coverage Period End", datatype="iso8601", default="Unknown")
     if temporal == "Unknown/Unknown": return None
     return temporal
 
@@ -455,3 +474,26 @@ def split_multiple_entries(retlist, extras, names):
         retlist.append(
             (names[0], [string.strip(x) for x in string.split(found_element, ',')])
         )
+    elif names[1] == 'Program Code':
+        retlist.append(
+            (names[0], defaultProgramCode)
+        )
+        
+
+def extension_to_mime_type(file_ext):
+#    if file_ext is None: return None
+#    if file_ext is "Other": return None
+    if file_ext is None: return "application/unknown"
+    if file_ext is "Other": return "application/unknown"
+    ext = {
+        "csv": "text/csv",
+        "xls": "application/vnd.ms-excel",
+        "xml": "application/xml",
+        "rdf": "application/rdf+xml",
+        "json": "application/json",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text": "text/plain",
+        "feed": "application/rss+xml",
+        "pdf": "application/pdf"
+    }
+    return ext.get(file_ext.lower(), "application/unknown")
