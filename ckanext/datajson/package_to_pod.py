@@ -305,7 +305,7 @@ def generate_distribution(package):
                 resource += [("describedBy", res_attr)]
 
         if 'describedByType' in rkeys:
-            res_attr = strip_if_string(r.get('describedByType'))
+            res_attr = strip_if_string(extension_to_mime_type(r.get('describedByType')))
             if res_attr:
                 resource += [("describedByType", res_attr)]
 
