@@ -1,0 +1,4 @@
+pyyaml
+lepl
+-e git+https://github.com/dgerber/rfc3987.git@master#egg=rfc3987
+-e git+https://github.com/Julian/jsonschema.git@master#egg=jsonschema
