@@ -5,8 +5,8 @@ except ImportError:
 
 import logging
 import string
-import validator
-from validator import URL_REGEX
+import datajsonvalidator
+from datajsonvalidator import URL_REGEX
 import re
 import ckan.model as model
 
