@@ -56,7 +56,7 @@ def make_datajson_entry(package):
 
             # ("accrualPeriodicity", "R/P1Y"),  # optional
             # ('accrualPeriodicity', 'accrual_periodicity'),
-            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))), # optional
+            ('accrualPeriodicity', get_accrual_periodicity(extras.get('accrual_periodicity'))),  # optional
 
             ("conformsTo", strip_if_string(extras.get('conforms_to'))),  # optional
 
@@ -85,9 +85,9 @@ def make_datajson_entry(package):
             # ("keyword", ['a', 'b']),  # required
             ("keyword", [t["display_name"] for t in package["tags"]]),  # required
 
-            ("landingPage", strip_if_string(extras.get('homepage_url'))),   # optional
+            ("landingPage", strip_if_string(extras.get('homepage_url'))),  # optional
 
-            ("license", strip_if_string(extras.get("license_new"))),    # required-if-applicable
+            ("license", strip_if_string(extras.get("license_new"))),  # required-if-applicable
 
             ("modified", strip_if_string(extras.get("modified"))),  # required
 
@@ -97,7 +97,8 @@ def make_datajson_entry(package):
             # ("@type", "org:Organization"),
             # ("name", "Widget Services")
             # ])),  # required
-            ("publisher", get_publisher_tree(extras)),  # required
+            # ("publisher", get_publisher_tree(extras)),  # required
+            ("publisher", get_publisher_tree_wrong_order(extras)),  # required
 
             ("rights", strip_if_string(extras.get('access_level_comment'))),  # required
 
@@ -107,7 +108,7 @@ def make_datajson_entry(package):
 
             ("temporal", strip_if_string(extras.get('temporal'))),  # required-if-applicable
 
-            ("distribution", generate_distribution(package)),   # required-if-applicable
+            ("distribution", generate_distribution(package)),  # required-if-applicable
 
             # ("distribution",
             # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
@@ -116,15 +117,15 @@ def make_datajson_entry(package):
             # ("downloadURL", r["url"]),
             # ("mediaType", r["formatReadable"]),
             # ])
-            #      for r in package["resources"]
-            #  ])
+            # for r in package["resources"]
+            # ])
         ]
 
         for pair in [
             ('bureauCode', 'bureau_code'),  # required
-            ('language', 'language'),   # optional
-            ('programCode', 'program_code'),    # required
-            ('references', 'related_documents'),    # optional
+            ('language', 'language'),  # optional
+            ('programCode', 'program_code'),  # required
+            ('references', 'related_documents'),  # optional
             ('theme', 'category'),  # optional
         ]:
             split_multiple_entries(retlist, extras, pair)
@@ -161,11 +162,11 @@ def make_datajson_entry(package):
 
     # If a required metadata field was removed, return empty string
     # for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
-    #                        "modified", "programCode", "publisher", "title"]:
-    #     if required_field not in striped_retlist_keys:
-    #         log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-    #                  package.get('id'), package.get('title'), required_field)
-    #         return
+    # "modified", "programCode", "publisher", "title"]:
+    # if required_field not in striped_retlist_keys:
+    # log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
+    # package.get('id'), package.get('title'), required_field)
+    # return
 
     # When saved from UI DataQuality value is stored as "on" instead of True.
     # Check if value is "on" and replace it with True.
@@ -179,6 +180,7 @@ def make_datajson_entry(package):
         striped_retlist_dict['dataQuality'] = False
 
     from datajsonvalidator import do_validation
+
     errors = []
     try:
         do_validation([dict(striped_retlist_dict)], errors)
@@ -198,10 +200,10 @@ accrual_periodicity_dict = {
     'decennial': 'R/P10Y',
     'quadrennial': 'R/P4Y',
     'annual': 'R/P1Y',
-    'bimonthly': 'R/P2M',   # or R/P0.5M
+    'bimonthly': 'R/P2M',  # or R/P0.5M
     'semiweekly': 'R/P3.5D',
     'daily': 'R/P1D',
-    'biweekly': 'R/P2W',    # or R/P0.5W
+    'biweekly': 'R/P2W',  # or R/P0.5W
     'semiannual': 'R/P6M',
     'biennial': 'R/P2Y',
     'triennial': 'R/P3Y',
@@ -242,9 +244,9 @@ def generate_distribution(package):
             log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
 
         # if 'accessURL_new' in rkeys:
-        #     res_access_url = strip_if_string(r.get('accessURL_new'))
-        #     if res_access_url:
-        #         resource += [("accessURL", res_access_url)]
+        # res_access_url = strip_if_string(r.get('accessURL_new'))
+        # if res_access_url:
+        # resource += [("accessURL", res_access_url)]
 
         if 'formatReadable' in rkeys:
             res_attr = strip_if_string(r.get('formatReadable'))
@@ -312,47 +314,36 @@ def extra(package, key, default=None):
     return default
 
 
-def get_publisher_tree(extras):
-    # Sorry guys
-    # TODO refactor that to recursion? any refactor would be nice though
+def get_publisher_tree_wrong_order(extras):
     publisher = strip_if_string(extras.get('publisher'))
     if publisher is None:
         raise KeyError('publisher')
 
-    tree = [
+    organization_list = list()
+    organization_list.append([
         ('@type', 'org:Organization'),  # optional
         ('name', publisher),  # required
-    ]
-    if 'publisher_1' in extras and extras['publisher_1']:
-        publisher1 = [
-            ('@type', 'org:Organization'),  # optional
-            ('name', strip_if_string(extras['publisher_1'])),  # required
-        ]
-        if 'publisher_2' in extras and extras['publisher_2']:
-            publisher2 = [
+    ])
+
+    for i in range(1, 6):
+        key = 'publisher_' + str(i)
+        if key in extras and extras[key] and strip_if_string(extras[key]):
+            organization_list.append([
                 ('@type', 'org:Organization'),  # optional
-                ('name', strip_if_string(extras['publisher_2'])),  # required
-            ]
-            if 'publisher_3' in extras and extras['publisher_3']:
-                publisher3 = [
-                    ('@type', 'org:Organization'),  # optional
-                    ('name', strip_if_string(extras['publisher_3'])),  # required
-                ]
-                if 'publisher_4' in extras and extras['publisher_4']:
-                    publisher4 = [
-                        ('@type', 'org:Organization'),  # optional
-                        ('name', strip_if_string(extras['publisher_4'])),  # required
-                    ]
-                    if 'publisher_5' in extras and extras['publisher_5']:
-                        publisher5 = [
-                            ('@type', 'org:Organization'),  # optional
-                            ('name', strip_if_string(extras['publisher_5'])),  # required
-                        ]
-                        publisher4 += [('subOrganizationOf', OrderedDict(publisher5))]
-                    publisher3 += [('subOrganizationOf', OrderedDict(publisher4))]
-                publisher2 += [('subOrganizationOf', OrderedDict(publisher3))]
-            publisher1 += [('subOrganizationOf', OrderedDict(publisher2))]
-        tree += [('subOrganizationOf', OrderedDict(publisher1))]
+                ('name', strip_if_string(extras[key])),  # required
+            ])
+
+    size = len(organization_list)
+
+    # [OSCIT, GSA]
+    # organization_list.reverse()
+    # [GSA, OSCIT]
+
+    tree = False
+    for i in range(0, size):
+        if tree:
+            organization_list[i] += [('subOrganizationOf', OrderedDict(tree))]
+        tree = organization_list[i]
 
     return OrderedDict(tree)
 
