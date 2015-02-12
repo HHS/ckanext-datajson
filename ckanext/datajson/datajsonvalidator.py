@@ -60,7 +60,7 @@ PROGRAM_CODE_REGEX = re.compile(r"^[0-9]{3}:[0-9]{3}$")
 
 IANA_MIME_REGEX = re.compile(r"^[-\w]+/[-\w]+(\.[-\w]+)*([+][-\w]+)?$")
 
-PRIMARY_IT_INVESTMENT_UII_REGEX = re.compile(r"$[0-9]{3}-[0-9]{9}^")
+PRIMARY_IT_INVESTMENT_UII_REGEX = re.compile(r"^[0-9]{3}-[0-9]{9}$")
 
 ACCRUAL_PERIODICITY_VALUES = (
     None, "R/P10Y", "R/P4Y", "R/P1Y", "R/P2M", "R/P3.5D", "R/P1D", "R/P2W", "R/P0.5W", "R/P6M",
