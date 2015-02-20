@@ -4,10 +4,10 @@ except ImportError:
     from sqlalchemy.util import OrderedDict
 
 def dataset_to_jsonld(dataset):
-    from plugin import DataJsonPlugin
+    from plugin import JsonExportPlugin
 	
     ret = OrderedDict([
-       ("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
+       ("@id", JsonExportPlugin.site_url + "/dataset/" + dataset["identifier"]),
        ("@type", "dcat:Dataset"),
     ])
     
@@ -20,9 +20,9 @@ def dataset_to_jsonld(dataset):
     return ret
         
 def distribution_to_jsonld(distribution):
-    from plugin import DataJsonPlugin
+    from plugin import JsonExportPlugin
     ret = OrderedDict([
-       ("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
+       ("@id", JsonExportPlugin.site_url + "/resource/" + distribution["identifier"]),
        ("@type", "dcat:Distribution"),
     ])
     apply_jsonld_metadata_mapping(distribution, ret)

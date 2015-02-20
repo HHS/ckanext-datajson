@@ -38,7 +38,7 @@ from build_datajson import make_datajson_entry, make_datajson_catalog
 from build_datajsonld import dataset_to_jsonld
 
 
-class DataJsonPlugin(p.SingletonPlugin):
+class JsonExportPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
     p.implements(p.interfaces.IRoutes, inherit=True)
 
@@ -48,14 +48,14 @@ class DataJsonPlugin(p.SingletonPlugin):
         # to know how to set the paths.
 
         # TODO commenting out enterprise data inventory for right now
-        # DataJsonPlugin.route_edata_path = config.get("ckanext.enterprisedatajson.path", "/enterprisedata.json")
-        DataJsonPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
-        DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
-        DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path",
-                                                  re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
-        DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
-        DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
-        DataJsonPlugin.site_url = config.get("ckan.site_url")
+        # JsonExportPlugin.route_edata_path = config.get("ckanext.enterprisedatajson.path", "/enterprisedata.json")
+        JsonExportPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
+        JsonExportPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
+        JsonExportPlugin.route_ld_path = config.get("ckanext.datajsonld.path",
+                                                  re.sub(r"\.json$", ".jsonld", JsonExportPlugin.route_path))
+        JsonExportPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
+        JsonExportPlugin.ld_title = config.get("ckan.site_title", "Catalog")
+        JsonExportPlugin.site_url = config.get("ckan.site_url")
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
@@ -65,13 +65,13 @@ class DataJsonPlugin(p.SingletonPlugin):
         return m
 
     def after_map(self, m):
-        if DataJsonPlugin.route_enabled:
+        if JsonExportPlugin.route_enabled:
             # /data.json and /data.jsonld (or other path as configured by user)
-            m.connect('datajson', DataJsonPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController',
+            m.connect('datajson', JsonExportPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController',
                       action='generate_json')
             # TODO commenting out enterprise data inventory for right now
-            # m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
-            #m.connect('datajsonld', DataJsonPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+            # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
+            #m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -112,11 +112,11 @@ class DataJsonController(BaseController):
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
                 ])
                 ),
-                ("@id", DataJsonPlugin.ld_id),
+                ("@id", JsonExportPlugin.ld_id),
                 ("@type", "dcat:Catalog"),
-                ("dcterms:title", DataJsonPlugin.ld_title),
-                ("rdfs:label", DataJsonPlugin.ld_title),
-                ("foaf:homepage", DataJsonPlugin.site_url),
+                ("dcterms:title", JsonExportPlugin.ld_title),
+                ("rdfs:label", JsonExportPlugin.ld_title),
+                ("foaf:homepage", JsonExportPlugin.site_url),
                 ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
             ])
 
