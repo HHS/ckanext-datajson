@@ -13,7 +13,7 @@ log = logging.getLogger('datajson')
 
 # TODO this file is pretty sloppy, needs cleanup and redundancies removed
 
-def make_datajson_catalog(datasets):
+def make_datajson_export_catalog(datasets):
     catalog = OrderedDict([
         ('conformsTo', 'https://project-open-data.cio.gov/v1.1/schema'),  # requred
         ('describedBy', 'https://project-open-data.cio.gov/v1.1/schema/catalog.json'),  # optional
@@ -24,7 +24,7 @@ def make_datajson_catalog(datasets):
     return catalog
 
 
-def make_datajson_entry(package):
+def make_datajson_export_entry(package):
     # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
     extras = dict([(x['key'], x['value']) for x in package['extras']])
 

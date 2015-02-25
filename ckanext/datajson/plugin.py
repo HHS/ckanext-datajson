@@ -1,39 +1,24 @@
-import json
 import logging
 import StringIO
+import json
 
 import ckan.plugins as p
 from ckan.lib.base import BaseController, render, c
-import ckan.model as model
 from pylons import request, response
-import ckan.lib.dictization.model_dictize as model_dictize
 import re
+import ckan.model as model
+import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
 
+
 logger = logging.getLogger('datajson')
-
-
-def get_validator():
-    import os
-    from jsonschema import Draft4Validator, FormatChecker
-
-    schema_path = os.path.join(os.path.dirname(__file__), 'pod_schema', 'federal-v1.1', 'dataset.json')
-    with open(schema_path, 'r') as file:
-        schema = json.loads(file.read())
-        return Draft4Validator(schema, format_checker=FormatChecker())
-
-    logger.warn('Unable to create validator')
-    return None
-
-
-validator = get_validator()
 
 try:
     from collections import OrderedDict  # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-from build_datajson import make_datajson_entry, make_datajson_catalog
+from build_datajson import make_datajson_export_entry, make_datajson_export_catalog
 
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 from build_datajsonld import dataset_to_jsonld
@@ -73,29 +58,30 @@ class JsonExportPlugin(p.SingletonPlugin):
     def after_map(self, m):
         if JsonExportPlugin.route_enabled:
             # /data.json and /data.jsonld (or other path as configured by user)
-            m.connect('datajson', JsonExportPlugin.route_path, controller='ckanext.datajson.plugin:DataJsonController',
+            m.connect('datajson_export', JsonExportPlugin.route_path,
+                      controller='ckanext.datajson.plugin:JsonExportController',
                       action='generate_json')
             # TODO commenting out enterprise data inventory for right now
-            # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
-            # m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+            # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path, controller='ckanext.datajson.plugin:JsonExportController', action='generate_enterprise')
+            # m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:JsonExportController', action='generate_jsonld')
 
         # TODO DWC update action
         # /data/{org}/data.json
         m.connect('public_data_listing', '/organization/{org}/data.json',
-                  controller='ckanext.datajson.plugin:DataJsonController', action='generate_pdl')
+                  controller='ckanext.datajson.plugin:JsonExportController', action='generate_pdl')
 
         # TODO DWC update action
         # /data/{org}/edi.json
         m.connect('enterprise_data_inventory', '/organization/{org}/edi.json',
-                  controller='ckanext.datajson.plugin:DataJsonController', action='generate_edi')
+                  controller='ckanext.datajson.plugin:JsonExportController', action='generate_edi')
 
         # /pod/validate
-        # m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:DataJsonController', action='validator')
+        # m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:JsonExportController', action='validator')
 
         return m
 
 
-class DataJsonController(BaseController):
+class JsonExportController(BaseController):
     def generate_output(self, format):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
@@ -106,7 +92,7 @@ class DataJsonController(BaseController):
 
         # TODO special processing for enterprise
         # output
-        data = make_json()
+        data = self.make_json()
 
         if format == 'json-ld':
             # Convert this to JSON-LD.
@@ -179,7 +165,7 @@ class DataJsonController(BaseController):
                 # allow caching of response (e.g. by Apache)
                 del response.headers["Cache-Control"]
                 del response.headers["Pragma"]
-                return make_pdl(match.group(1))
+                return self.make_pdl(match.group(1))
         return "Invalid organization id"
 
     def generate_edi(self):
@@ -195,169 +181,187 @@ class DataJsonController(BaseController):
                 # allow caching of response (e.g. by Apache)
                 del response.headers["Cache-Control"]
                 del response.headers["Pragma"]
-                return make_edi(match.group(1))
+                return self.make_edi(match.group(1))
         return "Invalid organization id"
 
 
-def make_json():
-    # Build the data.json file.
-    packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-    output = []
-    # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
-    for pkg in packages:
-        extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        try:
-            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                datajson_entry = make_datajson_entry(pkg)
-                if datajson_entry:
-                    output.append(datajson_entry)
-                else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
-        except KeyError:
-            logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field", pkg.get('id', None),
-                        pkg.get('title', None))
-            pass
-    return output
+    def make_json(self):
+        # Build the data.json file.
+        packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+        output = []
+        # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
+        for pkg in packages:
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            try:
+                if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
+                    datajson_entry = make_datajson_export_entry(pkg)
+                    if datajson_entry:
+                        output.append(datajson_entry)
+                    else:
+                        logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
+                                    pkg.get('title', None))
+            except KeyError:
+                logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field",
+                            pkg.get('id', None),
+                            pkg.get('title', None))
+                pass
+        return output
 
 
-def make_edi(owner_org):
-    # Error handler for creating error log
-    stream = StringIO.StringIO()
-    eh = logging.StreamHandler(stream)
-    eh.setLevel(logging.WARN)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
-    eh.setFormatter(formatter)
-    logger.addHandler(eh)
+    def make_edi(self, owner_org):
+        # Error handler for creating error log
+        stream = StringIO.StringIO()
+        eh = logging.StreamHandler(stream)
+        eh.setLevel(logging.WARN)
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        eh.setFormatter(formatter)
+        logger.addHandler(eh)
 
-    # Build the data.json file.
-    packages = get_packages(owner_org)
+        # Build the data.json file.
+        packages = self.get_packages(owner_org)
 
-    output = []
-    for pkg in packages:
-        # if pkg['owner_org'] == owner_org:
-        datajson_entry = make_datajson_entry(pkg)
-        if datajson_entry and is_valid(datajson_entry):
-            output.append(datajson_entry)
-        else:
-            logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+        output = []
+        for pkg in packages:
+            # if pkg['owner_org'] == owner_org:
+            datajson_entry = make_datajson_export_entry(pkg)
+            if datajson_entry and self.is_valid(datajson_entry):
+                output.append(datajson_entry)
+            else:
+                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
 
-    # Get the error log
-    eh.flush()
-    error = stream.getvalue()
-    eh.close()
-    logger.removeHandler(eh)
-    stream.close()
+        # Get the error log
+        eh.flush()
+        error = stream.getvalue()
+        eh.close()
+        logger.removeHandler(eh)
+        stream.close()
 
-    # return json.dumps(output)
-    return write_zip(output, error, zip_name='edi')
-
-
-def make_pdl(owner_org):
-    # Error handler for creating error log
-    stream = StringIO.StringIO()
-    eh = logging.StreamHandler(stream)
-    eh.setLevel(logging.WARN)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
-    eh.setFormatter(formatter)
-    logger.addHandler(eh)
-
-    # Build the data.json file.
-    packages = get_packages(owner_org)
-
-    output = []
-    # Create data.json only using public datasets, datasets marked non-public are not exposed
-    for pkg in packages:
-        extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-        try:
-            if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                datajson_entry = make_datajson_entry(pkg)
-                if datajson_entry and is_valid(datajson_entry):
-                    output.append(datajson_entry)
-                else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
-
-        except KeyError:
-            logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
-                        pkg.get('id', None), pkg.get('title', None))
-            pass
-
-    # Get the error log
-    eh.flush()
-    error = stream.getvalue()
-    eh.close()
-    logger.removeHandler(eh)
-    stream.close()
-
-    # return json.dumps(output)
-    return write_zip(output, error, zip_name='pdl')
+        # return json.dumps(output)
+        return self.write_zip(output, error, zip_name='edi')
 
 
-def get_packages(owner_org):
-    # Build the data.json file.
-    packages = get_all_group_packages(group_id=owner_org)
-    # get packages for sub-agencies.
-    sub_agency = model.Group.get(owner_org)
-    if 'sub-agencies' in sub_agency.extras.col.target and \
-                    sub_agency.extras.col.target['sub-agencies'].state == 'active':
-        sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
-        sub_agencies_list = sub_agencies.split(",")
-        for sub in sub_agencies_list:
-            sub_packages = get_all_group_packages(group_id=sub)
-            for sub_package in sub_packages:
-                packages.append(sub_package)
+    def make_pdl(self, owner_org):
+        # Error handler for creating error log
+        stream = StringIO.StringIO()
+        eh = logging.StreamHandler(stream)
+        eh.setLevel(logging.WARN)
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        eh.setFormatter(formatter)
+        logger.addHandler(eh)
 
-    return packages
+        # Build the data.json file.
+        packages = self.get_packages(owner_org)
+
+        output = []
+        # Create data.json only using public datasets, datasets marked non-public are not exposed
+        for pkg in packages:
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            try:
+                if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
+                    datajson_entry = make_datajson_export_entry(pkg)
+                    if datajson_entry and self.is_valid(datajson_entry):
+                        output.append(datajson_entry)
+                    else:
+                        logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
+                                    pkg.get('title', None))
+
+            except KeyError:
+                logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
+                            pkg.get('id', None), pkg.get('title', None))
+                pass
+
+        # Get the error log
+        eh.flush()
+        error = stream.getvalue()
+        eh.close()
+        logger.removeHandler(eh)
+        stream.close()
+
+        # return json.dumps(output)
+        return self.write_zip(output, error, zip_name='pdl')
 
 
-def get_all_group_packages(group_id):
-    """
-    Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
-    """
-    result = []
-    for pkg_rev in model.Group.get(group_id).packages(with_private=True, context={'user_is_admin': True}):
-        result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
+    def get_packages(self, owner_org):
+        # Build the data.json file.
+        packages = self.get_all_group_packages(group_id=owner_org)
+        # get packages for sub-agencies.
+        sub_agency = model.Group.get(owner_org)
+        if 'sub-agencies' in sub_agency.extras.col.target and \
+                        sub_agency.extras.col.target['sub-agencies'].state == 'active':
+            sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
+            sub_agencies_list = sub_agencies.split(",")
+            for sub in sub_agencies_list:
+                sub_packages = self, self.get_all_group_packages(group_id=sub)
+                for sub_package in sub_packages:
+                    packages.append(sub_package)
 
-    return result
-
-
-def is_valid(instance):
-    """
-    Validates a data.json entry against the project open data's JSON schema. Log a warning message on validation error
-    """
-    error = best_match(validator.iter_errors(instance))
-    if error:
-        logger.warn("Validation failed, best guess of error = %s", error)
-        return False
-    return True
+        return packages
 
 
-def write_zip(data, error=None, zip_name='data'):
-    """
-    Data: a python object to write to the data.json
-    Error: unicode string representing the content of the error log.
-    zip_name: the name to use for the zip file
-    """
-    import zipfile
+    def get_all_group_packages(self, group_id):
+        """
+        Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
+        """
+        result = []
+        for pkg_rev in model.Group.get(group_id).packages(with_private=True, context={'user_is_admin': True}):
+            result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
 
-    o = StringIO.StringIO()
-    zf = zipfile.ZipFile(o, mode='w')
+        return result
 
-    # Write the data file
-    if data:
-        zf.writestr('data.json', json.dumps(make_datajson_catalog(data), ensure_ascii=False).encode('utf8'))
 
-    # Write the error log
-    if error:
-        zf.writestr('errorlog.txt', error.encode('utf8'))
+    def is_valid(self, instance):
+        """
+        Validates a data.json entry against the project open data's JSON schema. Log a warning message on validation error
+        """
+        error = best_match(validator.iter_errors(instance))
+        if error:
+            logger.warn("Validation failed, best guess of error = %s", error)
+            return False
+        return True
 
-    zf.close()
-    o.seek(0)
 
-    binary = o.read()
-    o.close()
+    def write_zip(self, data, error=None, zip_name='data'):
+        """
+        Data: a python object to write to the data.json
+        Error: unicode string representing the content of the error log.
+        zip_name: the name to use for the zip file
+        """
+        import zipfile
 
-    response.content_type = 'application/octet-stream'
-    response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
+        o = StringIO.StringIO()
+        zf = zipfile.ZipFile(o, mode='w')
 
-    return binary
+        # Write the data file
+        if data:
+            zf.writestr('data.json', json.dumps(make_datajson_export_catalog(data), ensure_ascii=False).encode('utf8'))
 
+        # Write the error log
+        if error:
+            zf.writestr('errorlog.txt', error.encode('utf8'))
+
+        zf.close()
+        o.seek(0)
+
+        binary = o.read()
+        o.close()
+
+        response.content_type = 'application/octet-stream'
+        response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
+
+        return binary
+
+
+def get_validator():
+    import os
+    from jsonschema import Draft4Validator, FormatChecker
+
+    schema_path = os.path.join(os.path.dirname(__file__), 'pod_schema', 'federal-v1.1', 'dataset.json')
+    with open(schema_path, 'r') as file:
+        schema = json.loads(file.read())
+        return Draft4Validator(schema, format_checker=FormatChecker())
+
+    logger.warn('Unable to create validator')
+    return None
+
+
+validator = get_validator()
