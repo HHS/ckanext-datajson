@@ -1,13 +1,14 @@
-import ckan.plugins as p
+import json
+import logging
+import StringIO
 
+import ckan.plugins as p
 from ckan.lib.base import BaseController, render, c
 import ckan.model as model
 from pylons import request, response
 import ckan.lib.dictization.model_dictize as model_dictize
-import json, re
-import logging
+import re
 from jsonschema.exceptions import best_match
-import StringIO
 
 logger = logging.getLogger('datajson')
 
@@ -38,6 +39,11 @@ from build_datajson import make_datajson_entry, make_datajson_catalog
 from build_datajsonld import dataset_to_jsonld
 
 
+class DataJsonPlugin(p.SingletonPlugin):
+    p.implements(p.interfaces.IConfigurer)
+    p.implements(p.interfaces.IRoutes, inherit=True)
+
+
 class JsonExportPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
     p.implements(p.interfaces.IRoutes, inherit=True)
@@ -52,7 +58,7 @@ class JsonExportPlugin(p.SingletonPlugin):
         JsonExportPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
         JsonExportPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
         JsonExportPlugin.route_ld_path = config.get("ckanext.datajsonld.path",
-                                                  re.sub(r"\.json$", ".jsonld", JsonExportPlugin.route_path))
+                                                    re.sub(r"\.json$", ".jsonld", JsonExportPlugin.route_path))
         JsonExportPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         JsonExportPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         JsonExportPlugin.site_url = config.get("ckan.site_url")
@@ -71,7 +77,7 @@ class JsonExportPlugin(p.SingletonPlugin):
                       action='generate_json')
             # TODO commenting out enterprise data inventory for right now
             # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
-            #m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
+            # m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -147,7 +153,8 @@ class DataJsonController(BaseController):
                     e) + ". Try using JSONLint.com."]))
             except Exception as e:
                 c.errors.append((
-                "Internal Error", ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
+                    "Internal Error",
+                    ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
 
             if body:
                 try:
@@ -163,8 +170,8 @@ class DataJsonController(BaseController):
         # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/data.json", request.path)
 
-        #If user is not editor or admin of the organization then don't allow pdl download
-        if p.toolkit.check_access('package_create', {'model': model,'user':c.user}, {'owner_org': match.group(1)}):
+        # If user is not editor or admin of the organization then don't allow pdl download
+        if p.toolkit.check_access('package_create', {'model': model, 'user': c.user}, {'owner_org': match.group(1)}):
             if match:
                 # set content type (charset required or pylons throws an error)
                 response.content_type = 'application/json; charset=UTF-8'
@@ -179,8 +186,8 @@ class DataJsonController(BaseController):
         # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/edi.json", request.path)
 
-        #If user is not editor or admin of the organization then don't allow edi download
-        if p.toolkit.check_access('package_create', {'model': model,'user':c.user}, {'owner_org': match.group(1)}):
+        # If user is not editor or admin of the organization then don't allow edi download
+        if p.toolkit.check_access('package_create', {'model': model, 'user': c.user}, {'owner_org': match.group(1)}):
             if match:
                 # set content type (charset required or pylons throws an error)
                 response.content_type = 'application/json; charset=UTF-8'
@@ -227,7 +234,7 @@ def make_edi(owner_org):
 
     output = []
     for pkg in packages:
-        #if pkg['owner_org'] == owner_org:
+        # if pkg['owner_org'] == owner_org:
         datajson_entry = make_datajson_entry(pkg)
         if datajson_entry and is_valid(datajson_entry):
             output.append(datajson_entry)
@@ -241,7 +248,7 @@ def make_edi(owner_org):
     logger.removeHandler(eh)
     stream.close()
 
-    #return json.dumps(output)
+    # return json.dumps(output)
     return write_zip(output, error, zip_name='edi')
 
 
@@ -258,7 +265,7 @@ def make_pdl(owner_org):
     packages = get_packages(owner_org)
 
     output = []
-    #Create data.json only using public datasets, datasets marked non-public are not exposed
+    # Create data.json only using public datasets, datasets marked non-public are not exposed
     for pkg in packages:
         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
         try:
@@ -281,13 +288,14 @@ def make_pdl(owner_org):
     logger.removeHandler(eh)
     stream.close()
 
-    #return json.dumps(output)
+    # return json.dumps(output)
     return write_zip(output, error, zip_name='pdl')
+
 
 def get_packages(owner_org):
     # Build the data.json file.
     packages = get_all_group_packages(group_id=owner_org)
-    #get packages for sub-agencies.
+    # get packages for sub-agencies.
     sub_agency = model.Group.get(owner_org)
     if 'sub-agencies' in sub_agency.extras.col.target and \
                     sub_agency.extras.col.target['sub-agencies'].state == 'active':
@@ -299,6 +307,7 @@ def get_packages(owner_org):
                 packages.append(sub_package)
 
     return packages
+
 
 def get_all_group_packages(group_id):
     """
@@ -337,7 +346,7 @@ def write_zip(data, error=None, zip_name='data'):
     if data:
         zf.writestr('data.json', json.dumps(make_datajson_catalog(data), ensure_ascii=False).encode('utf8'))
 
-    #Write the error log
+    # Write the error log
     if error:
         zf.writestr('errorlog.txt', error.encode('utf8'))
 
