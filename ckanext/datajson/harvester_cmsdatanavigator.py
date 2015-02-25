@@ -50,7 +50,8 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         
         from ckan.lib.munge import munge_title_to_name
         package["tags"] = [ { "name": munge_title_to_name(t["Name"]) } for t in dataset.get("Keywords", [])]
-        
+        package["resources"] = [ { "url": dataset_hd.get("AccessPointURL"), "format": dataset_hd.get("MediaFormat") }]
+
         
 def extra(package, key, value):
     if not value: return
