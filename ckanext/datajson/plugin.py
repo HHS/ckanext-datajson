@@ -16,7 +16,7 @@ def get_validator():
     import os
     from jsonschema import Draft4Validator, FormatChecker
 
-    schema_path = os.path.join(os.path.dirname(__file__), 'schema', 'federal-v1.1', 'dataset.json')
+    schema_path = os.path.join(os.path.dirname(__file__), 'pod_schema', 'federal-v1.1', 'dataset.json')
     with open(schema_path, 'r') as file:
         schema = json.loads(file.read())
         return Draft4Validator(schema, format_checker=FormatChecker())
