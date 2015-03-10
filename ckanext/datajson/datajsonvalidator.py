@@ -82,10 +82,17 @@ LANGUAGE_REGEX = re.compile(
 )
 
 # load the OMB bureau codes on first load of this module
-import urllib, csv
+import urllib, csv, StringIO
 
+
+#
+# AJS - sometimes we are getting back an M2Crypto that isn't iterable - not sure why
+#
 omb_burueau_codes = set()
-for row in csv.DictReader(urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")):
+fp = urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")
+csvstr = fp.read()
+for row in csv.DictReader(StringIO.StringIO(csvstr)):
+#for row in csv.DictReader(urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")):
     omb_burueau_codes.add(row["Agency Code"] + ":" + row["Bureau Code"])
 
 # main function for validation

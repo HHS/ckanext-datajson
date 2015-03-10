@@ -356,6 +356,7 @@ accrual_periodicity_spatial_dict = {
     'daily': 'R/P1D',
     'weekly': 'R/P1W',
     'fortnightly': 'R/P0.5M',
+    'annually': 'R/P1Y',
     'monthly': 'R/P1M',
     'quarterly': 'R/P3M',
     'biannualy': 'R/P0.5Y',
@@ -610,8 +611,9 @@ def extra(package, key, default=None):
                 #log.info("rolledup_extras key: %s, value: %s", k, value)
                 #new_extras.append({"key": k, "value": value})
                 new_extras[k] = value
-        #else:
+        else:
         #    new_extras.append(extra)
+             new_extras[extra['key']]=extra['value']
 
     #decode keys:
     for k, v in new_extras.iteritems():
