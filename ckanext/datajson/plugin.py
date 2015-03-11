@@ -220,7 +220,7 @@ def make_json():
         # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
         for pkg in packages:
             total = total +1
-            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            #extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
                 if datajson_entry:
@@ -253,7 +253,7 @@ def make_jsonlines_file(tf):
         # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
         for pkg in packages:
             total = total +1
-            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            #extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 datajson_entry = make_datajson_entry(pkg,DataJsonPlugin)
                 if datajson_entry:
