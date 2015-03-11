@@ -587,6 +587,7 @@ class DatasetHarvesterBase(HarvesterBase):
         validate_message = self._validate_dataset(validator_schema,
             schema_version, dataset_processed)
         if validate_message:
+            log.debug('In import_stage validate message: %s' % validate_message )
             self._save_object_error(validate_message, harvest_object, 'Import')
             return None
 

@@ -17,11 +17,17 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         }
 
     def load_remote_catalog(self, harvest_job):
-        catalog = json.load(urllib2.urlopen(harvest_job.source.url))
-        for item in catalog:
+        req = urllib2.Request(harvest_job.source.url)
+        # todo: into config and across harvester
+        req.add_header('User-agent', 'HealthData.gov/2.0')
+
+        datasets = json.load(urllib2.urlopen(req))
+
+        for item in datasets:
             item["identifier"] = item["ID"]
             item["title"] = item["Name"].strip()
-        return catalog
+
+        return (datasets, None)
         
     def set_dataset_info(self, package, dataset, harvester_config, schema_version):
         extra(package, "Agency", "Department of Health & Human Services")

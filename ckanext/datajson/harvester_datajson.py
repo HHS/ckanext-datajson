@@ -21,7 +21,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
     def load_remote_catalog(self, harvest_job):
         req = urllib2.Request(harvest_job.source.url)
         # todo: into config and across harvester
-        req.add_header('User-agent', 'Data.gov/2.0')
+        req.add_header('User-agent', 'HealthData.gov/2.0')
         try:
             datasets = json.load(urllib2.urlopen(req))
         except UnicodeDecodeError:
