@@ -139,7 +139,7 @@
         {
           "type": "array",
           "items": {
-            "$ref": "distribution.json",
+            "$ref": "#/definitions/distribution",
             "minItems": 1,
             "uniqueItems": true
           }
@@ -263,7 +263,7 @@
       "uniqueItems": true
     },
     "publisher": {
-      "$ref": "organization.json"
+      "$ref": "#/definitions/organization"
     },
     "references": {
       "title": "Related Documents",
@@ -392,7 +392,7 @@
         "hasEmail": {
           "title": "Email",
           "description": "Email address for the contact",
-          "pattern": "^mailto:([\\w.-]+@[\\w.-]+\\.[\\w.-]+)?$",
+          "pattern": "^mailto:[\\w.-]+@[\\w.-]+\\.[\\w.-]+?$",
           "type": "string"
         }
       }
@@ -561,7 +561,7 @@
         },
         "subOrganizationOf": {
           "title": "Parent Organization",
-          "$ref": "organization.json"
+          "$ref": "#"
         }
       }
     }

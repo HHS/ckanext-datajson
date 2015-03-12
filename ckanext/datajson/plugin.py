@@ -18,7 +18,9 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-from build_datajson import make_datajson_export_entry, make_datajson_export_catalog
+from build_datajson import JsonExportBuilder
+
+from build_datajson import make_datajson_entry, get_facet_fields
 
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 from build_datajsonld import dataset_to_jsonld
@@ -194,7 +196,7 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = make_datajson_export_entry(pkg)
+                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
                     if datajson_entry:
                         output.append(datajson_entry)
                     else:
@@ -223,7 +225,7 @@ class JsonExportController(BaseController):
         output = []
         for pkg in packages:
             # if pkg['owner_org'] == owner_org:
-            datajson_entry = make_datajson_export_entry(pkg)
+            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
@@ -258,7 +260,7 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = make_datajson_export_entry(pkg)
+                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
                     if datajson_entry and self.is_valid(datajson_entry):
                         output.append(datajson_entry)
                     else:
@@ -333,7 +335,9 @@ class JsonExportController(BaseController):
 
         # Write the data file
         if data:
-            zf.writestr('data.json', json.dumps(make_datajson_export_catalog(data), ensure_ascii=False).encode('utf8'))
+            zf.writestr('data.json',
+                        json.dumps(JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
+                            'utf8'))
 
         # Write the error log
         if error:
