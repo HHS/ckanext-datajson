@@ -361,7 +361,7 @@
     "title": {
       "title": "Title",
       "description": "Human-readable name of the asset. Should be in plain English and include sufficient detail to facilitate search and discovery.",
-      "type": "string", 
+      "type": "string",
       "minLength": 1
     }
   },
@@ -382,17 +382,17 @@
           "enum": [
             "vcard:Contact"
           ]
-        },    
+        },
         "fn": {
           "title": "Contact Name",
           "description": "A full formatted name, eg Firstname Lastname",
           "type": "string",
-          "minLength": 1      
+          "minLength": 1
         },
         "hasEmail": {
           "title": "Email",
           "description": "Email address for the contact",
-          "pattern": "^mailto:[\\w.-]+@[\\w.-]+\\.[\\w.-]+?$",
+          "pattern": "^mailto:[\\w\\_\\~\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=\\:.-]+@[\\w.-]+\\.[\\w.-]+?$",
           "type": "string"
         }
       }
@@ -441,7 +441,7 @@
             {
               "type": "null"
             }
-          ]      
+          ]
         },
         "format": {
           "title": "Format",
@@ -557,7 +557,7 @@
           "title": "Publisher Name",
           "description": "A full formatted name, eg Firstname Lastname",
           "type": "string",
-          "minLength": 1 
+          "minLength": 1
         },
         "subOrganizationOf": {
           "title": "Parent Organization",
