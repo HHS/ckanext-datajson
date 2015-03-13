@@ -16,9 +16,9 @@ def get_facet_fields():
     # Return fields that we'd like to add to default CKAN faceting. This really has
     # nothing to do with exporting data.json but it's probably a common consideration.
     facets = OrderedDict()
-    facets[
-        # using "author" produces weird results because the Solr schema indexes it as "text" rather than "string"
-        "Agency"] = "Publishers"
+
+    # using "author" produces weird results because the Solr schema indexes it as "text" rather than "string"
+    facets["Agency"] = "Publishers"
     # search facets remove spaces from field names
     facets["SubjectArea1"] = "Subjects"
     return facets
@@ -50,12 +50,13 @@ def make_datajson_entry(package):
         ("language", extra(package, "Language")),
         ("PrimaryITInvestmentUII", extra(package, "PrimaryITInvestmentUII")),
         ("granularity", "/".join(
-            x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if x != None)),
+            x for x in [extra(package, "Unit of Analysis"), extra(package, "Geographic Granularity")] if
+            x is not None)),
         ("dataQuality", extra(package, "Data Quality Met", default="true") == "true"),
         ("theme", [s for s in (
             extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if
-                   s != None]),
-        ("references", [s for s in [extra(package, "Technical Documentation")] if s != None]),
+                   s is not None]),
+        ("references", [s for s in [extra(package, "Technical Documentation")] if s is not None]),
         ("landingPage", package["url"]),
         ("systemOfRecords", extra(package, "System Of Records")),
         ("distribution",
@@ -105,7 +106,6 @@ def get_api_resource(package):
 
 def build_temporal(package):
     # Build one dataset entry of the data.json file.
-    temporal = ""
     if extra(package, "Coverage Period Fiscal Year Start"):
         temporal = "FY" + extra(package, "Coverage Period Fiscal Year Start").replace(" ", "T").replace("T00:00:00", "")
     else:
