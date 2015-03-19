@@ -372,7 +372,8 @@ class JsonExportController(BaseController):
 
         output = []
         for pkg in packages:
-            # if pkg['owner_org'] == owner_org:
+            if pkg['publishing_status'] == 'Draft':
+                continue
             datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
@@ -405,6 +406,8 @@ class JsonExportController(BaseController):
         output = []
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
+            if pkg['publishing_status'] == 'Draft':
+                continue
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
