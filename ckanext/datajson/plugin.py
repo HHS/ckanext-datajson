@@ -225,6 +225,11 @@ class JsonExportPlugin(p.SingletonPlugin):
         m.connect('enterprise_data_inventory', '/organization/{org}/edi.json',
                   controller='ckanext.datajson.plugin:JsonExportController', action='generate_edi')
 
+        # TODO DWC update action
+        # /data/{org}/edi.json
+        m.connect('enterprise_data_inventory', '/organization/{org}/draft.json',
+                  controller='ckanext.datajson.plugin:JsonExportController', action='generate_draft')
+
         # /pod/validate
         # m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:JsonExportController', action='validator')
 
@@ -334,6 +339,22 @@ class JsonExportController(BaseController):
                 return self.make_edi(match.group(1))
         return "Invalid organization id"
 
+    def generate_draft(self):
+        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        match = re.match(r"/organization/([-a-z0-9]+)/draft.json", request.path)
+
+        # If user is not editor or admin of the organization then don't allow edi download
+        if p.toolkit.check_access('package_create', {'model': model, 'user': c.user}, {'owner_org': match.group(1)}):
+            if match:
+                # set content type (charset required or pylons throws an error)
+                response.content_type = 'application/json; charset=UTF-8'
+
+                # allow caching of response (e.g. by Apache)
+                del response.headers["Cache-Control"]
+                del response.headers["Pragma"]
+                return self.make_draft(match.group(1))
+        return "Invalid organization id"
+
 
     def make_json(self):
         # Build the data.json file.
@@ -358,6 +379,40 @@ class JsonExportController(BaseController):
         return output
 
 
+    def make_draft(self, owner_org):
+        # Error handler for creating error log
+        stream = StringIO.StringIO()
+        eh = logging.StreamHandler(stream)
+        eh.setLevel(logging.WARN)
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        eh.setFormatter(formatter)
+        logger.addHandler(eh)
+
+        # Build the data.json file.
+        packages = self.get_packages(owner_org)
+
+        output = []
+        for pkg in packages:
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            if 'publishing_status' in extras.keys() and extras['publishing_status'] != 'Draft':
+                continue
+            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+            if datajson_entry and self.is_valid(datajson_entry):
+                output.append(datajson_entry)
+            else:
+                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+
+        # Get the error log
+        eh.flush()
+        error = stream.getvalue()
+        eh.close()
+        logger.removeHandler(eh)
+        stream.close()
+
+        # return json.dumps(output)
+        return self.write_zip(output, error, zip_name='edi')
+
+
     def make_edi(self, owner_org):
         # Error handler for creating error log
         stream = StringIO.StringIO()
@@ -372,7 +427,8 @@ class JsonExportController(BaseController):
 
         output = []
         for pkg in packages:
-            if pkg['publishing_status'] == 'Draft':
+            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
                 continue
             datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
             if datajson_entry and self.is_valid(datajson_entry):
@@ -406,17 +462,18 @@ class JsonExportController(BaseController):
         output = []
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
-            if pkg['publishing_status'] == 'Draft':
-                continue
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+            if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
+                continue
             try:
-                if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
-                    if datajson_entry and self.is_valid(datajson_entry):
-                        output.append(datajson_entry)
-                    else:
-                        logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
-                                    pkg.get('title', None))
+                if re.match(r'[Nn]on-public', extras['public_access_level']):
+                    continue
+                datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+                if datajson_entry and self.is_valid(datajson_entry):
+                    output.append(datajson_entry)
+                else:
+                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
+                                pkg.get('title', None))
 
             except KeyError:
                 logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
