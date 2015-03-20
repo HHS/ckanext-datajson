@@ -557,7 +557,7 @@ class JsonExportController(BaseController):
             sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
             sub_agencies_list = sub_agencies.split(",")
             for sub in sub_agencies_list:
-                sub_packages = self, self.get_all_group_packages(group_id=sub)
+                sub_packages = self.get_all_group_packages(group_id=sub)
                 for sub_package in sub_packages:
                     packages.append(sub_package)
 
