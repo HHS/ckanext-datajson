@@ -396,7 +396,7 @@ class JsonExportController(BaseController):
         output = []
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-            if 'publishing_status' in extras.keys() and extras['publishing_status'] != 'Draft':
+            if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
                 continue
             datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
             if 'errors' in datajson_entry.keys():
