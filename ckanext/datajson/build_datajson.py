@@ -214,7 +214,9 @@ class JsonExportBuilder:
 
                 ("license", JsonExportBuilder.strip_if_string(extras.get("license_new"))),  # required-if-applicable
 
-                ("modified", JsonExportBuilder.strip_if_string(extras.get("modified"))),  # required
+                ("modified",
+                 JsonExportBuilder.strip_if_string(extras.get("modified", package.get("metadata_modified")))),
+                # required
 
                 ("primaryITInvestmentUII", JsonExportBuilder.strip_if_string(extras.get('primary_it_investment_uii'))),
                 # optional
