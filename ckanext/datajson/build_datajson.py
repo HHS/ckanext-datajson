@@ -41,7 +41,7 @@ def make_datajson_entry(package):
         ("dataDictionary", extra(package, "Data Dictionary")),
         ("accessURL", get_primary_resource(package).get("url", None)),
         ("webService", get_api_resource(package).get("url", None)),
-        ("format", extension_to_mime_type(get_primary_resource(package).get("format", None)) ),
+        ("format", extension_to_mime_type(get_primary_resource(package).get("format", None))),
         ("license", extra(package, "License Agreement")),
         ("spatial", extra(package, "Geographic Scope")),
         ("temporal", build_temporal(package)),
@@ -54,8 +54,9 @@ def make_datajson_entry(package):
             x is not None)),
         ("dataQuality", extra(package, "Data Quality Met", default="true") == "true"),
         ("theme", [s for s in (
-            extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")) if
-                   s is not None]),
+            extra(package, "Subject Area 1"), extra(package, "Subject Area 2"), extra(package, "Subject Area 3")
+        ) if s is not None]),
+
         ("references", [s for s in [extra(package, "Technical Documentation")] if s is not None]),
         ("landingPage", package["url"]),
         ("systemOfRecords", extra(package, "System Of Records")),
@@ -74,9 +75,9 @@ def make_datajson_entry(package):
 
 def extra(package, key, default=None):
     # Retrieves the value of an extras field.
-    for extra in package["extras"]:
-        if extra["key"] == key:
-            return extra["value"]
+    for xtra in package["extras"]:
+        if xtra["key"] == key:
+            return xtra["value"]
     return default
 
 
@@ -133,9 +134,15 @@ def extension_to_mime_type(file_ext):
     }
     return ext.get(file_ext.lower(), "application/unknown")
 
+
 currentPackageOrg = None
 
+
 class JsonExportBuilder:
+
+    def __init__(self):
+        global currentPackageOrg
+        currentPackageOrg = None
 
     @staticmethod
     def make_datajson_export_catalog(datasets):
@@ -193,7 +200,7 @@ class JsonExportBuilder:
                 # ("fn", "Jane Doe"),
                 # ("hasEmail", "mailto:jane.doe@agency.gov")
                 # ])),  # required
-                ('contactPoint', JsonExportBuilder.get_contact_point(extras, package)),  # required
+                ('contactPoint', JsonExportBuilder.get_contact_point(extras)),  # required
 
                 ("dataQuality", JsonExportBuilder.strip_if_string(extras.get('data_quality'))),
                 # required-if-applicable
@@ -277,38 +284,8 @@ class JsonExportBuilder:
 
             return errors_dict
 
-        # # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
-        # extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
-        # 'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
-        # 'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
-        # 'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
-        # 'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
-        # 'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
-        # 'publisher_4', 'publisher_5']
-        #
-        # # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
-        # # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
-        # # generate a list of keys to ignore by calling a specific function to get the extras
-        # retlist_keys = [x for x, y in retlist]
-        # extras_keys = set(extras.keys()) - set(extras_to_filter_out)
-        #
-        # for key in extras_keys:
-        # convertedKey = underscore_to_camelcase(key)
-        # if convertedKey not in retlist_keys:
-        # retlist.append((convertedKey, extras[key]))
-
         # Remove entries where value is None, "", or empty list []
         striped_retlist = [(x, y) for x, y in retlist if y is not None and y != "" and y != []]
-        striped_retlist_keys = [x for x, y in striped_retlist]
-
-
-        # If a required metadata field was removed, return empty string
-        # for required_field in ["accessLevel", "bureauCode", "contactPoint", "description", "identifier", "keyword",
-        # "modified", "programCode", "publisher", "title"]:
-        # if required_field not in striped_retlist_keys:
-        # log.warn("Missing required field detected for package with id=[%s], title=['%s']: '%s'",
-        # package.get('id'), package.get('title'), required_field)
-        # return
 
         # When saved from UI DataQuality value is stored as "on" instead of True.
         # Check if value is "on" and replace it with True.
@@ -343,7 +320,6 @@ class JsonExportBuilder:
             return errors_dict
 
         return striped_retlist_dict
-
 
     # used by get_accrual_periodicity
     accrual_periodicity_dict = {
@@ -436,18 +412,18 @@ class JsonExportBuilder:
         return arr
 
     @staticmethod
-    def get_contact_point(extras, package):
+    def get_contact_point(extras):
         for required_field in ["contact_name", "contact_email"]:
             if required_field not in extras.keys():
                 raise KeyError(required_field)
 
         email = JsonExportBuilder.strip_if_string(extras['contact_email'])
         if email is None or '@' not in email:
-            raise KeyError(required_field)
+            raise KeyError('contact_email')
 
         fn = JsonExportBuilder.strip_if_string(extras['contact_name'])
         if fn is None:
-            raise KeyError(required_field)
+            raise KeyError('contact_name')
 
         contact_point = OrderedDict([
             ('@type', 'vcard:Contact'),  # optional
@@ -459,9 +435,9 @@ class JsonExportBuilder:
     @staticmethod
     def extra(package, key, default=None):
         # Retrieves the value of an extras field.
-        for extra in package["extras"]:
-            if extra["key"] == key:
-                return extra["value"]
+        for xtra in package["extras"]:
+            if xtra["key"] == key:
+                return xtra["value"]
         return default
 
     @staticmethod
@@ -532,18 +508,15 @@ class JsonExportBuilder:
                 val = None
         return val
 
-
     @staticmethod
     def get_primary_resource(package):
         # Return info about a "primary" resource. Select a good one.
         return JsonExportBuilder.get_best_resource(package, ("csv", "xls", "xml", "text", "zip", "rdf"))
 
-
     @staticmethod
     def get_api_resource(package):
         # Return info about an API resource.
         return JsonExportBuilder.get_best_resource(package, ("api", "query tool"))
-
 
     @staticmethod
     def split_multiple_entries(retlist, extras, names):

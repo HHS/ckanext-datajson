@@ -88,7 +88,7 @@ class DataJsonPlugin(p.SingletonPlugin):
 
 
 class DataJsonController(BaseController):
-    def generate_output(self, format):
+    def generate_output(self, fmt):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
 
@@ -99,7 +99,7 @@ class DataJsonController(BaseController):
         # output
         data = self.make_json()
 
-        if format == 'json-ld':
+        if fmt == 'json-ld':
             # Convert this to JSON-LD.
             data = OrderedDict([
                 ("@context", OrderedDict([
@@ -108,8 +108,7 @@ class DataJsonController(BaseController):
                     ("dcat", "http://www.w3.org/ns/dcat#"),
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
                     ("pod", "http://project-open-data.github.io/schema/2013-09-20_1.0#"),
-                ])
-                 ),
+                ])),
                 ("@id", DataJsonPlugin.ld_id),
                 ("@type", "dcat:Catalog"),
                 ("dcterms:title", DataJsonPlugin.ld_title),
@@ -137,7 +136,8 @@ class DataJsonController(BaseController):
             c.source_url = request.POST["url"]
             c.errors = []
 
-            import urllib, json
+            import urllib
+            import json
             from datajsonvalidator import do_validation
 
             body = None
@@ -167,11 +167,12 @@ class DataJsonController(BaseController):
         # Shows an HTML rendition of the data.json file. Requests the file live
         # from http://localhost/data.json.
 
-        import urllib, json
+        import urllib
+        import json
 
         try:
             c.catalog_data = json.load(urllib.urlopen("http://localhost/data.json"))
-        except:
+        except Exception as e:
             c.catalog_data = []
 
         c.catalog_data.sort(key=lambda x: x.get("modified"), reverse=True)
@@ -212,8 +213,11 @@ class JsonExportPlugin(p.SingletonPlugin):
                       controller='ckanext.datajson.plugin:JsonExportController',
                       action='generate_json')
             # TODO commenting out enterprise data inventory for right now
-            # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path, controller='ckanext.datajson.plugin:JsonExportController', action='generate_enterprise')
-            # m.connect('datajsonld', JsonExportPlugin.route_ld_path, controller='ckanext.datajson.plugin:JsonExportController', action='generate_jsonld')
+            # m.connect('enterprisedatajson', JsonExportPlugin.route_edata_path,
+            # controller='ckanext.datajson.plugin:JsonExportController', action='generate_enterprise')
+
+            # m.connect('datajsonld', JsonExportPlugin.route_ld_path,
+            # controller='ckanext.datajson.plugin:JsonExportController', action='generate_jsonld')
 
         # TODO DWC update action
         # /data/{org}/data.json
@@ -231,7 +235,8 @@ class JsonExportPlugin(p.SingletonPlugin):
                   controller='ckanext.datajson.plugin:JsonExportController', action='generate_draft')
 
         # /pod/validate
-        # m.connect('datajsonvalidator', "/pod/validate", controller='ckanext.datajson.plugin:JsonExportController', action='validator')
+        # m.connect('datajsonvalidator', "/pod/validate",
+        # controller='ckanext.datajson.plugin:JsonExportController', action='validator')
 
         return m
 
@@ -239,7 +244,7 @@ class JsonExportPlugin(p.SingletonPlugin):
 class JsonExportController(BaseController):
     _errors_json = []
 
-    def generate_output(self, format):
+    def generate_output(self, fmt):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
 
@@ -251,7 +256,7 @@ class JsonExportController(BaseController):
         # output
         data = self.make_json()
 
-        if format == 'json-ld':
+        if fmt == 'json-ld':
             # Convert this to JSON-LD.
             data = OrderedDict([
                 ("@context", OrderedDict([
@@ -259,8 +264,7 @@ class JsonExportController(BaseController):
                     ("dcterms", "http://purl.org/dc/terms/"),
                     ("dcat", "http://www.w3.org/ns/dcat#"),
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
-                ])
-                 ),
+                ])),
                 ("@id", JsonExportPlugin.ld_id),
                 ("@type", "dcat:Catalog"),
                 ("dcterms:title", JsonExportPlugin.ld_title),
@@ -283,7 +287,8 @@ class JsonExportController(BaseController):
             c.source_url = request.POST["url"]
             c.errors = []
 
-            import urllib, json
+            import urllib
+            import json
             from datajsonvalidator import do_validation
 
             body = None
@@ -310,7 +315,8 @@ class JsonExportController(BaseController):
         return render('datajsonvalidator.html')
 
     def generate_pdl(self):
-        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        # DWC this is a hack, as I couldn't get to the request parameters.
+        #  For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/data.json", request.path)
 
         # If user is not editor or admin of the organization then don't allow pdl download
@@ -326,7 +332,8 @@ class JsonExportController(BaseController):
         return "Invalid organization id"
 
     def generate_edi(self):
-        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        # DWC this is a hack, as I couldn't get to the request parameters.
+        # For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/edi.json", request.path)
 
         # If user is not editor or admin of the organization then don't allow edi download
@@ -342,7 +349,8 @@ class JsonExportController(BaseController):
         return "Invalid organization id"
 
     def generate_draft(self):
-        # DWC this is a hack, as I couldn't get to the request parameters. For whatever reason, the multidict was always empty
+        # DWC this is a hack, as I couldn't get to the request parameters.
+        # For whatever reason, the multidict was always empty
         match = re.match(r"/organization/([-a-z0-9]+)/draft.json", request.path)
 
         # If user is not editor or admin of the organization then don't allow edi download
@@ -552,8 +560,8 @@ class JsonExportController(BaseController):
         packages = self.get_all_group_packages(group_id=owner_org)
         # get packages for sub-agencies.
         sub_agency = model.Group.get(owner_org)
-        if 'sub-agencies' in sub_agency.extras.col.target and \
-                        sub_agency.extras.col.target['sub-agencies'].state == 'active':
+        if 'sub-agencies' in sub_agency.extras.col.target \
+                and sub_agency.extras.col.target['sub-agencies'].state == 'active':
             sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
             sub_agencies_list = sub_agencies.split(",")
             for sub in sub_agencies_list:
@@ -575,7 +583,8 @@ class JsonExportController(BaseController):
 
     def is_valid(self, instance):
         """
-        Validates a data.json entry against the project open data's JSON schema. Log a warning message on validation error
+        Validates a data.json entry against the project open data's JSON schema.
+        Log a warning message on validation error
         """
         error = best_match(validator.iter_errors(instance))
         if error:
@@ -638,12 +647,8 @@ def get_validator():
     from jsonschema import Draft4Validator, FormatChecker
 
     schema_path = os.path.join(os.path.dirname(__file__), 'pod_schema', 'federal-v1.1', 'dataset.json')
-    with open(schema_path, 'r') as file:
-        schema = json.loads(file.read())
+    with open(schema_path, 'r') as schema:
+        schema = json.loads(schema.read())
         return Draft4Validator(schema, format_checker=FormatChecker())
-
-    logger.warn('Unable to create validator')
-    return None
-
 
 validator = get_validator()
