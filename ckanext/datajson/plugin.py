@@ -370,24 +370,17 @@ class JsonExportController(BaseController):
                     if datajson_entry:
                         output.append(datajson_entry)
                     else:
-                        logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
-                                    pkg.get('title', None))
+                        publisher = self.detect_publisher(extras)
+                        logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+                                    pkg.get('title', None), publisher)
             except KeyError:
-                currentPackageOrg = None
-
-                if 'publisher' in extras and extras['publisher']:
-                    currentPackageOrg = JsonExportBuilder.strip_if_string(extras['publisher'])
-
-                for i in range(1, 6):
-                    key = 'publisher_' + str(i)
-                    if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
-                        currentPackageOrg = JsonExportBuilder.strip_if_string(extras[key])
+                publisher = self.detect_publisher(extras)
 
                 logger.warn(
                     "Dataset id=[%s], title=[%s], organization=[%s] missing required 'public_access_level' field",
                     pkg.get('id', None),
                     pkg.get('title', None),
-                    currentPackageOrg)
+                    publisher)
 
                 errors = ['Missing Required Field', ['public_access_level']]
 
@@ -395,7 +388,7 @@ class JsonExportController(BaseController):
                     ('id', pkg.get('id')),
                     ('name', pkg.get('name')),
                     ('title', pkg.get('title')),
-                    ('organization', currentPackageOrg),
+                    ('organization', publisher),
                     ('errors', errors),
                 ]))
                 pass
@@ -427,17 +420,9 @@ class JsonExportController(BaseController):
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
-                currentPackageOrg = None
-
-                if 'publisher' in extras and extras['publisher']:
-                    currentPackageOrg = JsonExportBuilder.strip_if_string(extras['publisher'])
-
-                for i in range(1, 6):
-                    key = 'publisher_' + str(i)
-                    if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
-                        currentPackageOrg = JsonExportBuilder.strip_if_string(extras[key])
+                publisher = self.detect_publisher(extras)
                 logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
-                            pkg.get('title', None), currentPackageOrg)
+                            pkg.get('title', None), publisher)
 
         # Get the error log
         eh.flush()
@@ -448,6 +433,19 @@ class JsonExportController(BaseController):
 
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='draft')
+
+    @staticmethod
+    def detect_publisher(extras):
+        publisher = None
+
+        if 'publisher' in extras and extras['publisher']:
+            publisher = JsonExportBuilder.strip_if_string(extras['publisher'])
+
+        for i in range(1, 6):
+            key = 'publisher_' + str(i)
+            if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
+                publisher = JsonExportBuilder.strip_if_string(extras[key])
+        return publisher
 
     def make_edi(self, owner_org):
         # Error handler for creating error log
@@ -474,7 +472,9 @@ class JsonExportController(BaseController):
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
-                logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None), pkg.get('title', None))
+                publisher = self.detect_publisher(extras)
+                logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+                            pkg.get('title', None), publisher)
 
         # Get the error log
         eh.flush()
@@ -515,27 +515,24 @@ class JsonExportController(BaseController):
                 if datajson_entry and self.is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
-                    logger.warn("Dataset id=[%s], title=[%s] omitted\n", pkg.get('id', None),
-                                pkg.get('title', None))
+                    publisher = self.detect_publisher(extras)
+                    logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+                                pkg.get('title', None), publisher)
 
             except KeyError:
-                logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
-                            pkg.get('id', None), pkg.get('title', None))
-                errors = ['Missing Required Field', ['public_access_level']]
+                publisher = self.detect_publisher(extras)
 
-                currentPackageOrg = None
-                if 'publisher' in extras and extras['publisher']:
-                    currentPackageOrg = JsonExportBuilder.strip_if_string(extras['publisher'])
-                for i in range(1, 6):
-                    key = 'publisher_' + str(i)
-                    if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
-                        currentPackageOrg = JsonExportBuilder.strip_if_string(extras[key])
+                logger.warn(
+                    "Dataset id=[%s], title=['%s'], organization=['%s'] missing required 'public_access_level' field",
+                    pkg.get('id', None), pkg.get('title', None), publisher)
+
+                errors = ['Missing Required Field', ['public_access_level']]
 
                 self._errors_json.append(OrderedDict([
                     ('id', pkg.get('id')),
                     ('name', pkg.get('name')),
                     ('title', pkg.get('title')),
-                    ('organization', currentPackageOrg),
+                    ('organization', publisher),
                     ('errors', errors),
                 ]))
                 pass
