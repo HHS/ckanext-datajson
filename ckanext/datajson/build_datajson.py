@@ -263,8 +263,8 @@ class JsonExportBuilder:
                 JsonExportBuilder.split_multiple_entries(retlist, extras, pair)
 
         except KeyError as e:
-            log.warn("Missing Required Field for package with id=[%s], title=['%s']: '%s'" % (
-                package.get('id'), package.get('title'), e))
+            log.warn("Missing Required Field for package with id=[%s], title=['%s'], organization=['%s']: '%s'" % (
+                package.get('id'), package.get('title'), currentPackageOrg, e))
 
             errors = ['Missing Required Field', ["%s" % e]]
             errors_dict = OrderedDict([
