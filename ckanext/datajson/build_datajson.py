@@ -257,9 +257,18 @@ class JsonExportBuilder:
                 JsonExportBuilder.split_multiple_entries(retlist, extras, pair)
 
         except KeyError as e:
-            log.warn("Invalid field detected for package with id=[%s], title=['%s']: '%s'", package.get('id'),
-                     package.get('title'), e)
-            return
+            log.warn("Missing Required Field for package with id=[%s], title=['%s']: '%s'" % (
+                package.get('id'), package.get('title'), e))
+
+            errors = ['Missing Required Field', ["%s" % e]]
+            errors_dict = OrderedDict([
+                ('id', package.get('id')),
+                ('name', package.get('name')),
+                ('title', package.get('title')),
+                ('errors', errors),
+            ])
+
+            return errors_dict
 
         # # TODO this is a lazy hack to make sure we don't have redundant fields when the free form key/value pairs are added
         # extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
@@ -315,7 +324,15 @@ class JsonExportBuilder:
         if len(errors) > 0:
             for error in errors:
                 log.warn(error)
-            return
+
+            errors_dict = OrderedDict([
+                ('id', package.get('id')),
+                ('name', package.get('name')),
+                ('title', package.get('title')),
+                ('errors', errors),
+            ])
+
+            return errors_dict
 
         return striped_retlist_dict
 
@@ -443,7 +460,8 @@ class JsonExportBuilder:
     def get_publisher_tree_wrong_order(extras):
         publisher = JsonExportBuilder.strip_if_string(extras.get('publisher'))
         if publisher is None:
-            raise KeyError('publisher')
+            return None
+            # raise KeyError('publisher')
 
         organization_list = list()
         organization_list.append([

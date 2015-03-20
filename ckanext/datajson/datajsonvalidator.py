@@ -397,7 +397,7 @@ def check_required_field(obj, field_name, data_type, dataset_name, errs):
         add_error(errs, 10, "Missing Required Fields", "The '%s' field is missing." % field_name, dataset_name)
         return False
     elif obj[field_name] is None:
-        add_error(errs, 10, "Missing Required Fields", "The '%s' field is set to null." % field_name, dataset_name)
+        add_error(errs, 10, "Missing Required Fields", "The '%s' field is empty." % field_name, dataset_name)
         return False
     elif not isinstance(obj[field_name], data_type):
         add_error(errs, 5, "Invalid Required Field Value",

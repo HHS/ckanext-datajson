@@ -109,7 +109,7 @@ class DataJsonController(BaseController):
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
                     ("pod", "http://project-open-data.github.io/schema/2013-09-20_1.0#"),
                 ])
-                ),
+                 ),
                 ("@id", DataJsonPlugin.ld_id),
                 ("@type", "dcat:Catalog"),
                 ("dcterms:title", DataJsonPlugin.ld_title),
@@ -150,7 +150,8 @@ class DataJsonController(BaseController):
                     e) + ". Try using JSONLint.com."]))
             except Exception as e:
                 c.errors.append((
-                "Internal Error", ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
+                    "Internal Error",
+                    ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
 
             if body:
                 try:
@@ -176,7 +177,6 @@ class DataJsonController(BaseController):
         c.catalog_data.sort(key=lambda x: x.get("modified"), reverse=True)
 
         return render('html_rendition.html')
-
 
 
 class JsonExportPlugin(p.SingletonPlugin):
@@ -258,7 +258,7 @@ class JsonExportController(BaseController):
                     ("dcat", "http://www.w3.org/ns/dcat#"),
                     ("foaf", "http://xmlns.com/foaf/0.1/"),
                 ])
-                ),
+                 ),
                 ("@id", JsonExportPlugin.ld_id),
                 ("@type", "dcat:Catalog"),
                 ("dcterms:title", JsonExportPlugin.ld_title),
@@ -391,12 +391,17 @@ class JsonExportController(BaseController):
         # Build the data.json file.
         packages = self.get_packages(owner_org)
 
+        errors_json = []
+
         output = []
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' in extras.keys() and extras['publishing_status'] != 'Draft':
                 continue
             datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+            if 'errors' in datajson_entry.keys():
+                errors_json.append(datajson_entry)
+                datajson_entry = None
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
@@ -410,7 +415,7 @@ class JsonExportController(BaseController):
         stream.close()
 
         # return json.dumps(output)
-        return self.write_zip(output, error, zip_name='edi')
+        return self.write_zip(output, error, errors_json, zip_name='edi')
 
 
     def make_edi(self, owner_org):
@@ -426,11 +431,15 @@ class JsonExportController(BaseController):
         packages = self.get_packages(owner_org)
 
         output = []
+        errors_json = []
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
                 continue
             datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+            if 'errors' in datajson_entry.keys():
+                errors_json.append(datajson_entry)
+                datajson_entry = None
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
@@ -444,7 +453,7 @@ class JsonExportController(BaseController):
         stream.close()
 
         # return json.dumps(output)
-        return self.write_zip(output, error, zip_name='edi')
+        return self.write_zip(output, error, errors_json, zip_name='edi')
 
 
     def make_pdl(self, owner_org):
@@ -460,6 +469,7 @@ class JsonExportController(BaseController):
         packages = self.get_packages(owner_org)
 
         output = []
+        errors_json = []
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
@@ -469,6 +479,9 @@ class JsonExportController(BaseController):
                 if re.match(r'[Nn]on-public', extras['public_access_level']):
                     continue
                 datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+                if 'errors' in datajson_entry.keys():
+                    errors_json.append(datajson_entry)
+                    datajson_entry = None
                 if datajson_entry and self.is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
@@ -488,7 +501,7 @@ class JsonExportController(BaseController):
         stream.close()
 
         # return json.dumps(output)
-        return self.write_zip(output, error, zip_name='pdl')
+        return self.write_zip(output, error, errors_json, zip_name='pdl')
 
 
     def get_packages(self, owner_org):
@@ -530,7 +543,7 @@ class JsonExportController(BaseController):
         return True
 
 
-    def write_zip(self, data, error=None, zip_name='data'):
+    def write_zip(self, data, error=None, errors_json=None, zip_name='data'):
         """
         Data: a python object to write to the data.json
         Error: unicode string representing the content of the error log.
@@ -546,6 +559,13 @@ class JsonExportController(BaseController):
             zf.writestr('data.json',
                         json.dumps(JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
                             'utf8'))
+        # Write empty.json if nothing to return
+        else:
+            zf.writestr('empty.json', '')
+
+        # Errors in json format
+        if errors_json:
+            zf.writestr('errors.json', json.dumps(errors_json).encode('utf8'))
 
         # Write the error log
         if error:
