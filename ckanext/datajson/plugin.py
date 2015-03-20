@@ -378,10 +378,22 @@ class JsonExportController(BaseController):
                             pkg.get('title', None))
 
                 errors = ['Missing Required Field', ['public_access_level']]
+
+                currentPackageOrg = None
+
+                if 'publisher' in extras and extras['publisher']:
+                    currentPackageOrg = JsonExportBuilder.strip_if_string(extras['publisher'])
+
+                for i in range(1, 6):
+                    key = 'publisher_' + str(i)
+                    if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
+                        currentPackageOrg = JsonExportBuilder.strip_if_string(extras[key])
+
                 self._errors_json.append(OrderedDict([
                     ('id', pkg.get('id')),
                     ('name', pkg.get('name')),
                     ('title', pkg.get('title')),
+                    ('organization', currentPackageOrg),
                     ('errors', errors),
                 ]))
                 pass
@@ -498,10 +510,20 @@ class JsonExportController(BaseController):
                 logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
                             pkg.get('id', None), pkg.get('title', None))
                 errors = ['Missing Required Field', ['public_access_level']]
+
+                currentPackageOrg = None
+                if 'publisher' in extras and extras['publisher']:
+                    currentPackageOrg = JsonExportBuilder.strip_if_string(extras['publisher'])
+                for i in range(1, 6):
+                    key = 'publisher_' + str(i)
+                    if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
+                        currentPackageOrg = JsonExportBuilder.strip_if_string(extras[key])
+
                 self._errors_json.append(OrderedDict([
                     ('id', pkg.get('id')),
                     ('name', pkg.get('name')),
                     ('title', pkg.get('title')),
+                    ('organization', currentPackageOrg),
                     ('errors', errors),
                 ]))
                 pass

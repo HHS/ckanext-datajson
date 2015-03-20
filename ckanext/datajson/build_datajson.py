@@ -133,8 +133,10 @@ def extension_to_mime_type(file_ext):
     }
     return ext.get(file_ext.lower(), "application/unknown")
 
+currentPackageOrg = None
 
 class JsonExportBuilder:
+
     @staticmethod
     def make_datajson_export_catalog(datasets):
         catalog = OrderedDict([
@@ -148,6 +150,8 @@ class JsonExportBuilder:
 
     @staticmethod
     def make_datajson_export_entry(package):
+        global currentPackageOrg
+        currentPackageOrg = None
         # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
         extras = dict([(x['key'], x['value']) for x in package['extras']])
 
@@ -267,6 +271,7 @@ class JsonExportBuilder:
                 ('id', package.get('id')),
                 ('name', package.get('name')),
                 ('title', package.get('title')),
+                ('organization', currentPackageOrg),
                 ('errors', errors),
             ])
 
@@ -331,6 +336,7 @@ class JsonExportBuilder:
                 ('id', package.get('id')),
                 ('name', package.get('name')),
                 ('title', package.get('title')),
+                ('organization', currentPackageOrg),
                 ('errors', errors),
             ])
 
@@ -460,10 +466,13 @@ class JsonExportBuilder:
 
     @staticmethod
     def get_publisher_tree_wrong_order(extras):
+        global currentPackageOrg
         publisher = JsonExportBuilder.strip_if_string(extras.get('publisher'))
         if publisher is None:
             return None
             # raise KeyError('publisher')
+
+        currentPackageOrg = publisher
 
         organization_list = list()
         organization_list.append([
@@ -478,6 +487,7 @@ class JsonExportBuilder:
                     ('@type', 'org:Organization'),  # optional
                     ('name', JsonExportBuilder.strip_if_string(extras[key])),  # required
                 ])
+                currentPackageOrg = extras[key]
 
         size = len(organization_list)
 
