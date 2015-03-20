@@ -415,7 +415,7 @@ class JsonExportController(BaseController):
         stream.close()
 
         # return json.dumps(output)
-        return self.write_zip(output, error, errors_json, zip_name='edi')
+        return self.write_zip(output, error, errors_json, zip_name='draft')
 
 
     def make_edi(self, owner_org):
@@ -554,9 +554,13 @@ class JsonExportController(BaseController):
         o = StringIO.StringIO()
         zf = zipfile.ZipFile(o, mode='w')
 
+        data_file_name = 'data.json'
+        if 'draft' == zip_name:
+            data_file_name = 'draft_data.json'
+
         # Write the data file
         if data:
-            zf.writestr('data.json',
+            zf.writestr(data_file_name,
                         json.dumps(JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
                             'utf8'))
         # Write empty.json if nothing to return
