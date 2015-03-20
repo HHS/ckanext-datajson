@@ -237,6 +237,8 @@ class JsonExportPlugin(p.SingletonPlugin):
 
 
 class JsonExportController(BaseController):
+    _errors_json = []
+
     def generate_output(self, format):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
@@ -355,7 +357,6 @@ class JsonExportController(BaseController):
                 return self.make_draft(match.group(1))
         return "Invalid organization id"
 
-
     def make_json(self):
         # Build the data.json file.
         packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
@@ -375,9 +376,16 @@ class JsonExportController(BaseController):
                 logger.warn("Dataset id=[%s], title=[%s] missing required 'public_access_level' field",
                             pkg.get('id', None),
                             pkg.get('title', None))
+
+                errors = ['Missing Required Field', ['public_access_level']]
+                self._errors_json.append(OrderedDict([
+                    ('id', pkg.get('id')),
+                    ('name', pkg.get('name')),
+                    ('title', pkg.get('title')),
+                    ('errors', errors),
+                ]))
                 pass
         return output
-
 
     def make_draft(self, owner_org):
         # Error handler for creating error log
@@ -417,7 +425,6 @@ class JsonExportController(BaseController):
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='draft')
 
-
     def make_edi(self, owner_org):
         # Error handler for creating error log
         stream = StringIO.StringIO()
@@ -455,7 +462,6 @@ class JsonExportController(BaseController):
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='edi')
 
-
     def make_pdl(self, owner_org):
         # Error handler for creating error log
         stream = StringIO.StringIO()
@@ -491,6 +497,13 @@ class JsonExportController(BaseController):
             except KeyError:
                 logger.warn("Dataset id=[%s], title=['%s'] missing required 'public_access_level' field",
                             pkg.get('id', None), pkg.get('title', None))
+                errors = ['Missing Required Field', ['public_access_level']]
+                self._errors_json.append(OrderedDict([
+                    ('id', pkg.get('id')),
+                    ('name', pkg.get('name')),
+                    ('title', pkg.get('title')),
+                    ('errors', errors),
+                ]))
                 pass
 
         # Get the error log
@@ -502,7 +515,6 @@ class JsonExportController(BaseController):
 
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='pdl')
-
 
     def get_packages(self, owner_org):
         # Build the data.json file.
@@ -520,7 +532,6 @@ class JsonExportController(BaseController):
 
         return packages
 
-
     def get_all_group_packages(self, group_id):
         """
         Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
@@ -531,7 +542,6 @@ class JsonExportController(BaseController):
 
         return result
 
-
     def is_valid(self, instance):
         """
         Validates a data.json entry against the project open data's JSON schema. Log a warning message on validation error
@@ -541,7 +551,6 @@ class JsonExportController(BaseController):
             logger.warn("Validation failed, best guess of error = %s", error)
             return False
         return True
-
 
     def write_zip(self, data, error=None, errors_json=None, zip_name='data'):
         """
@@ -566,6 +575,12 @@ class JsonExportController(BaseController):
         # Write empty.json if nothing to return
         else:
             zf.writestr('empty.json', '')
+
+        if self._errors_json:
+            if errors_json:
+                errors_json += self._errors_json
+            else:
+                errors_json = self._errors_json
 
         # Errors in json format
         if errors_json:
