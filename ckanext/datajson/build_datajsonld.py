@@ -33,14 +33,18 @@ jsonld_metadata_mapping = {
     "description": "dcterms:description",
     "keyword": "dcat:keyword",
     "modified": "dcterms:modified",
-    "publisher": "dcat:publisher",
-    "person": "foaf:Person",
+    "publisher": "dcterms:publisher",
+    "contactPoint": "dcat:contactPoint",
     "mbox": "foaf:mbox",
     "identifier": "dcterms:identifier",
+    "accessLevel": "pod:accessLevel",
         
+    "bureauCode": "pod:bureauCode",
+    "programCode": "pod:programCode",
+    "accessLevelComment": "pod:accessLevelComment",
     "dataDictionary": "dcat:dataDictionary",
     "accessURL": "dcat:accessURL",
-    "webService": "dcat:webService",
+    "webService": "pod:webService",
     "format": "dcterms:format", # must be a dcterms:MediaTypeOrExtent
     "license": "dcterms:license",
     "spatial": "dcterms:spatial", # must be a dcterms:Location entity
@@ -49,19 +53,16 @@ jsonld_metadata_mapping = {
     "issued": "dcterms:issued",
     "accrualPeriodicity": "dcterms:accrualPeriodicity", # must be a dcterms:Frequency 
     "language": "dcat:language", # must be an IRI
-    "granularity": "dcat:granularity",
-    "dataQuality": "xsd:boolean",
+    "dataQuality": "pod:dataQuality",
     "theme": "dcat:theme",
     "references": "dcterms:references",
-    "size": "dcat:size",
     "landingPage": "dcat:landingPage",
-    "feed": "dcat:feed",
+    "systemOfRecords": "pod:systemOfRecords",
 }
 
 jsonld_metadata_datatypes = {
     "modified": "http://www.w3.org/2001/XMLSchema#dateTime",
     "issued": "http://www.w3.org/2001/XMLSchema#dateTime",
-    "size": "http://www.w3.org/2001/XMLSchema#decimal",
 }
     
 def apply_jsonld_metadata_mapping(data, newdict):
@@ -72,10 +73,6 @@ def apply_jsonld_metadata_mapping(data, newdict):
         # skip fields with no mapping to RDF
         if k not in jsonld_metadata_mapping: continue
         
-        # specially handle 'keyword' which in JSON is packed in a comma-separated field
-        if k == "keyword":
-            v = v.split(",")
-            
         # specially handle literal fields with datatypes
         if k in jsonld_metadata_datatypes:
             # Convert ISO datetime format to xsd:dateTime format.

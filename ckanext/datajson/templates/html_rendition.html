@@ -1,0 +1,43 @@
+{% extends "page.html" %}
+
+{% block subtitle %}Data Catalog (HTML Table Rendition){% endblock %}
+
+{% block breadcrumb_content %}
+{% endblock %}
+
+{% block primary %}
+  <article class="module">
+    <div class="module-content">
+      <h1>Data Catalog</h1>
+      
+      <p>Welcome to the {{g.site_title}}. There are several ways you may view &amp; download the data catalog:</p>
+
+      <ul>
+        <li>Use the <a href='/dataset'>Dataset Search &amp; Browse Page</a> to search datasets or browse and filter by publisher or subject.</li>
+        <li>Download the complete data catalog in our <a href="/data.json">data.json</a> or <a href="/data.jsonld">data.jsonld</a> file, which uses the <a href="http://project-open-data.github.io/schema/">Project Open Data Metadata Schema</a>.</li>
+        <li>Scroll down to see a list of datasets in the catalog with the most recently updated datesets listed first.</li>
+      </ul>
+
+      <hr style="margin: 1.5em 0">
+	
+      <table>
+      {% for item in c.catalog_data %}
+        <tr>
+          <td>
+            <p style="font-weight: bold"><a href="{{item.landingPage}}">{{item.title}}</a></p>
+            <div style="margin-left: 2em">
+              <p>{{item.description}}</p>
+              <p>
+                {% if item.accessURL %}<a href="{{item.accessURL}}">{{item.accessURL}}</a><br>{% endif %}
+                Last Modified: {% if item.modified %}{{item.modified}}{% else %}unknown{% endif %}<br>
+              </p>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </table>
+    </div>
+  </article>
+{% endblock %}
+
+{% block secondary %}{% endblock %}
