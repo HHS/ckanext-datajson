@@ -139,7 +139,6 @@ currentPackageOrg = None
 
 
 class JsonExportBuilder:
-
     def __init__(self):
         global currentPackageOrg
         currentPackageOrg = None
@@ -357,6 +356,8 @@ class JsonExportBuilder:
             if 'url' in rkeys:
                 res_url = JsonExportBuilder.strip_if_string(r.get('url'))
                 if res_url:
+                    res_url = res_url.replace('http://[[REDACTED', '[[REDACTED')
+                    res_url = res_url.replace('http://http', 'http')
                     if 'api' == r.get('resource_type') or 'accessurl' == r.get('resource_type'):
                         resource += [("accessURL", res_url)]
                     else:
@@ -417,18 +418,24 @@ class JsonExportBuilder:
             if required_field not in extras.keys():
                 raise KeyError(required_field)
 
-        email = JsonExportBuilder.strip_if_string(extras['contact_email'])
-        if email is None or '@' not in email:
-            raise KeyError('contact_email')
-
         fn = JsonExportBuilder.strip_if_string(extras['contact_name'])
         if fn is None:
             raise KeyError('contact_name')
 
+        email = JsonExportBuilder.strip_if_string(extras['contact_email'])
+        if email is None:
+            raise KeyError('contact_email')
+
+        if '[[REDACTED' not in email:
+            if '@' not in email:
+                raise KeyError('contact_email')
+            else:
+                email = 'mailto:' + email
+
         contact_point = OrderedDict([
             ('@type', 'vcard:Contact'),  # optional
             ('fn', fn),  # required
-            ('hasEmail', 'mailto:' + email),  # required
+            ('hasEmail', email),  # required
         ])
         return contact_point
 
