@@ -599,7 +599,7 @@ class DatasetHarvesterBase(HarvesterBase):
             owner_org = source_dataset.owner_org
 
 
-        source_config = json.loads(harvest_object.source.config or '{}')
+        source_config = self.load_config(harvest_object.source)
         group_name = source_config.get('default_groups', '')
 
         # Assemble basic information about the dataset.
