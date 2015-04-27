@@ -28,6 +28,9 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
     'Other (Open)':'other-open',
     'Other (Public Domain)':'other-pd',
     'UK Open Government Licence (OGL)':'uk-ogl',
+
+    'U.S. Public Domain Works':'us-pd',
+    'http://www.usa.gov/publicdomain/label/1.0/':'us-pd',
   }
 
   if not datajson.get("license", ""):
