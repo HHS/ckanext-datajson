@@ -53,7 +53,7 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
   license = datajson.get("license")
   if not license:
     package["license_id"] = licenses.get("License Not Specified", "");
-  else
+  else:
     license = license.replace("http://","")
     license = license.replace("https://","")
     license = license.rstrip('/')
