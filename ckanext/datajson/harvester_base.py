@@ -318,6 +318,7 @@ class DatasetHarvesterBase(HarvesterBase):
             get_action('package_update')(self.context(), pkg)
             obj = HarvestObject(
                 guid=pkg_id,
+                package_id=pkg["id"],
                 job=harvest_job,
                 ) 
             obj.save()
