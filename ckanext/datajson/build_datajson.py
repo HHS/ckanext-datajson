@@ -10,7 +10,7 @@ import json
 import dateutil.parser \
     as parser
 import ckan.model as model
-from ckanext.spatial.helpers import get_responsible_party, get_reference_date
+from helpers import get_responsible_party, get_reference_date
 from ckanext.harvest.model import HarvestSource, HarvestJob, HarvestObject
 from logging import getLogger
 log = getLogger(__name__)
