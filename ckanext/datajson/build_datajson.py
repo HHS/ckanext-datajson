@@ -14,6 +14,8 @@ from ckanext.harvest.model import HarvestSource, HarvestJob, HarvestObject
 from logging import getLogger
 log = getLogger(__name__)
 
+from datajsonvalidator import do_validation
+
 def get_facet_fields():
     # Return fields that we'd like to add to default CKAN faceting. This really has
     # nothing to do with exporting data.json but it's probably a common consideration.
@@ -157,7 +159,7 @@ class JsonExportBuilder:
         return catalog
 
     @staticmethod
-    def make_datajson_export_entry(package):
+    def make_datajson_export_entry(package, seen_identifiers):
         global currentPackageOrg
         currentPackageOrg = None
         # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
@@ -381,11 +383,9 @@ class JsonExportBuilder:
                 or striped_retlist_dict.get('dataQuality') == "False":
             striped_retlist_dict['dataQuality'] = False
 
-        from datajsonvalidator import do_validation
-
         errors = []
         try:
-            do_validation([dict(striped_retlist_dict)], errors)
+            do_validation([dict(striped_retlist_dict)], errors, seen_identifiers)
         except Exception as e:
             errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
         if len(errors) > 0:
