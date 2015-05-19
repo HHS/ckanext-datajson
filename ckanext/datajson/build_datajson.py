@@ -3,7 +3,6 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-import logging
 import string
 import os
 import json
