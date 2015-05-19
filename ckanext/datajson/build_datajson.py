@@ -7,7 +7,7 @@ import logging
 import string
 
 import ckan.model as model
-
+from datajsonvalidator import do_validation
 
 log = logging.getLogger('datajson')
 
@@ -155,7 +155,7 @@ class JsonExportBuilder:
         return catalog
 
     @staticmethod
-    def make_datajson_export_entry(package):
+    def make_datajson_export_entry(package, seen_identifiers):
         global currentPackageOrg
         currentPackageOrg = None
         # extras is a list of dicts [{},{}, {}]. For each dict, extract the key, value entries into a new dict
@@ -297,11 +297,9 @@ class JsonExportBuilder:
                 or striped_retlist_dict.get('dataQuality') == "False":
             striped_retlist_dict['dataQuality'] = False
 
-        from datajsonvalidator import do_validation
-
         errors = []
         try:
-            do_validation([dict(striped_retlist_dict)], errors)
+            do_validation([dict(striped_retlist_dict)], errors, seen_identifiers)
         except Exception as e:
             errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
         if len(errors) > 0:
