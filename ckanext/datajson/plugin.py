@@ -10,7 +10,6 @@ import ckan.model as model
 import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
 
-
 logger = logging.getLogger('datajson')
 
 try:
@@ -369,12 +368,13 @@ class JsonExportController(BaseController):
         # Build the data.json file.
         packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
         output = []
+        seen_identifiers = set()
         # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
                     if datajson_entry:
                         output.append(datajson_entry)
                     else:
@@ -417,11 +417,13 @@ class JsonExportController(BaseController):
         errors_json = []
 
         output = []
+        seen_identifiers = set()
+
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
                 continue
-            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
             if 'errors' in datajson_entry.keys():
                 errors_json.append(datajson_entry)
                 datajson_entry = None
@@ -469,11 +471,13 @@ class JsonExportController(BaseController):
 
         output = []
         errors_json = []
+        seen_identifiers = set()
+
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
                 continue
-            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
             if 'errors' in datajson_entry.keys():
                 errors_json.append(datajson_entry)
                 datajson_entry = None
@@ -508,6 +512,7 @@ class JsonExportController(BaseController):
 
         output = []
         errors_json = []
+        seen_identifiers = set()
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
@@ -516,7 +521,7 @@ class JsonExportController(BaseController):
             try:
                 if re.match(r'[Nn]on-public', extras['public_access_level']):
                     continue
-                datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg)
+                datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
                 if 'errors' in datajson_entry.keys():
                     errors_json.append(datajson_entry)
                     datajson_entry = None
@@ -650,5 +655,6 @@ def get_validator():
     with open(schema_path, 'r') as schema:
         schema = json.loads(schema.read())
         return Draft4Validator(schema, format_checker=FormatChecker())
+
 
 validator = get_validator()

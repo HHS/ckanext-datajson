@@ -88,9 +88,8 @@ omb_burueau_codes = set()
 for row in csv.DictReader(urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")):
     omb_burueau_codes.add(row["Agency Code"] + ":" + row["Bureau Code"])
 
-
 # main function for validation
-def do_validation(doc, errors_array):
+def do_validation(doc, errors_array, seen_identifiers):
     errs = {}
 
     if type(doc) != list:
@@ -100,8 +99,6 @@ def do_validation(doc, errors_array):
     elif len(doc) == 0:
         add_error(errs, 0, "Catalog Is Empty", "There are no entries in your file.")
     else:
-        seen_identifiers = set()
-
         for i, item in enumerate(doc):
             # Required
 
@@ -463,5 +460,3 @@ def check_url_field(required, obj, field_name, dataset_name, errs, allow_redacte
                   "The '%s' field has an invalid URL: \"%s\"." % (field_name, obj[field_name]), dataset_name)
         return False
     return True
-
-
