@@ -285,7 +285,7 @@ class JsonExportBuilder:
            license = JsonExportBuilder.strip_if_string(extras.get("license_new"))
            modified = JsonExportBuilder.strip_if_string(extras.get("modified"))
            primaryITInvestmentUII = JsonExportBuilder.strip_if_string(extras.get('primary_it_investment_uii'))
-           publisher = JsonExportBuilder.get_publisher_tree(extras)
+           publisher = JsonExportBuilder.get_publisher_tree_wrong_order(extras)
            rights = JsonExportBuilder.strip_if_string(extras.get('access_level_comment'))
            spatial = JsonExportBuilder.strip_if_string(package.get("spatial"))
            systemOfRecords = JsonExportBuilder.strip_if_string(extras.get('system_of_records'))
@@ -304,7 +304,7 @@ class JsonExportBuilder:
                 ("accessLevel", accessLevel), # required
                 ('accrualPeriodicity', accrualPeriodicity ), # optional
                 ("conformsTo", conformsTo ),  # optional
-                ('contactPoint', JsonExportBuilder.get_contact_point(extras, package)),  # required
+                ('contactPoint', JsonExportBuilder.get_contact_point(extras)),  # required
                 ("dataQuality", dataQuality ),  # required-if-applicable
                 ("describedBy", describedBy ),  # optional
                 ("describedByType", describedByType ),  # optional
