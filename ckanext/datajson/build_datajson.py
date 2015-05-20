@@ -3,13 +3,21 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-import logging
 import string
+import json
+from logging import getLogger
 
+import os
+import dateutil.parser \
+    as parser
 import ckan.model as model
-from datajsonvalidator import do_validation
+from ckanext.harvest.model import HarvestObject
 
-log = logging.getLogger('datajson')
+from helpers import get_responsible_party, get_reference_date
+
+log = getLogger(__name__)
+
+from datajsonvalidator import do_validation
 
 
 def get_facet_fields():
@@ -69,7 +77,7 @@ def make_datajson_entry(package):
              ])
              for r in package["resources"]
              if r["format"].lower() not in ("api", "query tool", "widget")
-         ]),
+             ]),
     ])
 
 
@@ -178,85 +186,151 @@ class JsonExportBuilder:
             if r["format"].lower() == "pdf":
                 r["format"] = "application/pdf"
 
+        #
+        # check to see if this is a spatial record
+        # if so, we want to do a crosswalk out of the metadata extras
+        #
+        log.warn("determine spatial or not [%s]", JsonExportBuilder.strip_if_string(package["title"]))
+        date = extra(package, "Metadata Date")
+        log.warn("date %s", date)
+        if date:
+            log.warn("treating this as spatial data")
+            harvest_object = model.Session.query(HarvestObject) \
+                .filter(HarvestObject.package_id == package['id']) \
+                .filter(HarvestObject.current == True) \
+                .first()
+            accessLevel = extra(package, "Access Level", default="public")
+            accrualPeriodicity = JsonExportBuilder.get_accrual_periodicity_spatial(
+                extra(package, "Frequency Of Update"))
+            dataQuality = extra(package, 'Data Quality')
+            conformsTo = JsonExportBuilder.strip_if_string(extra(package, 'Data Standard'))
+            describedBy = JsonExportBuilder.strip_if_string(extra(package, 'Data Dictionary'))
+            describedByType = JsonExportBuilder.strip_if_string(extra(package, 'Data Dictionary Type'))
+            description = JsonExportBuilder.strip_if_string(extra(package, 'Description'))
+            if not description:
+                description = JsonExportBuilder.strip_if_string(extra(package, 'Abstract'))
+            if not description:
+                description = JsonExportBuilder.strip_if_string(package["notes"])
+            identifier = JsonExportBuilder.strip_if_string(extra(package, 'Guid'))
+            if not identifier:
+                identifier = JsonExportBuilder.strip_if_string(package["title"])
+            if not identifier:
+                identifier = package["id"]
+            issued = get_reference_date(extra(package, "Release Date"))
+            keyword = tags(package)
+            landingPage = JsonExportBuilder.strip_if_string(extra(package, "Homepage URL"))
+            license = JsonExportBuilder.strip_if_string(extra(package, "License"))
+            modified = None
+            referencedate = json.loads(extra(package, "Dataset Reference Date"))
+            if referencedate and isinstance(referencedate, list):
+                for date_type in ["revision", "publication"]:
+                    for ref in referencedate:
+                        modified = ref['value'] if ref['type'] == date_type else None
+                if not modified:
+                    modified = referencedate[0]['value']
+            if not modified:
+                modified = clean_date(extra(package, "Last Update"))
+            if not modified:
+                modified = clean_date(extra(package, "Metadata Date"))
+            # log.warn("modified: %s",modified)
+            primaryITInvestmentUII = JsonExportBuilder.strip_if_string(extra(package, 'Primary_IT_Investment_UII'))
+            #
+            # this doesn't match crosswalk -- look at it
+            #
+            publisher = OrderedDict([
+                ("@type", "org:Organization"),
+                ("name", get_responsible_party(extra(package, "Responsible Party")))
+            ])  # required
+            rights = JsonExportBuilder.strip_if_string(extra(package, 'Rights'))
+            spatial = JsonExportBuilder.strip_if_string(extra(package, 'Spatial'))
+            systemOfRecords = JsonExportBuilder.strip_if_string(extra(package, 'System of Records'))
+            # how do we represent from a time, to present?
+            temporalbegin = extra(package, 'Temporal Extent Begin')
+            temporalend = extra(package, 'Temporal Extent End')
+            if temporalbegin and temporalend:
+                tb = clean_date(temporalbegin)
+                te = clean_date(temporalend)
+                if tb and te:
+                    temporal = tb + '/' + te
+                else:
+                    temporal = ""
+            else:
+                temporal = ""
+            bureauCode = [bureau_code(package)]
+            programCodePart = extra(package, 'Program Code')
+            if not programCodePart:
+                programCodePart = program_code(harvest_object)
+            if not programCodePart:
+                programCodePart = "000:000"
+            programCode = [programCodePart]
+            #
+            # are these arrays in the ISO metadata? Should we be pulling them apart somehow?
+            language = [convert_language(JsonExportBuilder.strip_if_string(extra(package, 'Metadata Language', "")))]
+            log.warn("language = %s %s", language,
+                     JsonExportBuilder.strip_if_string(extra(package, 'Metadata Language', "")))
+            if extra(package, 'Related Documents'):
+                references = [extra(package, 'Related Documents', "")]
+            else:
+                references = None
+            if extra(package, 'Category'):
+                theme = [extra(package, 'Category', "")]
+            else:
+                theme = None
+        else:
+            log.warn("treating this as non-spatial harvested data")
+            date = extra(package, "Date Updated")
+            accessLevel = JsonExportBuilder.strip_if_string(extras.get('public_access_level'))
+            accrualPeriodicity = JsonExportBuilder.get_accrual_periodicity(extras.get('accrual_periodicity'))
+            dataQuality = JsonExportBuilder.strip_if_string(extras.get('data_quality'))
+            conformsTo = JsonExportBuilder.strip_if_string(extras.get('conforms_to'))
+            describedBy = JsonExportBuilder.strip_if_string(extras.get('data_dictionary'))
+            describedByType = JsonExportBuilder.strip_if_string(extras.get('data_dictionary_type'))
+            description = JsonExportBuilder.strip_if_string(package["notes"])
+            identifier = JsonExportBuilder.strip_if_string(extras.get('unique_id'))
+            issued = JsonExportBuilder.strip_if_string(extras.get('release_date'))
+            keyword = [t["display_name"] for t in package["tags"]]
+            landingPage = JsonExportBuilder.strip_if_string(extras.get('homepage_url'))
+            license = JsonExportBuilder.strip_if_string(extras.get("license_new"))
+            modified = JsonExportBuilder.strip_if_string(extras.get("modified"))
+            primaryITInvestmentUII = JsonExportBuilder.strip_if_string(extras.get('primary_it_investment_uii'))
+            publisher = JsonExportBuilder.get_publisher_tree_wrong_order(extras)
+            rights = JsonExportBuilder.strip_if_string(extras.get('access_level_comment'))
+            spatial = JsonExportBuilder.strip_if_string(package.get("spatial"))
+            systemOfRecords = JsonExportBuilder.strip_if_string(extras.get('system_of_records'))
+            temporal = JsonExportBuilder.strip_if_string(extras.get('temporal'))
+
+            bureauCode = [string.strip(x) for x in string.split(extras.get('bureau_code', ""), ',')]
+            language = [string.strip(x) for x in string.split(extras.get('language', ""), ',')]
+            programCode = [string.strip(x) for x in string.split(extras.get('program_code', ""), ',')]
+            references = [string.strip(x) for x in string.split(extras.get('related_documents', ""), ',')]
+            theme = [string.strip(x) for x in string.split(extras.get('category', ""), ',')]
+
         try:
             retlist = [
                 ("@type", "dcat:Dataset"),  # optional
-
                 ("title", JsonExportBuilder.strip_if_string(package["title"])),  # required
-
-                # ("accessLevel", 'public'),  # required
-                ("accessLevel", JsonExportBuilder.strip_if_string(extras.get('public_access_level'))),  # required
-
-                # ("accrualPeriodicity", "R/P1Y"),  # optional
-                # ('accrualPeriodicity', 'accrual_periodicity'),
-                ('accrualPeriodicity', JsonExportBuilder.get_accrual_periodicity(extras.get('accrual_periodicity'))),
-                # optional
-
-                ("conformsTo", JsonExportBuilder.strip_if_string(extras.get('conforms_to'))),  # optional
-
-                # ('contactPoint', OrderedDict([
-                # ("@type", "vcard:Contact"),
-                # ("fn", "Jane Doe"),
-                # ("hasEmail", "mailto:jane.doe@agency.gov")
-                # ])),  # required
+                ("accessLevel", accessLevel),  # required
+                ('accrualPeriodicity', accrualPeriodicity),  # optional
+                ("conformsTo", conformsTo),  # optional
                 ('contactPoint', JsonExportBuilder.get_contact_point(extras)),  # required
-
-                ("dataQuality", JsonExportBuilder.strip_if_string(extras.get('data_quality'))),
-                # required-if-applicable
-
-                ("describedBy", JsonExportBuilder.strip_if_string(extras.get('data_dictionary'))),  # optional
-                ("describedByType", JsonExportBuilder.strip_if_string(extras.get('data_dictionary_type'))),  # optional
-
-                ("description", JsonExportBuilder.strip_if_string(package["notes"])),  # required
-
-                # ("description", 'asdfasdf'),  # required
-
-                ("identifier", JsonExportBuilder.strip_if_string(extras.get('unique_id'))),  # required
-                # ("identifier", 'asdfasdfasdf'),  # required
-
+                ("dataQuality", dataQuality),  # required-if-applicable
+                ("describedBy", describedBy),  # optional
+                ("describedByType", describedByType),  # optional
+                ("description", description),  # required
+                ("identifier", identifier),  # required
                 ("isPartOf", parent_dataset_id),  # optional
-                ("issued", JsonExportBuilder.strip_if_string(extras.get('release_date'))),  # optional
-
-                # ("keyword", ['a', 'b']),  # required
-                ("keyword", [t["display_name"] for t in package["tags"]]),  # required
-
-                ("landingPage", JsonExportBuilder.strip_if_string(extras.get('homepage_url'))),  # optional
-
-                ("license", JsonExportBuilder.strip_if_string(extras.get("license_new"))),  # required-if-applicable
-
-                ("modified",
-                 JsonExportBuilder.strip_if_string(extras.get("modified", package.get("metadata_modified")))),
-                # required
-
-                ("primaryITInvestmentUII", JsonExportBuilder.strip_if_string(extras.get('primary_it_investment_uii'))),
-                # optional
-
-                # ('publisher', OrderedDict([
-                # ("@type", "org:Organization"),
-                # ("name", "Widget Services")
-                # ])),  # required
-                # ("publisher", get_publisher_tree(extras)),  # required
-                ("publisher", JsonExportBuilder.get_publisher_tree_wrong_order(extras)),  # required
-
-                ("rights", JsonExportBuilder.strip_if_string(extras.get('access_level_comment'))),  # required
-
-                ("spatial", JsonExportBuilder.strip_if_string(package.get("spatial"))),  # required-if-applicable
-
-                ('systemOfRecords', JsonExportBuilder.strip_if_string(extras.get('system_of_records'))),  # optional
-
-                ("temporal", JsonExportBuilder.strip_if_string(extras.get('temporal'))),  # required-if-applicable
-
+                ("issued", issued),  # optional
+                ("keyword", keyword),  # required
+                ("landingPage", landingPage),  # optional
+                ("license", license),  # required-if-applicable
+                ("modified", modified),  # required
+                ("primaryITInvestmentUII", primaryITInvestmentUII),  # optional
+                ("publisher", publisher),  # required
+                ("rights", rights),  # required
+                ("spatial", spatial),  # required-if-applicable
+                ('systemOfRecords', systemOfRecords),  # optional
+                ("temporal", temporal),  # required-if-applicable
                 ("distribution", JsonExportBuilder.generate_distribution(package)),  # required-if-applicable
-
-                # ("distribution",
-                # #TODO distribution should hide any key/value pairs where value is "" or None (e.g. format)
-                # [
-                # OrderedDict([
-                # ("downloadURL", r["url"]),
-                # ("mediaType", r["formatReadable"]),
-                # ])
-                # for r in package["resources"]
-                # ])
             ]
 
             for pair in [
@@ -282,6 +356,24 @@ class JsonExportBuilder:
             ])
 
             return errors_dict
+        # extras_to_filter_out = ['publisher', 'contact_name', 'contact_email', 'unique_id', 'public_access_level',
+        # 'data_dictionary', 'bureau_code', 'program_code', 'access_level_comment', 'license_title',
+        # 'spatial', 'temporal', 'release_date', 'accrual_periodicity', 'language', 'granularity',
+        # 'data_quality', 'size', 'homepage_url', 'rss_feed', 'category', 'related_documents',
+        # 'system_of_records', 'system_of_records_none_related_to_this_dataset', 'tags',
+        # 'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
+        # 'publisher_4', 'publisher_5']
+        #
+        # # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
+        # # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
+        # # generate a list of keys to ignore by calling a specific function to get the extras
+        # retlist_keys = [x for x, y in retlist]
+        # extras_keys = set(extras.keys()) - set(extras_to_filter_out)
+        #
+        # for key in extras_keys:
+        # convertedKey = underscore_to_camelcase(key)
+        # if convertedKey not in retlist_keys:
+        # retlist.append((convertedKey, extras[key]))
 
         # Remove entries where value is None, "", or empty list []
         striped_retlist = [(x, y) for x, y in retlist if y is not None and y != "" and y != []]
@@ -341,9 +433,30 @@ class JsonExportBuilder:
         'weekly': 'R/P1W'
     }
 
+    # used by get_accrual_periodicity_spatial
+    accrual_periodicity_spatial_dict = {
+        'continual': 'R/PT1S',
+        'daily': 'R/P1D',
+        'weekly': 'R/P1W',
+        'fortnightly': 'R/P0.5M',
+        'annually': 'R/P1Y',
+        'monthly': 'R/P1M',
+        'quarterly': 'R/P3M',
+        'biannualy': 'R/P0.5Y',
+        'asneeded': 'irregular',
+        'irregular': 'irregular',
+        'notplanned': 'irregular',
+        'unknown': 'irregular',
+        'not updated': 'irregular'
+    }
+
     @staticmethod
     def get_accrual_periodicity(frequency):
         return JsonExportBuilder.accrual_periodicity_dict.get(str(frequency).lower().strip(), frequency)
+
+    @staticmethod
+    def get_accrual_periodicity_spatial(frequency):
+        return JsonExportBuilder.accrual_periodicity_spatial_dict.get(str(frequency).lower().strip(), frequency)
 
     @staticmethod
     def generate_distribution(package):
@@ -530,3 +643,126 @@ class JsonExportBuilder:
             retlist.append(
                 (names[0], [string.strip(x) for x in string.split(found_element, ',')])
             )
+
+
+def clean_date(val):
+    try:
+        if isinstance(val, (str, unicode)):
+            log.debug("clean_date: val %s ", val)
+            # 2014-03-18-06:00 needs to become "2014-03-18T06:00"
+            date = (parser.parse(val))
+            val = (date.isoformat())
+    except Exception as e:
+        log.debug("clean_date: exception %s val  %s ", e, val)
+        val = ""
+    return val
+
+
+def extra(package, key, default=None):
+    # Retrieves the value of an extras field.
+    '''
+    for extra in package["extras"]:
+        if extra["key"] == "extras_rollup":
+            extras_rollup_dict = extra["value"]
+            #return(extras_rollup_dict) #returns full json-formatted 'value' field of extras_rollup
+            extras_rollup_dict = json.loads(extra["value"])
+            for rollup_key in extras_rollup_dict.keys():
+                if rollup_key == key: return extras_rollup_dict.get(rollup_key)
+
+    return default
+    '''
+
+    current_extras = package["extras"]
+    # new_extras =[]
+    new_extras = {}
+    for extra in current_extras:
+        if extra['key'] == 'extras_rollup':
+            rolledup_extras = json.loads(extra['value'])
+            for k, value in rolledup_extras.iteritems():
+                # log.info("rolledup_extras key: %s, value: %s", k, value)
+                # new_extras.append({"key": k, "value": value})
+                new_extras[k] = value
+        else:
+            #    new_extras.append(extra)
+            new_extras[extra['key']] = extra['value']
+
+    # decode keys:
+    for k, v in new_extras.iteritems():
+        k = k.replace('_', ' ').replace('-', ' ').title()
+        if isinstance(v, (list, tuple)):
+            v = ", ".join(map(unicode, v))
+        # log.info("decoded values key: %s, value: %s", k, v)
+        if k == key:
+            return v
+    return default
+
+
+def program_code(harvest_object, default=None):
+    harvest_name = harvest_object.source.title if harvest_object else None
+    # log.debug("harvest name: %s",harvest_name)
+    file = open(os.path.join(os.path.dirname(__file__), "resources") + "/harvest-to-program-codes.json", 'r');
+    codelist = json.load(file)
+    for harvest_source in codelist:
+        if harvest_source['Harvest Source Name'] == harvest_name:
+            # log.debug("found match: %s", harvest_source["Program Code"])
+            result = harvest_source["Program Code"];
+            # log.debug("found program code match: '%s'", result)
+            return result
+    return default
+
+
+def bureau_code(package, default=None):
+    log.debug("org title: %s", package["organization"]["title"])
+    file = open(os.path.join(os.path.dirname(__file__), "resources") + "/omb-agency-bureau-treasury-codes.json", 'r');
+    codelist = json.load(file)
+    for bureau in codelist:
+        if bureau['Agency'] == package["organization"]["title"]:
+            log.debug("found match: %s", "[{0}:{1}]".format(bureau["OMB Agency Code"], bureau["OMB Bureau Code"]))
+            result = "{0}:{1}".format(bureau["OMB Agency Code"], bureau["OMB Bureau Code"])
+            log.debug("found match: '%s'", result)
+            return result
+    return default
+
+
+def tags(package, default=None):
+    # Retrieves the value of an extras field.
+    for extra in package["extras"]:
+        if extra["key"] == "tags":
+            keywords = extra["value"].split(",")
+            keywords = map(unicode.strip, keywords)
+            return keywords
+
+
+def extension_to_mime_type(file_ext):
+    if file_ext is None: return None
+    ext = {
+        "csv": "text/csv",
+        "xls": "application/vnd.ms-excel",
+        "xml": "application/xml",
+        "rdf": "application/rdf+xml",
+        "json": "application/json",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text": "text/plain",
+        "feed": "application/rss+xml",
+        "arcgis_rest": "text/html",
+        "wms": "text/html",
+        "html": "text/html",
+        "application/pdf": "application/pdf",
+    }
+    return ext.get(file_ext.lower(), "application/unknown")
+
+
+def convert_language(isocode, default="en-US"):
+    langcode = {
+        "eng": "en-US",
+        "spa": "es-US",
+        "fre": "fr-CA",
+    }
+    return langcode.get(isocode, default)
+
+# "Convert the value of this field based on the following mapping //gmd:identificationInfo/gmd:MD_DataIdentification/gmd:language
+# eng; USA - en-US
+# spa; USA - es-US
+# eng; CAN - en-CA
+# fre; CAN - fr-CA
+# spa; MEX - es-MX"
