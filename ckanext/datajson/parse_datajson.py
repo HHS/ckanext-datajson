@@ -57,7 +57,7 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
     license = license.replace("http://","")
     license = license.replace("https://","")
     license = license.rstrip('/')
-    package["license_id"] = licenses.get(license, "")
+    package["license_id"] = licenses.get(license, "other-license-specified")
 
   # 3. package["maintainer_email"]
   if package.get("maintainer_email"):
