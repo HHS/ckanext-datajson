@@ -9,6 +9,7 @@ import re
 import ckan.model as model
 import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
+import build_datajson
 
 logger = logging.getLogger('datajson')
 
@@ -17,9 +18,7 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-from build_datajson import JsonExportBuilder
-
-from build_datajson import make_datajson_entry, get_facet_fields
+# from build_datajson import make_datajson_entry, get_facet_fields
 
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 from build_datajsonld import dataset_to_jsonld
@@ -118,10 +117,10 @@ class DataJsonController(BaseController):
 
         return p.toolkit.literal(json.dumps(data, indent=2))
 
-    def make_json(self):
-        # Build the data.json file.
-        packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-        return [make_datajson_entry(pkg) for pkg in packages if pkg["type"] == "dataset"]
+    # def make_json(self):
+    #     # Build the data.json file.
+    #     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    #     return [make_datajson_entry(pkg) for pkg in packages if pkg["type"] == "dataset"]
 
     def generate_json(self):
         return self.generate_output('json')
@@ -369,12 +368,14 @@ class JsonExportController(BaseController):
         packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
         output = []
         seen_identifiers = set()
+        json_export_map = self.get_export_map_json()
+
         # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
+                    datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
                     if datajson_entry:
                         output.append(datajson_entry)
                     else:
@@ -413,6 +414,7 @@ class JsonExportController(BaseController):
 
         # Build the data.json file.
         packages = self.get_packages(owner_org)
+        json_export_map = self.get_export_map_json()
 
         errors_json = []
 
@@ -423,7 +425,7 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
                 continue
-            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
+            datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
             if 'errors' in datajson_entry.keys():
                 errors_json.append(datajson_entry)
                 datajson_entry = None
@@ -449,13 +451,24 @@ class JsonExportController(BaseController):
         publisher = None
 
         if 'publisher' in extras and extras['publisher']:
-            publisher = JsonExportBuilder.strip_if_string(extras['publisher'])
+            publisher = build_datajson.JsonExportBuilder.strip_if_string(extras['publisher'])
 
         for i in range(1, 6):
             key = 'publisher_' + str(i)
-            if key in extras and extras[key] and JsonExportBuilder.strip_if_string(extras[key]):
-                publisher = JsonExportBuilder.strip_if_string(extras[key])
+            if key in extras and extras[key] and build_datajson.JsonExportBuilder.strip_if_string(extras[key]):
+                publisher = build_datajson.JsonExportBuilder.strip_if_string(extras[key])
         return publisher
+
+    @staticmethod
+    def get_export_map_json():
+        # Reading json export map from file
+        import os
+        map_path = os.path.join(os.path.dirname(__file__), 'export_map', 'export.map.json')
+
+        with open(map_path, 'r') as export_map_json:
+            json_export_map = json.load(export_map_json)
+
+        return json_export_map
 
     def make_edi(self, owner_org):
         # Error handler for creating error log
@@ -469,6 +482,8 @@ class JsonExportController(BaseController):
         # Build the data.json file.
         packages = self.get_packages(owner_org)
 
+        json_export_map = self.get_export_map_json()
+
         output = []
         errors_json = []
         seen_identifiers = set()
@@ -477,7 +492,7 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
                 continue
-            datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
+            datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
             if 'errors' in datajson_entry.keys():
                 errors_json.append(datajson_entry)
                 datajson_entry = None
@@ -513,6 +528,9 @@ class JsonExportController(BaseController):
         output = []
         errors_json = []
         seen_identifiers = set()
+
+        json_export_map = self.get_export_map_json()
+
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
@@ -521,7 +539,7 @@ class JsonExportController(BaseController):
             try:
                 if re.match(r'[Nn]on-public', extras['public_access_level']):
                     continue
-                datajson_entry = JsonExportBuilder.make_datajson_export_entry(pkg, seen_identifiers)
+                datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
                 if 'errors' in datajson_entry.keys():
                     errors_json.append(datajson_entry)
                     datajson_entry = None
@@ -615,7 +633,7 @@ class JsonExportController(BaseController):
         # Write the data file
         if data:
             zf.writestr(data_file_name,
-                        json.dumps(JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
+                        json.dumps(build_datajson.JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
                             'utf8'))
         # Write empty.json if nothing to return
         else:
