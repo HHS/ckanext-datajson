@@ -1,4 +1,5 @@
 import re
+import rfc3987 as rfc3987_url
 
 # from the iso8601 package, plus ^ and $ on the edges
 ISO8601_REGEX = re.compile(r"^([0-9]{4})(-([0-9]{1,2})(-([0-9]{1,2})"
@@ -54,13 +55,6 @@ ISSUED_REGEX = re.compile(
     r'\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
 )
 
-URL_REGEX = re.compile(
-    r'^(?:http|ftp)s?://'  # http:// or https:// or ftp:// or ftps://
-    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-    r'(?::\d+)?'  # optional port
-    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
 PROGRAM_CODE_REGEX = re.compile(r"^[0-9]{3}:[0-9]{3}$")
 
 IANA_MIME_REGEX = re.compile(r"^[-\w]+/[-\w]+(\.[-\w]+)*([+][-\w]+)?$")
@@ -92,6 +86,7 @@ import csv
 omb_burueau_codes = set()
 for row in csv.DictReader(urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")):
     omb_burueau_codes.add(row["Agency Code"] + ":" + row["Bureau Code"])
+
 
 # main function for validation
 def do_validation(doc, errors_array, seen_identifiers):
@@ -368,9 +363,9 @@ def do_validation(doc, errors_array, seen_identifiers):
                               "The field 'references' must be an array, if present.", dataset_name)
             else:
                 for s in item["references"]:
-                    if not URL_REGEX.match(s) and not is_redacted(s):
+                    if not rfc3987_url.match(s) and not is_redacted(s):
                         add_error(errs, 50, "Invalid Field Value (Optional Fields)",
-                                  "The field 'references' had an invalid URL: \"%s\"" % s, dataset_name)
+                                  "The field 'references' had an invalid rfc3987 URL: \"%s\"" % s, dataset_name)
 
             # systemOfRecords # optional
             check_url_field(False, item, "systemOfRecords", dataset_name, errs)
@@ -460,8 +455,8 @@ def check_url_field(required, obj, field_name, dataset_name, errs, allow_redacte
     if not check_required_field(obj, field_name, (str, unicode), dataset_name,
                                 errs): return False  # just checking data type
     if allow_redacted and is_redacted(obj[field_name]): return True
-    if not URL_REGEX.match(obj[field_name]):
+    if not rfc3987_url.match(obj[field_name]):
         add_error(errs, 5, "Invalid Required Field Value",
-                  "The '%s' field has an invalid URL: \"%s\"." % (field_name, obj[field_name]), dataset_name)
+                  "The '%s' field has an invalid rfc3987 URL: \"%s\"." % (field_name, obj[field_name]), dataset_name)
         return False
     return True
