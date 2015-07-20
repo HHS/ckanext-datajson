@@ -18,6 +18,14 @@ class Package2Pod:
     seen_identifiers = None
 
     @staticmethod
+    def wrap_json_catalog(datasets, json_export_map):
+        catalog_headers = [(x, y) for x, y in json_export_map.get('catalog_headers').iteritems()]
+        catalog = OrderedDict(
+            catalog_headers + [('dataset', datasets)]
+        )
+        return catalog
+
+    @staticmethod
     def convert_package(package, json_export_map):
         dataset_dict = Package2Pod.export_map_fields(package, json_export_map)
         return Package2Pod.validate(package, dataset_dict)
@@ -29,9 +37,13 @@ class Package2Pod:
         import sys, os
 
         try:
+            dataset = json_export_map.get('dataset_headers')
+            if not dataset:
+                dataset = {}
 
-            dataset = {}
-            for key, field_map in json_export_map.iteritems():
+            json_fields = json_export_map.get('dataset_fields_map')
+
+            for key, field_map in json_fields.iteritems():
                 # log.debug('%s => %s', key, field_map)
 
                 field_type = field_map.get('type', 'direct')
@@ -40,12 +52,8 @@ class Package2Pod:
                 field = field_map.get('field')
                 split = field_map.get('split')
                 wrapper = field_map.get('wrapper')
-                meta = field_map.get('meta')
 
-                if 'meta' == field_type:
-                    dataset[key] = meta
-
-                elif 'direct' == field_type and field:
+                if 'direct' == field_type and field:
                     if is_extra:
                         dataset[key] = strip_if_string(get_extra(package, field))
                     else:
@@ -56,17 +64,10 @@ class Package2Pod:
                         if split:
                             found_element = strip_if_string(get_extra(package, field))
                             if found_element:
-                                # if key in ['bureauCode', 'programCode']:
-                                #     log.debug("found %s in %s : %s", field, package.get('id'), found_element)
                                 dataset[key] = [strip_if_string(x) for x in string.split(found_element, ',')]
-                                # elif key in ['bureauCode', 'programCode']:
-                                #     log.debug("not found %s in %s", field, package.get('id'))
-                                #     log.debug("%s", package.get('extras'))
                     else:
                         if array_key:
                             dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field)]
-                            # else:
-                            #     dataset[key] = package[field]
                 if wrapper:
                     method = getattr(Wrappers, wrapper)
                     if method:
@@ -77,7 +78,6 @@ class Package2Pod:
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # raise Exception("%s : %s : %s" % (exc_type, filename, exc_tb.tb_lineno))
             log.error("%s : %s : %s", exc_type, filename, exc_tb.tb_lineno)
             raise e
 

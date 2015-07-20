@@ -648,11 +648,14 @@ class JsonExportController(BaseController):
         if 'draft' == zip_name:
             data_file_name = 'draft_data.json'
 
+        # to get catalog json headers
+        json_export_map = self.get_export_map_json()
+
         # Write the data file
         if data:
             zf.writestr(data_file_name,
-                        json.dumps(build_datajson.JsonExportBuilder.make_datajson_export_catalog(data), ensure_ascii=False).encode(
-                            'utf8'))
+                        json.dumps(Package2Pod.wrap_json_catalog(data, json_export_map), ensure_ascii=False).encode('utf8'))
+
         # Write empty.json if nothing to return
         else:
             zf.writestr('empty.json', '')
