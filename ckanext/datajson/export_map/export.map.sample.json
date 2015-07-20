@@ -1,4 +1,8 @@
 {
+  "@type": {
+    "type": "meta",
+    "value": "dcat:Dataset"
+  },
   "title": {
     "field": "title"
   },
@@ -64,6 +68,11 @@
   "temporal": {
     "extra": true,
     "field": "Temporal"
+  },
+  "publisher": {
+    "extra": true,
+    "field": "publisher",
+    "wrapper": "catalog_publisher"
   },
   "keyword": {
     "type": "array",

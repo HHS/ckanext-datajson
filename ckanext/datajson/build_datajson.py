@@ -386,15 +386,6 @@ class JsonExportBuilder:
                     ("theme", dataset.get('theme'))  # optional
                 ]
 
-                # for pair in [
-                #     ('bureauCode', 'bureau_code'),  # required
-                #     ('language', 'language'),  # optional
-                #     ('programCode', 'program_code'),  # required
-                #     ('references', 'related_documents'),  # optional
-                #     ('theme', 'category'),  # optional
-                # ]:
-                #     JsonExportBuilder.split_multiple_entries(retlist, extras, pair)
-
             except KeyError as e:
                 log.warn("Missing Required Field for package with id=[%s], title=['%s'], organization=['%s']: '%s'" % (
                     package.get('id'), package.get('title'), currentPackageOrg, e))

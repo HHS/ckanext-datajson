@@ -71,8 +71,8 @@
   },
   "publisher": {
     "extra": true,
-    "field": "Responsible Party",
-    "wrapper": "spatial_publisher"
+    "field": "publisher",
+    "wrapper": "inventory_publisher"
   },
   "keyword": {
     "type": "array",

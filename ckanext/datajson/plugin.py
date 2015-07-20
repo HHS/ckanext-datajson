@@ -11,6 +11,8 @@ import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
 import build_datajson
 
+from package2pod import Package2Pod
+
 logger = logging.getLogger('datajson')
 
 try:
@@ -19,6 +21,7 @@ except ImportError:
     from sqlalchemy.util import OrderedDict
 
 # from build_datajson import make_datajson_entry, get_facet_fields
+from build_datajson import get_facet_fields
 
 # from build_enterprisedatajson import make_enterprisedatajson_entry
 from build_datajsonld import dataset_to_jsonld
@@ -375,7 +378,8 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             try:
                 if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
+                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
+
                     if datajson_entry:
                         output.append(datajson_entry)
                     else:
@@ -479,29 +483,42 @@ class JsonExportController(BaseController):
         eh.setFormatter(formatter)
         logger.addHandler(eh)
 
-        # Build the data.json file.
-        packages = self.get_packages(owner_org)
+        import sys, os
 
-        json_export_map = self.get_export_map_json()
+        try:
 
-        output = []
-        errors_json = []
-        seen_identifiers = set()
+            # Build the data.json file.
+            packages = self.get_packages(owner_org)
 
-        for pkg in packages:
-            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-            if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
-                continue
-            datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
-            if 'errors' in datajson_entry.keys():
-                errors_json.append(datajson_entry)
-                datajson_entry = None
-            if datajson_entry and self.is_valid(datajson_entry):
-                output.append(datajson_entry)
-            else:
-                publisher = self.detect_publisher(extras)
-                logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
-                            pkg.get('title', None), publisher)
+            json_export_map = self.get_export_map_json()
+
+            output = []
+            errors_json = []
+            seen_identifiers = set()
+            Package2Pod.seen_identifiers = set()
+
+            for pkg in packages:
+                extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+                if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
+                    continue
+                #datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
+                datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
+                if 'errors' in datajson_entry.keys():
+                    errors_json.append(datajson_entry)
+                    datajson_entry = None
+                if datajson_entry and self.is_valid(datajson_entry):
+                    output.append(datajson_entry)
+                else:
+                    publisher = self.detect_publisher(extras)
+                    logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+                                pkg.get('title', None), publisher)
+
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            # raise Exception("%s : %s : %s" % (exc_type, filename, exc_tb.tb_lineno))
+            logger.error("%s : %s : %s", exc_type, filename, exc_tb.tb_lineno)
+            raise e
 
         # Get the error log
         eh.flush()
@@ -512,6 +529,7 @@ class JsonExportController(BaseController):
 
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='edi')
+
 
     def make_pdl(self, owner_org):
         # Error handler for creating error log

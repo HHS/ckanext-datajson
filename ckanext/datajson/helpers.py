@@ -6,8 +6,9 @@ from ckan.lib import helpers as h
 
 log = logging.getLogger(__name__)
 
+
 def get_reference_date(date_str):
-    '''
+    """
         Gets a reference date extra created by the harvesters and formats it
         nicely for the UI.
 
@@ -20,7 +21,7 @@ def get_reference_date(date_str):
             1977 (creation), May 15, 1981 (revision)
             1977 (publication)
             NaN-NaN-NaN (publication)
-    '''
+    """
     try:
         out = []
         for date in h.json.loads(date_str):
@@ -30,19 +31,21 @@ def get_reference_date(date_str):
     except (ValueError, TypeError):
         return date_str
 
+
 def get_responsible_party(value):
-    '''
+    """
         Gets a responsible party extra created by the harvesters and formats it
         nicely for the UI.
 
         Examples:
             [{"name": "Complex Systems Research Center", "roles": ["pointOfContact"]}]
-            [{"name": "British Geological Survey", "roles": ["custodian", "pointOfContact"]}, {"name": "Natural England", "roles": ["publisher"]}]
+            [{"name": "British Geological Survey", "roles": ["custodian", "pointOfContact"]},
+             {"name": "Natural England", "roles": ["publisher"]}]
 
         Results
             Complex Systems Research Center (pointOfContact)
             British Geological Survey (custodian, pointOfContact); Natural England (publisher)
-    '''
+    """
     formatted = {
         'resourceProvider': p.toolkit._('Resource Provider'),
         'pointOfContact': p.toolkit._('Point of Contact'),
@@ -53,16 +56,67 @@ def get_responsible_party(value):
         out = []
         parties = h.json.loads(value)
         for party in parties:
-            roles = [formatted[role] if role in formatted.keys() else p.toolkit._(role.capitalize()) for role in party['roles']]
+            roles = [formatted[role] if role in formatted.keys() else p.toolkit._(role.capitalize()) for role in
+                     party['roles']]
             out.append('{0} ({1})'.format(party['name'], ', '.join(roles)))
         return '; '.join(out)
     except (ValueError, TypeError):
         return value
 
+
 def get_common_map_config():
-    '''
+    """
         Returns a dict with all configuration options related to the common
         base map (ie those starting with 'ckanext.spatial.common_map.')
-    '''
+    """
     namespace = 'ckanext.spatial.common_map.'
     return dict([(k.replace(namespace, ''), v) for k, v in config.iteritems() if k.startswith(namespace)])
+
+
+def strip_if_string(val):
+    """
+    :param val: any
+    :return: str|None
+    """
+    if isinstance(val, (str, unicode)):
+        val = val.strip()
+        if '' == val:
+            val = None
+    return val
+
+
+def get_extra(package, key, default=None):
+    """
+    Retrieves the value of an extras field.
+
+    :param package: dict
+    :param key: str
+    :param default: Any
+    :return: Any
+    """
+
+    import json
+
+    current_extras = package["extras"]
+    # new_extras =[]
+    new_extras = {}
+    for extra in current_extras:
+        if extra['key'] == 'extras_rollup':
+            rolledup_extras = json.loads(extra['value'])
+            for k, value in rolledup_extras.iteritems():
+                # log.info("rolledup_extras key: %s, value: %s", k, value)
+                # new_extras.append({"key": k, "value": value})
+                new_extras[k] = value
+        else:
+            #    new_extras.append(extra)
+            new_extras[extra['key']] = extra['value']
+
+    # decode keys:
+    for k, v in new_extras.iteritems():
+        k = k.replace('_', ' ').replace('-', ' ').title()
+        if isinstance(v, (list, tuple)):
+            v = ", ".join(map(unicode, v))
+        # log.info("decoded values key: %s, value: %s", k, v)
+        if k == key:
+            return v
+    return default
