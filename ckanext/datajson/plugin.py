@@ -7,10 +7,12 @@ from ckan.lib.base import BaseController, render, c
 from pylons import request, response
 import re
 import ckan.model as model
+
 import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
-import build_datajson
 
+import build_datajson
+from helpers import get_export_map_json, detect_publisher
 from package2pod import Package2Pod
 
 logger = logging.getLogger('datajson')
@@ -282,38 +284,38 @@ class JsonExportController(BaseController):
     def generate_jsonld(self):
         return self.generate_output('json-ld')
 
-    def validator(self):
-        # Validates that a URL is a good data.json file.
-        if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
-            c.source_url = request.POST["url"]
-            c.errors = []
-
-            import urllib
-            import json
-            from datajsonvalidator import do_validation
-
-            body = None
-            try:
-                body = json.load(urllib.urlopen(c.source_url))
-            except IOError as e:
-                c.errors.append(("Error Loading File", ["The address could not be loaded: " + unicode(e)]))
-            except ValueError as e:
-                c.errors.append(("Invalid JSON", ["The file does not meet basic JSON syntax requirements: " + unicode(
-                    e) + ". Try using JSONLint.com."]))
-            except Exception as e:
-                c.errors.append((
-                    "Internal Error",
-                    ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
-
-            if body:
-                try:
-                    do_validation(body, c.errors)
-                except Exception as e:
-                    c.errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
-                if len(c.errors) == 0:
-                    c.errors.append(("No Errors", ["Great job!"]))
-
-        return render('datajsonvalidator.html')
+    # def validator(self):
+    #     # Validates that a URL is a good data.json file.
+    #     if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
+    #         c.source_url = request.POST["url"]
+    #         c.errors = []
+    # 
+    #         import urllib
+    #         import json
+    #         from datajsonvalidator import do_validation
+    # 
+    #         body = None
+    #         try:
+    #             body = json.load(urllib.urlopen(c.source_url))
+    #         except IOError as e:
+    #             c.errors.append(("Error Loading File", ["The address could not be loaded: " + unicode(e)]))
+    #         except ValueError as e:
+    #             c.errors.append(("Invalid JSON", ["The file does not meet basic JSON syntax requirements: " + unicode(
+    #                 e) + ". Try using JSONLint.com."]))
+    #         except Exception as e:
+    #             c.errors.append((
+    #                 "Internal Error",
+    #                 ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
+    # 
+    #         if body:
+    #             try:
+    #                 do_validation(body, c.errors)
+    #             except Exception as e:
+    #                 c.errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
+    #             if len(c.errors) == 0:
+    #                 c.errors.append(("No Errors", ["Great job!"]))
+    # 
+    #     return render('datajsonvalidator.html')
 
     def generate_pdl(self):
         # DWC this is a hack, as I couldn't get to the request parameters.
@@ -366,46 +368,46 @@ class JsonExportController(BaseController):
                 return self.make_draft(match.group(1))
         return "Invalid organization id"
 
-    def make_json(self):
-        # Build the data.json file.
-        packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
-        output = []
-        seen_identifiers = set()
-        json_export_map = self.get_export_map_json()
-
-        # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
-        for pkg in packages:
-            extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-            try:
-                if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
-                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
-
-                    if datajson_entry:
-                        output.append(datajson_entry)
-                    else:
-                        publisher = self.detect_publisher(extras)
-                        logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
-                                    pkg.get('title', None), publisher)
-            except KeyError:
-                publisher = self.detect_publisher(extras)
-
-                logger.warn(
-                    "Dataset id=[%s], title=[%s], organization=[%s] missing required 'public_access_level' field",
-                    pkg.get('id', None),
-                    pkg.get('title', None),
-                    publisher)
-
-                errors = ['Missing Required Field', ['public_access_level']]
-
-                self._errors_json.append(OrderedDict([
-                    ('id', pkg.get('id')),
-                    ('name', pkg.get('name')),
-                    ('title', pkg.get('title')),
-                    ('organization', publisher),
-                    ('errors', errors),
-                ]))
-                pass
-        return output
+    # def make_json(self):
+    #     # Build the data.json file.
+    #     packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+    #     output = []
+    #     seen_identifiers = set()
+    #     json_export_map = get_export_map_json()
+    # 
+    #     # Create data.json only using public and public-restricted datasets, datasets marked non-public are not exposed
+    #     for pkg in packages:
+    #         extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+    #         try:
+    #             if not (re.match(r'[Nn]on-public', extras['public_access_level'])):
+    #                 datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
+    # 
+    #                 if datajson_entry:
+    #                     output.append(datajson_entry)
+    #                 else:
+    #                     publisher = detect_publisher(extras)
+    #                     logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+    #                                 pkg.get('title', None), publisher)
+    #         except KeyError:
+    #             publisher = detect_publisher(extras)
+    # 
+    #             logger.warn(
+    #                 "Dataset id=[%s], title=[%s], organization=[%s] missing required 'public_access_level' field",
+    #                 pkg.get('id', None),
+    #                 pkg.get('title', None),
+    #                 publisher)
+    # 
+    #             errors = ['Missing Required Field', ['public_access_level']]
+    # 
+    #             self._errors_json.append(OrderedDict([
+    #                 ('id', pkg.get('id')),
+    #                 ('name', pkg.get('name')),
+    #                 ('title', pkg.get('title')),
+    #                 ('organization', publisher),
+    #                 ('errors', errors),
+    #             ]))
+    #             pass
+    #     return output
 
     def make_draft(self, owner_org):
         # Error handler for creating error log
@@ -418,7 +420,7 @@ class JsonExportController(BaseController):
 
         # Build the data.json file.
         packages = self.get_packages(owner_org)
-        json_export_map = self.get_export_map_json()
+        json_export_map = get_export_map_json()
 
         errors_json = []
 
@@ -429,14 +431,15 @@ class JsonExportController(BaseController):
             extras = dict([(x['key'], x['value']) for x in pkg['extras']])
             if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
                 continue
-            datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
+            datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map,
+                                                                                         seen_identifiers)
             if 'errors' in datajson_entry.keys():
                 errors_json.append(datajson_entry)
                 datajson_entry = None
             if datajson_entry and self.is_valid(datajson_entry):
                 output.append(datajson_entry)
             else:
-                publisher = self.detect_publisher(extras)
+                publisher = detect_publisher(extras)
                 logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
                             pkg.get('title', None), publisher)
 
@@ -449,30 +452,6 @@ class JsonExportController(BaseController):
 
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='draft')
-
-    @staticmethod
-    def detect_publisher(extras):
-        publisher = None
-
-        if 'publisher' in extras and extras['publisher']:
-            publisher = build_datajson.JsonExportBuilder.strip_if_string(extras['publisher'])
-
-        for i in range(1, 6):
-            key = 'publisher_' + str(i)
-            if key in extras and extras[key] and build_datajson.JsonExportBuilder.strip_if_string(extras[key]):
-                publisher = build_datajson.JsonExportBuilder.strip_if_string(extras[key])
-        return publisher
-
-    @staticmethod
-    def get_export_map_json():
-        # Reading json export map from file
-        import os
-        map_path = os.path.join(os.path.dirname(__file__), 'export_map', 'export.map.json')
-
-        with open(map_path, 'r') as export_map_json:
-            json_export_map = json.load(export_map_json)
-
-        return json_export_map
 
     def make_edi(self, owner_org):
         # Error handler for creating error log
@@ -490,26 +469,36 @@ class JsonExportController(BaseController):
             # Build the data.json file.
             packages = self.get_packages(owner_org)
 
-            json_export_map = self.get_export_map_json()
+            json_export_map = get_export_map_json()
 
             output = []
             errors_json = []
-            seen_identifiers = set()
             Package2Pod.seen_identifiers = set()
 
             for pkg in packages:
+                logger.error("processing %s" % (pkg.get('title')))
                 extras = dict([(x['key'], x['value']) for x in pkg['extras']])
                 if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
+                    publisher = detect_publisher(extras)
+                    errors_json.append(OrderedDict([
+                        ('id', pkg.get('id')),
+                        ('name', pkg.get('name')),
+                        ('title', pkg.get('title')),
+                        ('organization', publisher),
+                        ('errors', [('Skipped', ["publishing_status = 'Draft'"])])
+                    ]))
                     continue
-                #datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
+
                 datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
                 if 'errors' in datajson_entry.keys():
                     errors_json.append(datajson_entry)
                     datajson_entry = None
+
                 if datajson_entry and self.is_valid(datajson_entry):
+                    logger.error("writing to json: %s" % (pkg.get('title')))
                     output.append(datajson_entry)
                 else:
-                    publisher = self.detect_publisher(extras)
+                    publisher = detect_publisher(extras)
                     logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
                                 pkg.get('title', None), publisher)
 
@@ -530,7 +519,6 @@ class JsonExportController(BaseController):
         # return json.dumps(output)
         return self.write_zip(output, error, errors_json, zip_name='edi')
 
-
     def make_pdl(self, owner_org):
         # Error handler for creating error log
         stream = StringIO.StringIO()
@@ -547,7 +535,7 @@ class JsonExportController(BaseController):
         errors_json = []
         seen_identifiers = set()
 
-        json_export_map = self.get_export_map_json()
+        json_export_map = get_export_map_json()
 
         # Create data.json only using public datasets, datasets marked non-public are not exposed
         for pkg in packages:
@@ -557,19 +545,20 @@ class JsonExportController(BaseController):
             try:
                 if re.match(r'[Nn]on-public', extras['public_access_level']):
                     continue
-                datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map, seen_identifiers)
+                datajson_entry = build_datajson.JsonExportBuilder.make_datajson_export_entry(pkg, json_export_map,
+                                                                                             seen_identifiers)
                 if 'errors' in datajson_entry.keys():
                     errors_json.append(datajson_entry)
                     datajson_entry = None
                 if datajson_entry and self.is_valid(datajson_entry):
                     output.append(datajson_entry)
                 else:
-                    publisher = self.detect_publisher(extras)
+                    publisher = detect_publisher(extras)
                     logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
                                 pkg.get('title', None), publisher)
 
             except KeyError:
-                publisher = self.detect_publisher(extras)
+                publisher = detect_publisher(extras)
 
                 logger.warn(
                     "Dataset id=[%s], title=['%s'], organization=['%s'] missing required 'public_access_level' field",
@@ -649,12 +638,13 @@ class JsonExportController(BaseController):
             data_file_name = 'draft_data.json'
 
         # to get catalog json headers
-        json_export_map = self.get_export_map_json()
+        json_export_map = get_export_map_json()
 
         # Write the data file
         if data:
             zf.writestr(data_file_name,
-                        json.dumps(Package2Pod.wrap_json_catalog(data, json_export_map), ensure_ascii=False).encode('utf8'))
+                        json.dumps(Package2Pod.wrap_json_catalog(data, json_export_map), ensure_ascii=False).encode(
+                            'utf8'))
 
         # Write empty.json if nothing to return
         else:

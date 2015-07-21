@@ -9,6 +9,7 @@ log = getLogger(__name__)
 
 from helpers import *
 from datajsonvalidator import do_validation
+import ckan.model as model
 
 
 class Package2Pod:
@@ -18,10 +19,10 @@ class Package2Pod:
     seen_identifiers = None
 
     @staticmethod
-    def wrap_json_catalog(datasets, json_export_map):
+    def wrap_json_catalog(dataset_dict, json_export_map):
         catalog_headers = [(x, y) for x, y in json_export_map.get('catalog_headers').iteritems()]
         catalog = OrderedDict(
-            catalog_headers + [('dataset', datasets)]
+            catalog_headers + [('dataset', dataset_dict)]
         )
         return catalog
 
@@ -52,6 +53,7 @@ class Package2Pod:
                 field = field_map.get('field')
                 split = field_map.get('split')
                 wrapper = field_map.get('wrapper')
+                redacted_allowed = field_map.get('redacted_allowed')
 
                 if 'direct' == field_type and field:
                     if is_extra:
@@ -61,10 +63,13 @@ class Package2Pod:
 
                 elif 'array' == field_type:
                     if is_extra:
-                        if split:
-                            found_element = strip_if_string(get_extra(package, field))
-                            if found_element:
-                                dataset[key] = [strip_if_string(x) for x in string.split(found_element, ',')]
+                        found_element = strip_if_string(get_extra(package, field))
+                        if found_element:
+                            if redacted_allowed and is_redacted(found_element):
+                                dataset[key] = found_element
+                            elif split:
+                                dataset[key] = [strip_if_string(x) for x in string.split(found_element, split)]
+
                     else:
                         if array_key:
                             dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field)]
@@ -251,3 +256,12 @@ class Wrappers:
             ('hasEmail', email),  # required
         ])
         return contact_point
+
+    @staticmethod
+    def inventory_parent_uid(parent_dataset_id):
+        if parent_dataset_id:
+            parent = model.Package.get(parent_dataset_id)
+            parent_uid = parent.extras.col.target['unique_id'].value
+            if parent_uid:
+                parent_dataset_id = parent_uid
+        return parent_dataset_id

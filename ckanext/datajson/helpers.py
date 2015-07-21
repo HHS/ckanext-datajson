@@ -1,8 +1,13 @@
 import logging
-from pylons import config
 
+from pylons import config
 from ckan import plugins as p
 from ckan.lib import helpers as h
+import re
+
+REDACTED_REGEX = re.compile(
+    r'^(\[\[REDACTED).*?(\]\])$'
+)
 
 log = logging.getLogger(__name__)
 
@@ -120,3 +125,40 @@ def get_extra(package, key, default=None):
         if k == key:
             return v
     return default
+
+
+def get_export_map_json():
+    """
+    Reading json export map from file
+    :return: obj
+    """
+    import os
+    import json
+    map_path = os.path.join(os.path.dirname(__file__), 'export_map', 'export.map.json')
+
+    with open(map_path, 'r') as export_map_json:
+        json_export_map = json.load(export_map_json)
+
+    return json_export_map
+
+
+def detect_publisher(extras):
+    """
+    Detect publisher by package extras
+    :param extras: dict
+    :return: str
+    """
+    publisher = None
+
+    if 'publisher' in extras and extras['publisher']:
+        publisher = strip_if_string(extras['publisher'])
+
+    for i in range(1, 6):
+        key = 'publisher_' + str(i)
+        if key in extras and extras[key] and strip_if_string(extras[key]):
+            publisher = strip_if_string(extras[key])
+    return publisher
+
+
+def is_redacted(value):
+    return REDACTED_REGEX.match(value)

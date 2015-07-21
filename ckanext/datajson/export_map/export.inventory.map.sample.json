@@ -5,7 +5,7 @@
     "@context": "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
     "@type": "dcat:Catalog"
   },
-  "dataset_headers":{
+  "dataset_headers": {
     "@type": "dcat:Dataset"
   },
   "dataset_fields_map": {
@@ -17,7 +17,8 @@
     },
     "modified": {
       "extra": true,
-      "field": "Modified"
+      "field": "Modified",
+      "redacted_allowed": true
     },
     "accessLevel": {
       "extra": true,
@@ -29,35 +30,43 @@
     },
     "dataQuality": {
       "extra": true,
-      "field": "Data Quality"
+      "field": "Data Quality",
+      "redacted_allowed": true
     },
     "conformsTo": {
       "extra": true,
-      "field": "Conforms To"
+      "field": "Conforms To",
+      "redacted_allowed": true
     },
     "describedBy": {
       "extra": true,
-      "field": "Data Dictionary"
+      "field": "Data Dictionary",
+      "redacted_allowed": true
     },
     "describedByType": {
       "extra": true,
-      "field": "Data Dictionary Type"
+      "field": "Data Dictionary Type",
+      "redacted_allowed": true
     },
     "issued": {
       "extra": true,
-      "field": "Release Date"
+      "field": "Release Date",
+      "redacted_allowed": true
     },
     "landingPage": {
       "extra": true,
-      "field": "Homepage Url"
+      "field": "Homepage Url",
+      "redacted_allowed": true
     },
     "license": {
       "extra": true,
-      "field": "License New"
+      "field": "License New",
+      "redacted_allowed": true
     },
     "primaryITInvestmentUII": {
       "extra": true,
-      "field": "Primary It Investment Uii"
+      "field": "Primary It Investment Uii",
+      "redacted_allowed": true
     },
     "rights": {
       "extra": true,
@@ -73,7 +82,8 @@
     },
     "temporal": {
       "extra": true,
-      "field": "Temporal"
+      "field": "Temporal",
+      "redacted_allowed": true
     },
     "publisher": {
       "extra": true,
@@ -83,7 +93,13 @@
     "accrualPeriodicity": {
       "extra": true,
       "field": "accrual_periodicity",
+      "redacted_allowed": true,
       "wrapper": "fix_accrual_periodicity"
+    },
+    "isPartOf": {
+      "extra": true,
+      "field": "parent_dataset",
+      "wrapper": "inventory_parent_uid"
     },
     "contactPoint": {
       "wrapper": "build_contact_point"
@@ -91,7 +107,8 @@
     "keyword": {
       "type": "array",
       "array_key": "display_name",
-      "field": "tags"
+      "field": "tags",
+      "redacted_allowed": true
     },
     "bureauCode": {
       "type": "array",
@@ -109,19 +126,22 @@
       "type": "array",
       "extra": true,
       "field": "Language",
-      "split": ","
+      "split": ",",
+      "redacted_allowed": true
     },
     "references": {
       "type": "array",
       "extra": true,
       "field": "Related Documents",
-      "split": ","
+      "split": ",",
+      "redacted_allowed": true
     },
     "theme": {
       "type": "array",
       "extra": true,
       "field": "Category",
-      "split": ","
+      "split": ",",
+      "redacted_allowed": true
     }
   }
 }
