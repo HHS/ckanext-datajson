@@ -7,6 +7,8 @@ from ckan.lib.base import BaseController, render, c
 from pylons import request, response
 import re
 import ckan.model as model
+import os
+import sys
 
 import ckan.lib.dictization.model_dictize as model_dictize
 from jsonschema.exceptions import best_match
@@ -462,52 +464,51 @@ class JsonExportController(BaseController):
         eh.setFormatter(formatter)
         logger.addHandler(eh)
 
-        import sys, os
+        data = ''
+        output = []
+        errors_json = []
+        Package2Pod.seen_identifiers = set()
 
         try:
-
             # Build the data.json file.
             packages = self.get_packages(owner_org)
 
-            json_export_map = get_export_map_json()
+            json_export_map = get_export_map_json('export.map.json')
 
-            output = []
-            errors_json = []
-            Package2Pod.seen_identifiers = set()
+            if json_export_map:
+                for pkg in packages:
+                    # logger.debug("processing %s" % (pkg.get('title')))
+                    extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+                    if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
+                        publisher = detect_publisher(extras)
+                        errors_json.append(OrderedDict([
+                            ('id', pkg.get('id')),
+                            ('name', pkg.get('name')),
+                            ('title', pkg.get('title')),
+                            ('organization', publisher),
+                            ('errors', [('Skipped', ["publishing_status = 'Draft'"])])
+                        ]))
+                        continue
 
-            for pkg in packages:
-                logger.error("processing %s" % (pkg.get('title')))
-                extras = dict([(x['key'], x['value']) for x in pkg['extras']])
-                if 'publishing_status' in extras.keys() and extras['publishing_status'] == 'Draft':
-                    publisher = detect_publisher(extras)
-                    errors_json.append(OrderedDict([
-                        ('id', pkg.get('id')),
-                        ('name', pkg.get('name')),
-                        ('title', pkg.get('title')),
-                        ('organization', publisher),
-                        ('errors', [('Skipped', ["publishing_status = 'Draft'"])])
-                    ]))
-                    continue
+                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
+                    if 'errors' in datajson_entry.keys():
+                        errors_json.append(datajson_entry)
+                        datajson_entry = None
 
-                datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
-                if 'errors' in datajson_entry.keys():
-                    errors_json.append(datajson_entry)
-                    datajson_entry = None
+                    if datajson_entry and self.is_valid(datajson_entry):
+                        # logger.debug("writing to json: %s" % (pkg.get('title')))
+                        output.append(datajson_entry)
+                    else:
+                        publisher = detect_publisher(extras)
+                        logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
+                                    pkg.get('title', None), publisher)
 
-                if datajson_entry and self.is_valid(datajson_entry):
-                    logger.error("writing to json: %s" % (pkg.get('title')))
-                    output.append(datajson_entry)
-                else:
-                    publisher = detect_publisher(extras)
-                    logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted\n", pkg.get('id', None),
-                                pkg.get('title', None), publisher)
-
+                    data = json.dumps(Package2Pod.wrap_json_catalog(output, json_export_map), ensure_ascii=False)\
+                        .encode('utf8')
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # raise Exception("%s : %s : %s" % (exc_type, filename, exc_tb.tb_lineno))
-            logger.error("%s : %s : %s", exc_type, filename, exc_tb.tb_lineno)
-            raise e
+            logger.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
 
         # Get the error log
         eh.flush()
@@ -516,8 +517,7 @@ class JsonExportController(BaseController):
         logger.removeHandler(eh)
         stream.close()
 
-        # return json.dumps(output)
-        return self.write_zip(output, error, errors_json, zip_name='edi')
+        return self.write_zip(data, error, errors_json, zip_name='edi')
 
     def make_pdl(self, owner_org):
         # Error handler for creating error log
@@ -637,17 +637,13 @@ class JsonExportController(BaseController):
         if 'draft' == zip_name:
             data_file_name = 'draft_data.json'
 
-        # to get catalog json headers
-        json_export_map = get_export_map_json()
-
         # Write the data file
         if data:
-            zf.writestr(data_file_name,
-                        json.dumps(Package2Pod.wrap_json_catalog(data, json_export_map), ensure_ascii=False).encode(
-                            'utf8'))
+            zf.writestr(data_file_name, data)
 
         # Write empty.json if nothing to return
         else:
+            # logger.debug('no data to write')
             zf.writestr('empty.json', '')
 
         if self._errors_json:
@@ -658,10 +654,12 @@ class JsonExportController(BaseController):
 
         # Errors in json format
         if errors_json:
+            # logger.debug('writing errors.json')
             zf.writestr('errors.json', json.dumps(errors_json).encode('utf8'))
 
         # Write the error log
         if error:
+            # logger.debug('writing errorlog.txt')
             zf.writestr('errorlog.txt', error.encode('utf8'))
 
         zf.close()

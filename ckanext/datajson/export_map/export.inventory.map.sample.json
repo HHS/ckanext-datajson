@@ -17,8 +17,7 @@
     },
     "modified": {
       "extra": true,
-      "field": "Modified",
-      "redacted_allowed": true
+      "field": "Modified"
     },
     "accessLevel": {
       "extra": true,
@@ -30,43 +29,35 @@
     },
     "dataQuality": {
       "extra": true,
-      "field": "Data Quality",
-      "redacted_allowed": true
+      "field": "Data Quality"
     },
     "conformsTo": {
       "extra": true,
-      "field": "Conforms To",
-      "redacted_allowed": true
+      "field": "Conforms To"
     },
     "describedBy": {
       "extra": true,
-      "field": "Data Dictionary",
-      "redacted_allowed": true
+      "field": "Data Dictionary"
     },
     "describedByType": {
       "extra": true,
-      "field": "Data Dictionary Type",
-      "redacted_allowed": true
+      "field": "Data Dictionary Type"
     },
     "issued": {
       "extra": true,
-      "field": "Release Date",
-      "redacted_allowed": true
+      "field": "Release Date"
     },
     "landingPage": {
       "extra": true,
-      "field": "Homepage Url",
-      "redacted_allowed": true
+      "field": "Homepage Url"
     },
     "license": {
       "extra": true,
-      "field": "License New",
-      "redacted_allowed": true
+      "field": "License New"
     },
     "primaryITInvestmentUII": {
       "extra": true,
-      "field": "Primary It Investment Uii",
-      "redacted_allowed": true
+      "field": "Primary It Investment Uii"
     },
     "rights": {
       "extra": true,
@@ -82,8 +73,7 @@
     },
     "temporal": {
       "extra": true,
-      "field": "Temporal",
-      "redacted_allowed": true
+      "field": "Temporal"
     },
     "publisher": {
       "extra": true,
@@ -93,7 +83,7 @@
     "accrualPeriodicity": {
       "extra": true,
       "field": "accrual_periodicity",
-      "redacted_allowed": true,
+      ,
       "wrapper": "fix_accrual_periodicity"
     },
     "isPartOf": {
@@ -107,8 +97,7 @@
     "keyword": {
       "type": "array",
       "array_key": "display_name",
-      "field": "tags",
-      "redacted_allowed": true
+      "field": "tags"
     },
     "bureauCode": {
       "type": "array",
@@ -126,22 +115,19 @@
       "type": "array",
       "extra": true,
       "field": "Language",
-      "split": ",",
-      "redacted_allowed": true
+      "split": ","
     },
     "references": {
       "type": "array",
       "extra": true,
       "field": "Related Documents",
-      "split": ",",
-      "redacted_allowed": true
+      "split": ","
     },
     "theme": {
       "type": "array",
       "extra": true,
       "field": "Category",
-      "split": ",",
-      "redacted_allowed": true
+      "split": ","
     }
   }
 }

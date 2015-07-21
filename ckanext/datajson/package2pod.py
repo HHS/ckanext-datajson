@@ -28,21 +28,35 @@ class Package2Pod:
 
     @staticmethod
     def convert_package(package, json_export_map):
-        dataset_dict = Package2Pod.export_map_fields(package, json_export_map)
-        return Package2Pod.validate(package, dataset_dict)
-        # return dataset_dict
+        import sys, os
+
+        try:
+            dataset = OrderedDict()
+            # injecting head
+            # log.debug('adding header')
+            dataset.update(OrderedDict(json_export_map.get('dataset_headers')))
+
+            # log.debug('getting body')
+            dataset_dict = Package2Pod.export_map_fields(package, json_export_map.get('dataset_fields_map'))
+
+            # log.debug('merging head with body')
+            # injecting body
+            dataset.update(dataset_dict)
+
+            return Package2Pod.validate(package, dataset_dict)
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            log.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
+            raise e
 
     @staticmethod
-    def export_map_fields(package, json_export_map):
+    def export_map_fields(package, json_fields):
         import string
         import sys, os
 
         try:
-            dataset = json_export_map.get('dataset_headers')
-            if not dataset:
-                dataset = {}
-
-            json_fields = json_export_map.get('dataset_fields_map')
+            dataset = OrderedDict()
 
             for key, field_map in json_fields.iteritems():
                 # log.debug('%s => %s', key, field_map)
@@ -53,10 +67,11 @@ class Package2Pod:
                 field = field_map.get('field')
                 split = field_map.get('split')
                 wrapper = field_map.get('wrapper')
-                redacted_allowed = field_map.get('redacted_allowed')
 
                 if 'direct' == field_type and field:
                     if is_extra:
+                        # log.debug('field: %s', field)
+                        # log.debug('value: %s', get_extra(package, field))
                         dataset[key] = strip_if_string(get_extra(package, field))
                     else:
                         dataset[key] = strip_if_string(package.get(field))
@@ -65,7 +80,7 @@ class Package2Pod:
                     if is_extra:
                         found_element = strip_if_string(get_extra(package, field))
                         if found_element:
-                            if redacted_allowed and is_redacted(found_element):
+                            if is_redacted(found_element):
                                 dataset[key] = found_element
                             elif split:
                                 dataset[key] = [strip_if_string(x) for x in string.split(found_element, split)]
@@ -83,7 +98,7 @@ class Package2Pod:
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            log.error("%s : %s : %s", exc_type, filename, exc_tb.tb_lineno)
+            log.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
             raise e
 
     @staticmethod
@@ -129,7 +144,6 @@ class Package2Pod:
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # raise Exception("%s : %s : %s" % (exc_type, filename, exc_tb.tb_lineno))
             log.error("%s : %s : %s", exc_type, filename, exc_tb.tb_lineno)
             raise e
 
@@ -265,3 +279,65 @@ class Wrappers:
             if parent_uid:
                 parent_dataset_id = parent_uid
         return parent_dataset_id
+
+    @staticmethod
+    def generate_distribution(someValue):
+        arr = []
+        package = Wrappers.pkg
+
+        for r in package["resources"]:
+            resource = [("@type", "dcat:Distribution")]
+            rkeys = r.keys()
+            if 'url' in rkeys:
+                res_url = strip_if_string(r.get('url'))
+                if res_url:
+                    res_url = res_url.replace('http://[[REDACTED', '[[REDACTED')
+                    res_url = res_url.replace('http://http', 'http')
+                    if 'api' == r.get('resource_type') or 'accessurl' == r.get('resource_type'):
+                        resource += [("accessURL", res_url)]
+                    else:
+                        resource += [("downloadURL", res_url)]
+                        if 'format' in rkeys:
+                            res_format = strip_if_string(r.get('format'))
+                            if res_format:
+                                resource += [("mediaType", res_format)]
+                        else:
+                            log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
+            else:
+                log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
+
+            if 'formatReadable' in rkeys:
+                res_attr = strip_if_string(r.get('formatReadable'))
+                if res_attr:
+                    resource += [("format", res_attr)]
+
+            if 'name' in rkeys:
+                res_attr = strip_if_string(r.get('name'))
+                if res_attr:
+                    resource += [("title", res_attr)]
+
+            if 'notes' in rkeys:
+                res_attr = strip_if_string(r.get('notes'))
+                if res_attr:
+                    resource += [("description", res_attr)]
+
+            if 'conformsTo' in rkeys:
+                res_attr = strip_if_string(r.get('conformsTo'))
+                if res_attr:
+                    resource += [("conformsTo", res_attr)]
+
+            if 'describedBy' in rkeys:
+                res_attr = strip_if_string(r.get('describedBy'))
+                if res_attr:
+                    resource += [("describedBy", res_attr)]
+
+            if 'describedByType' in rkeys:
+                res_attr = strip_if_string(r.get('describedByType'))
+                if res_attr:
+                    resource += [("describedByType", res_attr)]
+
+            striped_resource = [(x, y) for x, y in resource if y is not None and y != "" and y != []]
+
+            arr += [OrderedDict(striped_resource)]
+
+        return arr

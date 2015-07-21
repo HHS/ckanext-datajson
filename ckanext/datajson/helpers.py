@@ -1,9 +1,15 @@
+try:
+    from collections import OrderedDict  # 2.7
+except ImportError:
+    from sqlalchemy.util import OrderedDict
+
 import logging
 
 from pylons import config
 from ckan import plugins as p
 from ckan.lib import helpers as h
 import re
+import simplejson as json
 
 REDACTED_REGEX = re.compile(
     r'^(\[\[REDACTED).*?(\]\])$'
@@ -100,8 +106,6 @@ def get_extra(package, key, default=None):
     :return: Any
     """
 
-    import json
-
     current_extras = package["extras"]
     # new_extras =[]
     new_extras = {}
@@ -127,17 +131,18 @@ def get_extra(package, key, default=None):
     return default
 
 
-def get_export_map_json():
+def get_export_map_json(map_filename):
     """
     Reading json export map from file
+    :param map_filename: str
     :return: obj
     """
     import os
-    import json
-    map_path = os.path.join(os.path.dirname(__file__), 'export_map', 'export.map.json')
+
+    map_path = os.path.join(os.path.dirname(__file__), 'export_map', map_filename)
 
     with open(map_path, 'r') as export_map_json:
-        json_export_map = json.load(export_map_json)
+        json_export_map = json.load(export_map_json, object_pairs_hook=OrderedDict)
 
     return json_export_map
 
