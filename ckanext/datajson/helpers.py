@@ -96,41 +96,6 @@ def strip_if_string(val):
     return val
 
 
-def get_extra(package, key, default=None):
-    """
-    Retrieves the value of an extras field.
-
-    :param package: dict
-    :param key: str
-    :param default: Any
-    :return: Any
-    """
-
-    current_extras = package["extras"]
-    # new_extras =[]
-    new_extras = {}
-    for extra in current_extras:
-        if extra['key'] == 'extras_rollup':
-            rolledup_extras = json.loads(extra['value'])
-            for k, value in rolledup_extras.iteritems():
-                # log.info("rolledup_extras key: %s, value: %s", k, value)
-                # new_extras.append({"key": k, "value": value})
-                new_extras[k] = value
-        else:
-            #    new_extras.append(extra)
-            new_extras[extra['key']] = extra['value']
-
-    # decode keys:
-    for k, v in new_extras.iteritems():
-        k = k.replace('_', ' ').replace('-', ' ').title()
-        if isinstance(v, (list, tuple)):
-            v = ", ".join(map(unicode, v))
-        # log.info("decoded values key: %s, value: %s", k, v)
-        if k == key:
-            return v
-    return default
-
-
 def get_export_map_json(map_filename):
     """
     Reading json export map from file
@@ -187,3 +152,64 @@ def get_validator(schema_type="federal-v1.1"):
     with open(schema_path, 'r') as schema:
         schema = json.loads(schema.read())
         return Draft4Validator(schema, format_checker=FormatChecker())
+
+
+def uglify(key):
+    """
+    lower string and remove spaces
+    :param key: string
+    :return: string
+    """
+    if isinstance(key, (str, unicode)):
+        return "".join(key.lower().split()).replace('_', '').replace('-', '')
+    return key
+
+
+def get_extra(package, key, default=None):
+    """
+    Retrieves the value of an extras field.
+    """
+    return packageExtraCache.get(package, key, default)
+
+
+class PackageExtraCache:
+    def __init__(self):
+        self.pid = None
+        self.extras = {}
+        pass
+
+    def store(self, package):
+        import sys, os
+
+        try:
+            self.pid = package.get('id')
+
+            current_extras = package.get('extras')
+            new_extras = {}
+            for extra in current_extras:
+                if 'extras_rollup' == extra.get('key'):
+                    rolledup_extras = json.loads(extra.get('value'))
+                    for k, value in rolledup_extras.iteritems():
+                        if isinstance(value, (list, tuple)):
+                            value = ", ".join(map(unicode, value))
+                        new_extras[uglify(k)] = value
+                else:
+                    value = extra.get('value')
+                    if isinstance(value, (list, tuple)):
+                        value = ", ".join(map(unicode, value))
+                    new_extras[uglify(extra['key'])] = value
+
+            self.extras = new_extras
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            log.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
+            raise e
+
+    def get(self, package, key, default=None):
+        if self.pid != package.get('id'):
+            self.store(package)
+        return strip_if_string(self.extras.get(uglify(key), default))
+
+
+packageExtraCache = PackageExtraCache()

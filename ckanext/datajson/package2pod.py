@@ -59,6 +59,13 @@ class Package2Pod:
         import string
         import sys, os
 
+        # pkg = [(x, y) for x, y in package.iteritems() if y is not None and y != "" and y != []]
+        # pkg = package
+        # for key, item in pkg.items():
+        #     pkg[uglify(key)] = pkg.pop(key)
+        # log.debug(json.dumps(pkg))
+        # log.debug('package type: %s', type(pkg))
+
         try:
             dataset = OrderedDict()
 
@@ -93,6 +100,7 @@ class Package2Pod:
                         if array_key:
                             dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field)]
                 if wrapper:
+                    # log.debug('wrapper: %s', wrapper)
                     method = getattr(Wrappers, wrapper)
                     if method:
                         Wrappers.pkg = package
@@ -111,7 +119,7 @@ class Package2Pod:
             raise e
 
     @staticmethod
-    def validate(package, dataset_dict):
+    def validate(pkg, dataset_dict):
         import sys, os
 
         try:
@@ -136,9 +144,9 @@ class Package2Pod:
                     log.warn(error)
 
                 errors_dict = OrderedDict([
-                    ('id', package.get('id')),
-                    ('name', package.get('name')),
-                    ('title', package.get('title')),
+                    ('id', pkg.get('id')),
+                    ('name', pkg.get('name')),
+                    ('title', pkg.get('title')),
                     ('organization', currentPackageOrg),
                     ('errors', errors),
                 ])
@@ -171,9 +179,7 @@ class Wrappers:
     def inventory_publisher(value):
         global currentPackageOrg
 
-        extras = dict([(x['key'], x['value']) for x in Wrappers.pkg['extras']])
-
-        publisher = strip_if_string(extras.get(Wrappers.field_map.get('field')))
+        publisher = strip_if_string(get_extra(Wrappers.pkg, Wrappers.field_map.get('field')))
         if publisher is None:
             return None
 
@@ -187,12 +193,12 @@ class Wrappers:
 
         for i in range(1, 6):
             pub_key = 'publisher_' + str(i)
-            if pub_key in extras and extras[pub_key] and strip_if_string(extras[pub_key]):
+            if get_extra(Wrappers.pkg, pub_key):
                 organization_list.append([
                     ('@type', 'org:Organization'),  # optional
-                    ('name', strip_if_string(extras[pub_key])),  # required
+                    ('name', get_extra(Wrappers.pkg, pub_key)),  # required
                 ])
-                currentPackageOrg = extras[pub_key]
+                currentPackageOrg = get_extra(Wrappers.pkg, pub_key)
 
         size = len(organization_list)
 
@@ -249,21 +255,14 @@ class Wrappers:
 
     @staticmethod
     def build_contact_point(someValue):
-        extras = dict([(x['key'], x['value']) for x in Wrappers.pkg['extras']])
 
-        for required_field in ["contact_name", "contact_email"]:
-            if required_field not in extras.keys():
-                raise KeyError(required_field)
+        fn = get_extra(Wrappers.pkg, "contact_name")
+        if not fn: raise KeyError("contact_name")
 
-        fn = strip_if_string(extras['contact_name'])
-        if fn is None:
-            raise KeyError('contact_name')
+        email = get_extra(Wrappers.pkg, "contact_email")
+        if not email: raise KeyError("contact_email")
 
-        email = strip_if_string(extras['contact_email'])
-        if email is None:
-            raise KeyError('contact_email')
-
-        if '[[REDACTED' not in email:
+        if not is_redacted(email):
             if '@' not in email:
                 raise KeyError('contact_email')
             else:

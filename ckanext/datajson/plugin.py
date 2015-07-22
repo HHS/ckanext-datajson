@@ -13,7 +13,7 @@ import ckan.lib.dictization.model_dictize as model_dictize
 
 from jsonschema.exceptions import best_match
 
-from helpers import get_export_map_json, detect_publisher, get_validator
+from helpers import get_export_map_json, detect_publisher, get_validator, uglify
 from package2pod import Package2Pod
 
 logger = logging.getLogger('datajson')
