@@ -78,7 +78,23 @@
     "publisher": {
       "extra": true,
       "field": "publisher",
-      "wrapper": "catalog_publisher"
+      "wrapper": "inventory_publisher"
+    },
+    "accrualPeriodicity": {
+      "extra": true,
+      "field": "accrual_periodicity",
+      "wrapper": "fix_accrual_periodicity"
+    },
+    "isPartOf": {
+      "extra": true,
+      "field": "parent_dataset",
+      "wrapper": "inventory_parent_uid"
+    },
+    "contactPoint": {
+      "wrapper": "build_contact_point"
+    },
+    "distribution": {
+      "wrapper": "generate_distribution"
     },
     "keyword": {
       "type": "array",

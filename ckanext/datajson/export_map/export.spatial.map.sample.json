@@ -78,7 +78,7 @@
     "publisher": {
       "extra": true,
       "field": "Responsible Party",
-      "wrapper": "spatial_publisher"
+      "wrapper": "catalog_publisher"
     },
     "accrualPeriodicity": {
       "extra": true,

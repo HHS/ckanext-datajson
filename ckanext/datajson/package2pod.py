@@ -169,7 +169,7 @@ class Wrappers:
     field_map = None
 
     @staticmethod
-    def spatial_publisher(value):
+    def catalog_publisher(value):
         return OrderedDict([
             ("@type", "org:Organization"),
             ("name", get_responsible_party(get_extra(Wrappers.pkg, Wrappers.field_map.get('field'))))

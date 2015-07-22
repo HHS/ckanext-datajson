@@ -77,29 +77,27 @@
     },
     "publisher": {
       "extra": true,
-      "field": "publisher",
-      "wrapper": "inventory_publisher"
+      "field": "Responsible Party",
+      "wrapper": "catalog_publisher"
     },
     "accrualPeriodicity": {
       "extra": true,
-      "field": "accrual_periodicity",
+      "field": "Frequency Of Update",
       "wrapper": "fix_accrual_periodicity"
     },
-    "isPartOf": {
-      "extra": true,
-      "field": "parent_dataset",
-      "wrapper": "inventory_parent_uid"
-    },
     "contactPoint": {
+      "extra": true,
+      "field": "contact_name",
       "wrapper": "build_contact_point"
     },
     "distribution": {
       "wrapper": "generate_distribution"
     },
     "keyword": {
+      "extra": true,
       "type": "array",
-      "array_key": "display_name",
-      "field": "tags"
+      "field": "tags",
+      "split": ","
     },
     "bureauCode": {
       "type": "array",

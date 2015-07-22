@@ -151,7 +151,7 @@ class DataJsonController(BaseController):
                 ("dcterms:title", DataJsonPlugin.ld_title),
                 ("rdfs:label", DataJsonPlugin.ld_title),
                 ("foaf:homepage", DataJsonPlugin.site_url),
-                ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
+                ("dcat:dataset", [dataset_to_jsonld(d) for d in data.get('dataset')]),
             ])
 
         return p.toolkit.literal(json.dumps(data, indent=2))
