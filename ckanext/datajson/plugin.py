@@ -178,8 +178,9 @@ class DataJsonController(BaseController):
             if owner_org:
                 packages = self.get_packages(owner_org)
             else:
-                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 100})
-                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+                # temporarily limit number of records
+                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50})
+                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
             json_export_map = get_export_map_json('export.map.json')
 
