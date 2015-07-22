@@ -166,4 +166,24 @@ def detect_publisher(extras):
 
 
 def is_redacted(value):
-    return REDACTED_REGEX.match(value)
+    """
+    Checks if value is valid POD v1.1 [REDACTED-*]
+    :param value: str
+    :return: bool
+    """
+    return isinstance(value, (str, unicode)) and REDACTED_REGEX.match(value)
+
+
+def get_validator(schema_type="federal-v1.1"):
+    """
+    Get POD json validator object
+    :param schema_type: str
+    :return: obj
+    """
+    import os
+    from jsonschema import Draft4Validator, FormatChecker
+
+    schema_path = os.path.join(os.path.dirname(__file__), 'pod_schema', schema_type, 'dataset.json')
+    with open(schema_path, 'r') as schema:
+        schema = json.loads(schema.read())
+        return Draft4Validator(schema, format_checker=FormatChecker())

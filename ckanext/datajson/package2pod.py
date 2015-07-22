@@ -27,7 +27,7 @@ class Package2Pod:
         return catalog
 
     @staticmethod
-    def convert_package(package, json_export_map):
+    def convert_package(package, json_export_map, validation_required=False):
         import sys, os
 
         try:
@@ -43,7 +43,11 @@ class Package2Pod:
             # injecting body
             dataset.update(dataset_dict)
 
-            return Package2Pod.validate(package, dataset_dict)
+            # skip validation if we export whole /data.json catalog
+            if validation_required:
+                return Package2Pod.validate(package, dataset_dict)
+            else:
+                return dataset_dict
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
