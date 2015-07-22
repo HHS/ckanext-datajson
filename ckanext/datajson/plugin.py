@@ -13,7 +13,7 @@ import ckan.lib.dictization.model_dictize as model_dictize
 
 from jsonschema.exceptions import best_match
 
-from helpers import get_export_map_json, detect_publisher, get_validator, uglify
+from helpers import get_export_map_json, detect_publisher, get_validator
 from package2pod import Package2Pod
 
 logger = logging.getLogger('datajson')
@@ -178,12 +178,14 @@ class DataJsonController(BaseController):
             if owner_org:
                 packages = self.get_packages(owner_org)
             else:
+                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 100})
                 packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
             json_export_map = get_export_map_json('export.map.json')
 
             if json_export_map:
                 for pkg in packages:
+                    # logger.error('package: %s', json.dumps(pkg))
                     # logger.debug("processing %s" % (pkg.get('title')))
                     extras = dict([(x['key'], x['value']) for x in pkg['extras']])
 

@@ -106,6 +106,10 @@ def get_export_map_json(map_filename):
 
     map_path = os.path.join(os.path.dirname(__file__), 'export_map', map_filename)
 
+    if not os.path.isfile(map_path):
+        log.warn("Could not find %s ! Please create it. Use samples from same folder", map_path)
+        map_path = map_path.replace('.map.json', '.map.sample.json')
+
     with open(map_path, 'r') as export_map_json:
         json_export_map = json.load(export_map_json, object_pairs_hook=OrderedDict)
 
