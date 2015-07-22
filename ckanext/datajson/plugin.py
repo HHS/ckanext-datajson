@@ -154,8 +154,7 @@ class DataJsonController(BaseController):
                 ("dcat:dataset", [dataset_to_jsonld(d) for d in data]),
             ])
 
-        # return p.toolkit.literal(json.dumps(data))
-        return json.dumps(data, indent=2)
+        return p.toolkit.literal(json.dumps(data, indent=2))
 
     def make_json(self, export_type='datajson', owner_org=None):
         # Error handler for creating error log
@@ -223,8 +222,7 @@ class DataJsonController(BaseController):
                             logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted, reason above.\n",
                                         pkg.get('id', None), pkg.get('title', None), publisher)
 
-                data = json.dumps(Package2Pod.wrap_json_catalog(output, json_export_map), ensure_ascii=False) \
-                    .encode('utf8')
+                data = Package2Pod.wrap_json_catalog(output, json_export_map)
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -297,7 +295,7 @@ class DataJsonController(BaseController):
 
         # Write the data file
         if data:
-            zf.writestr(data_file_name, data)
+            zf.writestr(data_file_name, json.dumps(data, ensure_ascii=False).encode('utf8'))
 
         # Write empty.json if nothing to return
         else:

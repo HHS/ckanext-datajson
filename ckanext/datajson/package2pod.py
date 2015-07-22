@@ -98,6 +98,11 @@ class Package2Pod:
                         Wrappers.pkg = package
                         Wrappers.field_map = field_map
                         dataset[key] = method(dataset.get(key))
+
+            # CKAN doesn't like empty values on harvest, let's get rid of them
+            # Remove entries where value is None, "", or empty list []
+            dataset = OrderedDict([(x, y) for x, y in dataset.iteritems() if y is not None and y != "" and y != []])
+
             return dataset
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -110,10 +115,6 @@ class Package2Pod:
         import sys, os
 
         try:
-            # CKAN doesn't like empty values on harvest, let's get rid of them
-            # Remove entries where value is None, "", or empty list []
-            dataset_dict = [(x, y) for x, y in dataset_dict.iteritems() if y is not None and y != "" and y != []]
-
             # When saved from UI DataQuality value is stored as "on" instead of True.
             # Check if value is "on" and replace it with True.
             dataset_dict = OrderedDict(dataset_dict)
