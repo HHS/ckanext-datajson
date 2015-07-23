@@ -84,7 +84,7 @@
     },
     "contactPoint": {
       "wrapper": "build_contact_point",
-      "map":{
+      "map": {
         "fn": {
           "extra": true,
           "field": "Responsible Party"

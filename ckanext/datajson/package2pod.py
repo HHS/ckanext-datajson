@@ -255,9 +255,11 @@ class Wrappers:
             fn = get_responsible_party(fn)
 
             if contact_point_map.get('hasEmail').get('extra'):
-                email = get_extra(package, contact_point_map.get('hasEmail').get('field'))
+                email = get_extra(package, contact_point_map.get('hasEmail').get('field'),
+                                  package.get('maintainer_email'))
             else:
-                email = package.get(contact_point_map.get('hasEmail').get('field'))
+                email = package.get(contact_point_map.get('hasEmail').get('field'),
+                                    package.get('maintainer_email'))
 
             if not is_redacted(email):
                 if '@' not in email:

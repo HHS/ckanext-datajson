@@ -179,13 +179,14 @@ class DataJsonController(BaseController):
                 packages = self.get_packages(owner_org)
             else:
                 # temporarily limit number of records
-                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50})
+                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50, 'page': 300})
                 # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
             json_export_map = get_export_map_json('export.map.json')
 
             if json_export_map:
                 for pkg in packages:
+                    # output.append(pkg)
                     # logger.error('package: %s', json.dumps(pkg))
                     # logger.debug("processing %s" % (pkg.get('title')))
                     extras = dict([(x['key'], x['value']) for x in pkg['extras']])
