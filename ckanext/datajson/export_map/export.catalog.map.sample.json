@@ -17,12 +17,12 @@
     },
     "accessLevel": {
       "extra": true,
-      "field": "accessLevel",
+      "field": "Access Level",
       "default": "public"
     },
     "identifier": {
       "extra": true,
-      "field": "Unique Id"
+      "field": "identifier"
     },
     "dataQuality": {
       "extra": true,
