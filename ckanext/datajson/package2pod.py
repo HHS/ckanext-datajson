@@ -199,13 +199,6 @@ class Wrappers:
 
         return OrderedDict(tree)
 
-    @staticmethod
-    def catalog_publisher(value):
-        return OrderedDict([
-            ("@type", "org:Organization"),
-            ("name", 'StubOrg')
-        ])
-
     # used by get_accrual_periodicity
     accrual_periodicity_dict = {
         'completely irregular': 'irregular',
