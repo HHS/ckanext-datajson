@@ -5,9 +5,6 @@
     "@context": "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
     "@type": "dcat:Catalog"
   },
-  "dataset_headers": {
-    "@type": "dcat:Dataset"
-  },
   "dataset_fields_map": {
     "title": {
       "field": "title"
@@ -16,12 +13,12 @@
       "field": "notes"
     },
     "modified": {
-      "extra": true,
-      "field": "Modified"
+      "field": "metadata_modified"
     },
     "accessLevel": {
       "extra": true,
-      "field": "Public Access Level"
+      "field": "accessLevel",
+      "default": "public"
     },
     "identifier": {
       "extra": true,
@@ -86,12 +83,46 @@
       "wrapper": "fix_accrual_periodicity"
     },
     "contactPoint": {
-      "extra": true,
-      "field": "contact_name",
-      "wrapper": "build_contact_point"
+      "wrapper": "build_contact_point",
+      "map":{
+        "fn": {
+          "extra": true,
+          "field": "Responsible Party"
+        },
+        "hasEmail": {
+          "extra": true,
+          "field": "Contact Email"
+        }
+      }
     },
     "distribution": {
-      "wrapper": "generate_distribution"
+      "wrapper": "generate_distribution",
+      "map": {
+        "accessURL": {
+          "field": "url"
+        },
+        "mediaType": {
+          "field": "mimetype"
+        },
+        "format": {
+          "field": "format"
+        },
+        "title": {
+          "field": "name"
+        },
+        "description": {
+          "field": "description"
+        },
+        "conformsTo": {
+          "field": "conformsTo"
+        },
+        "describedBy": {
+          "field": "describedBy"
+        },
+        "describedByType": {
+          "field": "describedByType"
+        }
+      }
     },
     "keyword": {
       "extra": true,

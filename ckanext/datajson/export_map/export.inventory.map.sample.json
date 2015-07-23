@@ -5,9 +5,6 @@
     "@context": "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
     "@type": "dcat:Catalog"
   },
-  "dataset_headers": {
-    "@type": "dcat:Dataset"
-  },
   "dataset_fields_map": {
     "title": {
       "field": "title"
@@ -91,10 +88,46 @@
       "wrapper": "inventory_parent_uid"
     },
     "contactPoint": {
-      "wrapper": "build_contact_point"
+      "wrapper": "build_contact_point",
+      "map":{
+        "fn": {
+          "extra": true,
+          "field": "contact_name"
+        },
+        "hasEmail": {
+          "extra": true,
+          "field": "contact_email"
+        }
+      }
     },
     "distribution": {
-      "wrapper": "generate_distribution"
+      "wrapper": "generate_distribution",
+      "map": {
+        "accessURL": {
+          "field": "url"
+        },
+        "mediaType": {
+          "field": "format"
+        },
+        "format": {
+          "field": "formatReadable"
+        },
+        "title": {
+          "field": "name"
+        },
+        "description": {
+          "field": "notes"
+        },
+        "conformsTo": {
+          "field": "conformsTo"
+        },
+        "describedBy": {
+          "field": "describedBy"
+        },
+        "describedByType": {
+          "field": "describedByType"
+        }
+      }
     },
     "keyword": {
       "type": "array",

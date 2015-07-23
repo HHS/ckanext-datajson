@@ -57,6 +57,9 @@ def get_responsible_party(value):
             Complex Systems Research Center (pointOfContact)
             British Geological Survey (custodian, pointOfContact); Natural England (publisher)
     """
+    if not value:
+        return None
+
     formatted = {
         'resourceProvider': p.toolkit._('Resource Provider'),
         'pointOfContact': p.toolkit._('Point of Contact'),
