@@ -1,4 +1,5 @@
 {
+  "validation_enabled": false,
   "catalog_headers": {
     "conformsTo": "https://project-open-data.cio.gov/v1.1/schema",
     "describedBy": "https://project-open-data.cio.gov/v1.1/schema/catalog.json",
@@ -34,23 +35,23 @@
     },
     "describedBy": {
       "extra": true,
-      "field": "Data Dictionary"
+      "field": "Described by"
     },
     "describedByType": {
       "extra": true,
-      "field": "Data Dictionary Type"
+      "field": "Described by Type"
     },
     "issued": {
       "extra": true,
-      "field": "Release Date"
+      "field": "issued"
     },
     "landingPage": {
       "extra": true,
-      "field": "Homepage Url"
+      "field": "landingPage"
     },
     "license": {
       "extra": true,
-      "field": "License New"
+      "field": "license"
     },
     "primaryITInvestmentUII": {
       "extra": true,
@@ -58,7 +59,7 @@
     },
     "rights": {
       "extra": true,
-      "field": "Access Level Comment"
+      "field": "rights"
     },
     "systemOfRecords": {
       "extra": true,
@@ -74,7 +75,7 @@
     },
     "publisher": {
       "extra": true,
-      "field": "Responsible Party",
+      "field": "publisher",
       "wrapper": "catalog_publisher"
     },
     "accrualPeriodicity": {
@@ -157,7 +158,7 @@
     "theme": {
       "type": "array",
       "extra": true,
-      "field": "Category",
+      "field": "theme",
       "split": ","
     }
   }

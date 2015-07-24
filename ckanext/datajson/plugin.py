@@ -170,9 +170,6 @@ class DataJsonController(BaseController):
         errors_json = []
         Package2Pod.seen_identifiers = set()
 
-        # Skip validation if exporting whole catalog /data.json
-        validation_required = 'datajson' != export_type
-
         try:
             # Build the data.json file.
             if owner_org:
@@ -207,14 +204,15 @@ class DataJsonController(BaseController):
                         if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
                             continue
 
-                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map, validation_required)
+                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
                     errors = None
                     if 'errors' in datajson_entry.keys():
                         errors_json.append(datajson_entry)
                         errors = datajson_entry.get('errors')
                         datajson_entry = None
 
-                    if datajson_entry and (not validation_required or self.is_valid(datajson_entry)):
+                    if datajson_entry and \
+                            (not json_export_map.get('validation_enabled') or self.is_valid(datajson_entry)):
                         # logger.debug("writing to json: %s" % (pkg.get('title')))
                         output.append(datajson_entry)
                     else:

@@ -27,14 +27,14 @@ class Package2Pod:
         return catalog
 
     @staticmethod
-    def convert_package(package, json_export_map, validation_required=False):
+    def convert_package(package, json_export_map):
         import sys, os
 
         try:
             dataset = Package2Pod.export_map_fields(package, json_export_map)
 
             # skip validation if we export whole /data.json catalog
-            if validation_required:
+            if json_export_map.get('validation_enabled'):
                 return Package2Pod.validate(package, dataset)
             else:
                 return dataset
@@ -161,7 +161,7 @@ class Wrappers:
     def catalog_publisher(value):
         return OrderedDict([
             ("@type", "org:Organization"),
-            ("name", get_responsible_party(get_extra(Wrappers.pkg, Wrappers.current_field_map.get('field'))))
+            ("name", get_responsible_party(value))
         ])
 
     @staticmethod
@@ -248,9 +248,12 @@ class Wrappers:
 
             if contact_point_map.get('fn').get('extra'):
                 fn = get_extra(package, contact_point_map.get('fn').get('field'),
-                               get_extra(package, "Contact Name"))
+                               get_extra(package, "Contact Name",
+                                         package.get('maintainer')))
             else:
-                fn = package.get(contact_point_map.get('fn').get('field'))
+                fn = package.get(contact_point_map.get('fn').get('field'),
+                                 get_extra(package, "Contact Name",
+                                           package.get('maintainer')))
 
             fn = get_responsible_party(fn)
 
@@ -261,12 +264,8 @@ class Wrappers:
                 email = package.get(contact_point_map.get('hasEmail').get('field'),
                                     package.get('maintainer_email'))
 
-            if not is_redacted(email):
-                if '@' not in email:
-                    # raise KeyError('contact_email')
-                    return None
-                else:
-                    email = 'mailto:' + email
+            if not is_redacted(email) and '@' in email:
+                email = 'mailto:' + email
 
             contact_point = OrderedDict([('@type', 'vcard:Contact')])
             if fn:
