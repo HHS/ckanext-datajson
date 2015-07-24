@@ -80,7 +80,7 @@
     },
     "accrualPeriodicity": {
       "extra": true,
-      "field": "Frequency Of Update",
+      "field": "Accrual Periodicity",
       "wrapper": "fix_accrual_periodicity"
     },
     "contactPoint": {
@@ -152,7 +152,7 @@
     "references": {
       "type": "array",
       "extra": true,
-      "field": "Related Documents",
+      "field": "references",
       "split": ","
     },
     "theme": {
