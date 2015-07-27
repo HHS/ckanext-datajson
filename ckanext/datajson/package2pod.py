@@ -8,8 +8,6 @@ from logging import getLogger
 log = getLogger(__name__)
 
 from helpers import *
-from datajsonvalidator import do_validation
-import ckan.model as model
 
 
 class Package2Pod:
@@ -124,6 +122,7 @@ class Package2Pod:
 
             errors = []
             try:
+                from datajsonvalidator import do_validation
                 do_validation([dict(dataset_dict)], errors, Package2Pod.seen_identifiers)
             except Exception as e:
                 errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
@@ -283,6 +282,8 @@ class Wrappers:
     @staticmethod
     def inventory_parent_uid(parent_dataset_id):
         if parent_dataset_id:
+            import ckan.model as model
+
             parent = model.Package.get(parent_dataset_id)
             parent_uid = parent.extras.col.target['unique_id'].value
             if parent_uid:
