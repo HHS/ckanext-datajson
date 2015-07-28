@@ -24,8 +24,6 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
-from build_datajsonld import dataset_to_jsonld
-
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
@@ -59,8 +57,9 @@ class DataJsonPlugin(p.SingletonPlugin):
         if DataJsonPlugin.route_enabled:
             # /data.json and /data.jsonld (or other path as configured by user)
             m.connect('datajson_export', DataJsonPlugin.route_path,
-                      controller='ckanext.datajson.plugin:DataJsonController',
-                      action='generate_json')
+                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_json')
+            m.connect('organization_export', '/organization/{org_id}/data.json',
+                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_org_json')
             # TODO commenting out enterprise data inventory for right now
             # m.connect('enterprisedatajson', DataJsonPlugin.route_edata_path,
             # controller='ckanext.datajson.plugin:DataJsonController', action='generate_enterprise')
@@ -69,13 +68,13 @@ class DataJsonPlugin(p.SingletonPlugin):
             # controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
 
         if DataJsonPlugin.edi_pdl_enabled:
-            m.connect('public_data_listing', '/organization/{org}/pdl.json',
+            m.connect('public_data_listing', '/organization/{org_id}/pdl.json',
                       controller='ckanext.datajson.plugin:DataJsonController', action='generate_pdl')
 
-            m.connect('enterprise_data_inventory', '/organization/{org}/edi.json',
+            m.connect('enterprise_data_inventory', '/organization/{org_id}/edi.json',
                       controller='ckanext.datajson.plugin:DataJsonController', action='generate_edi')
 
-            m.connect('enterprise_data_inventory', '/organization/{org}/draft.json',
+            m.connect('enterprise_data_inventory', '/organization/{org_id}/draft.json',
                       controller='ckanext.datajson.plugin:DataJsonController', action='generate_draft')
 
         # /pod/validate
@@ -91,41 +90,38 @@ class DataJsonController(BaseController):
     def generate_json(self):
         return self.generate_output('json')
 
-    def generate_jsonld(self):
-        return self.generate_output('json-ld')
+    def generate_org_json(self, org_id):
+        return self.generate_output('json', org_id=org_id)
 
-    def generate_pdl(self):
-        return self.generate('pdl')
+    # def generate_jsonld(self):
+    #     return self.generate_output('json-ld')
 
-    def generate_edi(self):
-        return self.generate('edi')
+    def generate_pdl(self, org_id):
+        return self.generate('pdl', org_id=org_id)
 
-    def generate_draft(self):
-        return self.generate('draft')
+    def generate_edi(self, org_id):
+        return self.generate('edi', org_id=org_id)
 
-    def generate(self, export_type='datajson'):
-        if 'datajson' == export_type:
-            return self.generate_output('json')
+    def generate_draft(self, org_id):
+        return self.generate('draft', org_id=org_id)
+
+    def generate(self, export_type='datajson', org_id=None):
         if export_type in ['draft', 'pdl', 'edi']:
-            # DWC this is a hack, as I couldn't get to the request parameters.
-            # For whatever reason, the multidict was always empty
-            match = re.match(r"/organization/([-a-z0-9]+)/" + export_type + r".json", request.path)
-
             # If user is not editor or admin of the organization then don't allow edi download
             if p.toolkit.check_access('package_create', {'model': model, 'user': c.user},
-                                      {'owner_org': match.group(1)}):
-                if match:
+                                      {'owner_org': org_id}):
+                if org_id:
                     # set content type (charset required or pylons throws an error)
                     response.content_type = 'application/json; charset=UTF-8'
 
                     # allow caching of response (e.g. by Apache)
                     del response.headers["Cache-Control"]
                     del response.headers["Pragma"]
-                    return self.make_json(export_type, match.group(1))
+                    return self.make_json(export_type, org_id)
             return "Invalid organization id"
         return "Invalid type"
 
-    def generate_output(self, fmt):
+    def generate_output(self, fmt='json', org_id=None):
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
 
@@ -135,24 +131,24 @@ class DataJsonController(BaseController):
 
         # TODO special processing for enterprise
         # output
-        data = self.make_json()
+        data = self.make_json(export_type='datajson', owner_org=org_id)
 
-        if fmt == 'json-ld':
-            # Convert this to JSON-LD.
-            data = OrderedDict([
-                ("@context", OrderedDict([
-                    ("rdfs", "http://www.w3.org/2000/01/rdf-schema#"),
-                    ("dcterms", "http://purl.org/dc/terms/"),
-                    ("dcat", "http://www.w3.org/ns/dcat#"),
-                    ("foaf", "http://xmlns.com/foaf/0.1/"),
-                ])),
-                ("@id", DataJsonPlugin.ld_id),
-                ("@type", "dcat:Catalog"),
-                ("dcterms:title", DataJsonPlugin.ld_title),
-                ("rdfs:label", DataJsonPlugin.ld_title),
-                ("foaf:homepage", DataJsonPlugin.site_url),
-                ("dcat:dataset", [dataset_to_jsonld(d) for d in data.get('dataset')]),
-            ])
+        # if fmt == 'json-ld':
+        #     # Convert this to JSON-LD.
+        #     data = OrderedDict([
+        #         ("@context", OrderedDict([
+        #             ("rdfs", "http://www.w3.org/2000/01/rdf-schema#"),
+        #             ("dcterms", "http://purl.org/dc/terms/"),
+        #             ("dcat", "http://www.w3.org/ns/dcat#"),
+        #             ("foaf", "http://xmlns.com/foaf/0.1/"),
+        #         ])),
+        #         ("@id", DataJsonPlugin.ld_id),
+        #         ("@type", "dcat:Catalog"),
+        #         ("dcterms:title", DataJsonPlugin.ld_title),
+        #         ("rdfs:label", DataJsonPlugin.ld_title),
+        #         ("foaf:homepage", DataJsonPlugin.site_url),
+        #         ("dcat:dataset", [dataset_to_jsonld(d) for d in data.get('dataset')]),
+        #     ])
 
         return p.toolkit.literal(json.dumps(data, indent=2))
 
@@ -173,11 +169,15 @@ class DataJsonController(BaseController):
         try:
             # Build the data.json file.
             if owner_org:
-                packages = self.get_packages(owner_org)
+                if 'datajson' == export_type:
+                    # we didn't check ownership for this type of export, so never load private datasets here
+                    packages = self.get_packages(owner_org, with_private=False)
+                else:
+                    packages = self.get_packages(owner_org, with_private=True)
             else:
-                # temporarily limit number of records
-                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50, 'page': 300})
-                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+                # TODO: load data by pages
+                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50, 'page': 300})
+                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
             json_export_map = get_export_map_json('export.map.json')
 
@@ -243,9 +243,9 @@ class DataJsonController(BaseController):
 
         return self.write_zip(data, error, errors_json, zip_name=export_type)
 
-    def get_packages(self, owner_org):
+    def get_packages(self, owner_org, with_private=True):
         # Build the data.json file.
-        packages = self.get_all_group_packages(group_id=owner_org)
+        packages = self.get_all_group_packages(group_id=owner_org, with_private=with_private)
         # get packages for sub-agencies.
         sub_agency = model.Group.get(owner_org)
         if 'sub-agencies' in sub_agency.extras.col.target \
@@ -253,18 +253,18 @@ class DataJsonController(BaseController):
             sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
             sub_agencies_list = sub_agencies.split(",")
             for sub in sub_agencies_list:
-                sub_packages = self.get_all_group_packages(group_id=sub)
+                sub_packages = self.get_all_group_packages(group_id=sub, with_private=with_private)
                 for sub_package in sub_packages:
                     packages.append(sub_package)
 
         return packages
 
-    def get_all_group_packages(self, group_id):
+    def get_all_group_packages(self, group_id, with_private=True):
         """
         Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
         """
         result = []
-        for pkg_rev in model.Group.get(group_id).packages(with_private=True, context={'user_is_admin': True}):
+        for pkg_rev in model.Group.get(group_id).packages(with_private=with_private, context={'user_is_admin': True}):
             result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
 
         return result
