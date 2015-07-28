@@ -171,9 +171,7 @@ class DataJsonController(BaseController):
             if owner_org:
                 if 'datajson' == export_type:
                     # we didn't check ownership for this type of export, so never load private datasets here
-                    packages = p.toolkit.get_action("package_search")(
-                        None, {'q': '+capacity:public', 'rows': 100, 'start': 0})
-                    packages = packages.get('results', [])
+                    packages = DataJsonController._get_ckan_datasets(org=owner_org)
                 else:
                     packages = self.get_packages(owner_org, with_private=True)
             else:
@@ -365,3 +363,32 @@ class DataJsonController(BaseController):
                     c.errors.append(("No Errors", ["Great job!"]))
 
         return render('datajsonvalidator.html')
+
+    @staticmethod
+    def _get_ckan_datasets(org=None, with_private=False):
+        n = 500
+        page = 1
+        dataset_list = []
+
+        q = '+capacity:public' if not with_private else '*:*'
+
+        fq = 'dataset_type:dataset'
+        if org:
+            fq += " AND organization:" + org
+
+        while True:
+            search_data_dict = {
+                'q': q,
+                'fq': fq,
+                'sort': 'metadata_modified desc',
+                'rows': n,
+                'start': n * (page - 1),
+            }
+
+            query = p.toolkit.get_action('package_search')({}, search_data_dict)
+            if len(query['results']):
+                dataset_list.extend(query['results'])
+                page += 1
+            else:
+                break
+        return dataset_list
