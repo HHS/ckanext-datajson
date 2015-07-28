@@ -171,7 +171,9 @@ class DataJsonController(BaseController):
             if owner_org:
                 if 'datajson' == export_type:
                     # we didn't check ownership for this type of export, so never load private datasets here
-                    packages = self.get_packages(owner_org, with_private=False)
+                    packages = p.toolkit.get_action("package_search")(
+                        None, {'q': '+capacity:public', 'rows': 100, 'start': 0})
+                    packages = packages.get('results', [])
                 else:
                     packages = self.get_packages(owner_org, with_private=True)
             else:
