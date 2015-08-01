@@ -172,21 +172,26 @@ class DataJsonController(BaseController):
                 if 'datajson' == export_type:
                     # we didn't check ownership for this type of export, so never load private datasets here
                     packages = DataJsonController._get_ckan_datasets(org=owner_org)
+                    if not packages:
+                        packages = self.get_packages(owner_org=owner_org, with_private=False)
                 else:
-                    packages = self.get_packages(owner_org, with_private=True)
+                    packages = self.get_packages(owner_org=owner_org, with_private=True)
             else:
                 # TODO: load data by pages
-                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {'limit': 50, 'page': 300})
-                packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
+                # packages = p.toolkit.get_action("current_package_list_with_resources")(
+                # None, {'limit': 50, 'page': 300})
+                packages = DataJsonController._get_ckan_datasets()
+                # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
             json_export_map = get_export_map_json('export.map.json')
 
             if json_export_map:
                 for pkg in packages:
-                    # output.append(pkg)
+                    if json_export_map.get('debug'):
+                        output.append(pkg)
                     # logger.error('package: %s', json.dumps(pkg))
                     # logger.debug("processing %s" % (pkg.get('title')))
-                    extras = dict([(x['key'], x['value']) for x in pkg['extras']])
+                    extras = dict([(x['key'], x['value']) for x in pkg.get('extras', {})])
 
                     # edi = all non-draft datasets (public + private)
                     # pdl = public-only, non-draft datasets
@@ -194,14 +199,14 @@ class DataJsonController(BaseController):
                         if 'Draft' == extras.get('publishing_status'):
                             publisher = detect_publisher(extras)
                             logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted (%s)\n",
-                                        pkg.get('id', None), pkg.get('title', None), publisher,
+                                        pkg.get('id'), pkg.get('title'), publisher,
                                         'publishing_status: Draft')
                             continue
-                        if 'pdl' == export_type and re.match(r'[Nn]on-public', extras['public_access_level']):
+                        if 'pdl' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
                             continue
                     # draft = all draft-only datasets
                     elif 'draft' == export_type:
-                        if 'publishing_status' not in extras.keys() or extras['publishing_status'] != 'Draft':
+                        if 'publishing_status' not in extras.keys() or extras.get('publishing_status') != 'Draft':
                             continue
 
                     datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
@@ -264,6 +269,7 @@ class DataJsonController(BaseController):
         Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
         """
         result = []
+
         for pkg_rev in model.Group.get(group_id).packages(with_private=with_private, context={'user_is_admin': True}):
             result.append(model_dictize.package_dictize(pkg_rev, {'model': model}))
 

@@ -85,7 +85,7 @@ class Package2Pod:
 
                     else:
                         if array_key:
-                            dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field)]
+                            dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field, {})]
                 if wrapper:
                     # log.debug('wrapper: %s', wrapper)
                     method = getattr(Wrappers, wrapper)
@@ -129,6 +129,11 @@ class Package2Pod:
             if len(errors) > 0:
                 for error in errors:
                     log.warn(error)
+
+                try:
+                    currentPackageOrg
+                except NameError:
+                    currentPackageOrg = 'unknown'
 
                 errors_dict = OrderedDict([
                     ('id', pkg.get('id')),
@@ -263,7 +268,7 @@ class Wrappers:
                 email = package.get(contact_point_map.get('hasEmail').get('field'),
                                     package.get('maintainer_email'))
 
-            if not is_redacted(email) and '@' in email:
+            if email and not is_redacted(email) and '@' in email:
                 email = 'mailto:' + email
 
             contact_point = OrderedDict([('@type', 'vcard:Contact')])
@@ -297,8 +302,8 @@ class Wrappers:
         package = Wrappers.pkg
 
         distribution_map = Wrappers.full_field_map.get('distribution').get('map')
-        if not distribution_map:
-            return None
+        if not distribution_map or 'resources' not in package:
+            return arr
 
         for r in package["resources"]:
             resource = OrderedDict([('@type', "dcat:Distribution")])
