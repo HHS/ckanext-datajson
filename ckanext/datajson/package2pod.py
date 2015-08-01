@@ -160,6 +160,7 @@ class Wrappers:
     pkg = None
     current_field_map = None
     full_field_map = None
+    bureau_code_list = None
 
     @staticmethod
     def catalog_publisher(value):
@@ -335,3 +336,33 @@ class Wrappers:
             arr += [OrderedDict(striped_resource)]
 
         return arr
+
+    @staticmethod
+    def bureau_code(value):
+        if value:
+            return value
+
+        if not 'organization' not in Wrappers.pkg or 'title' not in Wrappers.pkg.get('organization'):
+            return None
+        org_title = Wrappers.pkg.get('organization').get('title')
+        log.debug("org title: %s", org_title)
+
+        codelist = Wrappers._get_bureau_code_list()
+        for bureau in codelist:
+            if bureau['Agency'] == org_title:
+                log.debug("found match: %s", "[{0}:{1}]".format(
+                    bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code')))
+                result = "{0}:{1}".format(bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code'))
+                log.debug("found match: '%s'", result)
+                return [result]
+        return None
+
+    @staticmethod
+    def _get_bureau_code_list():
+        if Wrappers.bureau_code_list:
+            return Wrappers.bureau_code_list
+        import os
+        file = open(os.path.join(os.path.dirname(__file__), "resources")
+                    + "/omb-agency-bureau-treasury-codes.json", 'r')
+        Wrappers.bureau_code_list = json.load(file)
+        return Wrappers.bureau_code_list
