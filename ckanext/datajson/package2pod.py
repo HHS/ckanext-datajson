@@ -347,22 +347,29 @@ class Wrappers:
         org_title = Wrappers.pkg.get('organization').get('title')
         log.debug("org title: %s", org_title)
 
-        codelist = Wrappers._get_bureau_code_list()
-        for bureau in codelist:
-            if bureau['Agency'] == org_title:
-                log.debug("found match: %s", "[{0}:{1}]".format(
-                    bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code')))
-                result = "{0}:{1}".format(bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code'))
-                log.debug("found match: '%s'", result)
-                return [result]
-        return None
+        code_list = Wrappers._get_bureau_code_list()
+
+        if org_title not in code_list:
+            return None
+
+        bureau = code_list.get(org_title)
+
+        log.debug("found match: %s", "[{0}:{1}]".format(bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code')))
+        result = "{0}:{1}".format(bureau.get('OMB Agency Code'), bureau.get('OMB Bureau Code'))
+        log.debug("found match: '%s'", result)
+        return [result]
 
     @staticmethod
     def _get_bureau_code_list():
         if Wrappers.bureau_code_list:
             return Wrappers.bureau_code_list
         import os
-        file = open(os.path.join(os.path.dirname(__file__), "resources")
-                    + "/omb-agency-bureau-treasury-codes.json", 'r')
-        Wrappers.bureau_code_list = json.load(file)
+        bc_file = open(
+            os.path.join(os.path.dirname(__file__), "resources", "omb-agency-bureau-treasury-codes.json"),
+            "r"
+        )
+        code_list = json.load(bc_file)
+        Wrappers.bureau_code_list = {}
+        for bureau in code_list:
+            Wrappers.bureau_code_list[bureau['Agency']] = bureau
         return Wrappers.bureau_code_list
