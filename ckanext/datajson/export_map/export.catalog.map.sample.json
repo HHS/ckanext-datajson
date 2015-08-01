@@ -135,7 +135,8 @@
       "type": "array",
       "extra": true,
       "field": "Bureau Code",
-      "split": ","
+      "split": ",",
+      "wrapper": "bureau_code"
     },
     "programCode": {
       "type": "array",
