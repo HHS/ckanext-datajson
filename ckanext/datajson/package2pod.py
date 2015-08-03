@@ -164,9 +164,14 @@ class Wrappers:
 
     @staticmethod
     def catalog_publisher(value):
+        publisher = None
+        if value:
+            publisher = get_responsible_party(value)
+        if not publisher and 'organization' in Wrappers.pkg and 'title' in Wrappers.pkg.get('organization'):
+            publisher = Wrappers.pkg.get('organization').get('title')
         return OrderedDict([
             ("@type", "org:Organization"),
-            ("name", get_responsible_party(value))
+            ("name", publisher)
         ])
 
     @staticmethod
