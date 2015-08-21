@@ -36,7 +36,7 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
     # url (without protocol and trailing slash ) can also be used as key 
     'creativecommons.org/licenses/by/4.0':'cc-by',
     'creativecommons.org/licenses/by-sa/4.0':'cc-by-sa',
-    'creativecommons.org/publicdomain/zero/1.0':'cc-by-sa',
+    'creativecommons.org/publicdomain/zero/1.0':'cc-zero',
     'creativecommons.org/licenses/by-nc/4.0':'cc-nc',
     'www.gnu.org/copyleft/fdl.html':'gfdl',
     'opendatacommons.org/licenses/by/1-0':'odc-by',
