@@ -44,7 +44,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
 
-        DataJsonPlugin.edi_pdl_enabled = config.get("ckanext.datajson.edi_pdl_enabled", "False") == 'True'
+        DataJsonPlugin.inventory_links_enabled = config.get("ckanext.datajson.inventory_links_enabled", "False") == 'True'
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
@@ -67,12 +67,12 @@ class DataJsonPlugin(p.SingletonPlugin):
             # m.connect('datajsonld', DataJsonPlugin.route_ld_path,
             # controller='ckanext.datajson.plugin:DataJsonController', action='generate_jsonld')
 
-        if DataJsonPlugin.edi_pdl_enabled:
-            m.connect('public_data_listing', '/organization/{org_id}/pdl.json',
-                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_pdl')
+        if DataJsonPlugin.inventory_links_enabled:
+            m.connect('public_data_listing', '/organization/{org_id}/redacted.json',
+                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_redacted')
 
-            m.connect('enterprise_data_inventory', '/organization/{org_id}/edi.json',
-                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_edi')
+            m.connect('enterprise_data_inventory', '/organization/{org_id}/unredacted.json',
+                      controller='ckanext.datajson.plugin:DataJsonController', action='generate_unredacted')
 
             m.connect('enterprise_data_inventory', '/organization/{org_id}/draft.json',
                       controller='ckanext.datajson.plugin:DataJsonController', action='generate_draft')
@@ -96,18 +96,18 @@ class DataJsonController(BaseController):
     # def generate_jsonld(self):
     #     return self.generate_output('json-ld')
 
-    def generate_pdl(self, org_id):
-        return self.generate('pdl', org_id=org_id)
+    def generate_redacted(self, org_id):
+        return self.generate('redacted', org_id=org_id)
 
-    def generate_edi(self, org_id):
-        return self.generate('edi', org_id=org_id)
+    def generate_unredacted(self, org_id):
+        return self.generate('unredacted', org_id=org_id)
 
     def generate_draft(self, org_id):
         return self.generate('draft', org_id=org_id)
 
     def generate(self, export_type='datajson', org_id=None):
-        if export_type in ['draft', 'pdl', 'edi']:
-            # If user is not editor or admin of the organization then don't allow edi download
+        if export_type in ['draft', 'redacted', 'unredacted']:
+            # If user is not editor or admin of the organization then don't allow unredacted download
             if p.toolkit.check_access('package_create', {'model': model, 'user': c.user},
                                       {'owner_org': org_id}):
                 if org_id:
@@ -193,17 +193,17 @@ class DataJsonController(BaseController):
                     # logger.debug("processing %s" % (pkg.get('title')))
                     extras = dict([(x['key'], x['value']) for x in pkg.get('extras', {})])
 
-                    # edi = all non-draft datasets (public + private)
-                    # pdl = public-only, non-draft datasets
-                    if export_type in ['edi', 'pdl']:
+                    # unredacted = all non-draft datasets (public + private)
+                    # redacted = public-only, non-draft datasets
+                    if export_type in ['unredacted', 'redacted']:
                         if 'Draft' == extras.get('publishing_status'):
                             publisher = detect_publisher(extras)
                             logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted (%s)\n",
                                         pkg.get('id'), pkg.get('title'), publisher,
                                         'publishing_status: Draft')
                             continue
-                        if 'pdl' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
-                            continue
+                        # if 'redacted' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
+                        #     continue
                     # draft = all draft-only datasets
                     elif 'draft' == export_type:
                         if 'publishing_status' not in extras.keys() or extras.get('publishing_status') != 'Draft':
