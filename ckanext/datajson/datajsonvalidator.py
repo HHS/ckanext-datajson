@@ -230,7 +230,7 @@ def do_validation(doc, errors_array, seen_identifiers):
                             continue
                     distribution_name = dataset_name + (" distribution %d" % (j + 1))
                     # distribution - downloadURL # Required-If-Applicable
-                    check_url_field(False, dt, "downloadURL", distribution_name, errs, True)
+                    check_url_field(False, dt, "downloadURL", distribution_name, errs, allow_redacted=True)
 
                     # distribution - mediaType # Required-If-Applicable
                     if 'downloadURL' in dt:
@@ -243,13 +243,13 @@ def do_validation(doc, errors_array, seen_identifiers):
                                           distribution_name)
 
                     # distribution - accessURL # optional
-                    check_url_field(False, dt, "accessURL", distribution_name, errs, True)
+                    check_url_field(False, dt, "accessURL", distribution_name, errs, allow_redacted=True)
 
                     # distribution - conformsTo # optional
-                    check_url_field(False, dt, "conformsTo", distribution_name, errs, True)
+                    check_url_field(False, dt, "conformsTo", distribution_name, errs, allow_redacted=True)
 
                     # distribution - describedBy # optional
-                    check_url_field(False, dt, "describedBy", distribution_name, errs, True)
+                    check_url_field(False, dt, "describedBy", distribution_name, errs, allow_redacted=True)
 
                     # distribution - describedByType # optional
                     if dt.get("describedByType") is None or is_redacted(dt.get("describedByType")):
@@ -273,7 +273,7 @@ def do_validation(doc, errors_array, seen_identifiers):
                         check_required_string_field(dt, "title", 1, distribution_name, errs)
 
             # license # Required-If-Applicable
-            check_url_field(False, item, "license", dataset_name, errs, True)
+            check_url_field(False, item, "license", dataset_name, errs, allow_redacted=True)
 
             # rights # Required-If-Applicable
             # TODO move to warnings
@@ -310,10 +310,10 @@ def do_validation(doc, errors_array, seen_identifiers):
                           "The field 'accrualPeriodicity' had an invalid value.", dataset_name)
 
             # conformsTo # optional
-            check_url_field(False, item, "conformsTo", dataset_name, errs, True)
+            check_url_field(False, item, "conformsTo", dataset_name, errs, allow_redacted=True)
 
             # describedBy # optional
-            check_url_field(False, item, "describedBy", dataset_name, errs, True)
+            check_url_field(False, item, "describedBy", dataset_name, errs, allow_redacted=True)
 
             # describedByType # optional
             if item.get("describedByType") is None or is_redacted(item.get("describedByType")):
@@ -335,7 +335,7 @@ def do_validation(doc, errors_array, seen_identifiers):
                               "The field 'issued' is not in a valid format.", dataset_name)
 
             # landingPage # optional
-            check_url_field(False, item, "landingPage", dataset_name, errs, True)
+            check_url_field(False, item, "landingPage", dataset_name, errs, allow_redacted=True)
 
             # language # optional
             if item.get("language") is None or is_redacted(item.get("language")):
@@ -373,7 +373,7 @@ def do_validation(doc, errors_array, seen_identifiers):
                                   "The field 'references' had an invalid rfc3987 URL: \"%s\"" % s, dataset_name)
 
             # systemOfRecords # optional
-            check_url_field(False, item, "systemOfRecords", dataset_name, errs)
+            check_url_field(False, item, "systemOfRecords", dataset_name, errs, allow_redacted=True)
 
             # theme #optional
             if item.get("theme") is None or is_redacted(item.get("theme")):
