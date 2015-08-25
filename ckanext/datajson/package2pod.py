@@ -70,6 +70,9 @@ class Package2Pod:
 
                 if redaction_enabled and field:
                     redaction_mask = get_extra(package, 'redacted_' + field, False)
+                    # keywords(tags) have some UI-related issues with this, so we'll check both versions here
+                    if not redaction_mask and 'tags' == field:
+                        redaction_mask = get_extra(package, 'redacted_tag_string', False)
                     if redaction_mask:
                         dataset[key] = '[[REDACTED-EX ' + redaction_mask + ']]'
                         continue
