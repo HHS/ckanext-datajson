@@ -47,6 +47,8 @@ class Package2Pod:
         import string
         import sys, os
 
+        Wrappers.redaction_enabled = redaction_enabled
+
         json_fields = json_export_map.get('dataset_fields_map')
 
         try:
@@ -163,6 +165,7 @@ class Wrappers:
     def __init__(self):
         pass
 
+    redaction_enabled = False
     pkg = None
     current_field_map = None
     full_field_map = None
@@ -262,26 +265,41 @@ class Wrappers:
 
             package = Wrappers.pkg
 
-            if contact_point_map.get('fn').get('extra'):
-                fn = get_extra(package, contact_point_map.get('fn').get('field'),
-                               get_extra(package, "Contact Name",
-                                         package.get('maintainer')))
-            else:
-                fn = package.get(contact_point_map.get('fn').get('field'),
-                                 get_extra(package, "Contact Name",
-                                           package.get('maintainer')))
+            fn = ''
+            if Wrappers.redaction_enabled:
+                    redaction_mask = get_extra(package, 'redacted_' + contact_point_map.get('fn').get('field'), False)
+                    if redaction_mask:
+                        fn = '[[REDACTED-EX ' + redaction_mask + ']]'
 
-            fn = get_responsible_party(fn)
+            if not fn:
+                if contact_point_map.get('fn').get('extra'):
+                    fn = get_extra(package, contact_point_map.get('fn').get('field'),
+                                   get_extra(package, "Contact Name",
+                                             package.get('maintainer')))
+                else:
+                    fn = package.get(contact_point_map.get('fn').get('field'),
+                                     get_extra(package, "Contact Name",
+                                               package.get('maintainer')))
 
-            if contact_point_map.get('hasEmail').get('extra'):
-                email = get_extra(package, contact_point_map.get('hasEmail').get('field'),
-                                  package.get('maintainer_email'))
-            else:
-                email = package.get(contact_point_map.get('hasEmail').get('field'),
-                                    package.get('maintainer_email'))
+                fn = get_responsible_party(fn)
 
-            if email and not is_redacted(email) and '@' in email:
-                email = 'mailto:' + email
+            email = ''
+            if Wrappers.redaction_enabled:
+                    redaction_mask = get_extra(package,
+                                               'redacted_' + contact_point_map.get('hasEmail').get('field'), False)
+                    if redaction_mask:
+                        email = '[[REDACTED-EX ' + redaction_mask + ']]'
+
+            if not email:
+                if contact_point_map.get('hasEmail').get('extra'):
+                    email = get_extra(package, contact_point_map.get('hasEmail').get('field'),
+                                      package.get('maintainer_email'))
+                else:
+                    email = package.get(contact_point_map.get('hasEmail').get('field'),
+                                        package.get('maintainer_email'))
+
+                if email and not is_redacted(email) and '@' in email:
+                    email = 'mailto:' + email
 
             contact_point = OrderedDict([('@type', 'vcard:Contact')])
             if fn:
