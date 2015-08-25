@@ -38,13 +38,14 @@ class DataJsonPlugin(p.SingletonPlugin):
         # DataJsonPlugin.route_edata_path = config.get("ckanext.enterprisedatajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
-        DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path",
+        DataJsonPlugin.route_ld_path = config.get(" ckanext.datajsonld.path",
                                                   re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
         DataJsonPlugin.site_url = config.get("ckan.site_url")
 
-        DataJsonPlugin.inventory_links_enabled = config.get("ckanext.datajson.inventory_links_enabled", "False") == 'True'
+        DataJsonPlugin.inventory_links_enabled = config.get("ckanext.datajson.inventory_links_enabled",
+                                                            "False") == 'True'
 
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
@@ -202,14 +203,15 @@ class DataJsonController(BaseController):
                                         pkg.get('id'), pkg.get('title'), publisher,
                                         'publishing_status: Draft')
                             continue
-                        # if 'redacted' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
-                        #     continue
+                            # if 'redacted' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
+                            #     continue
                     # draft = all draft-only datasets
                     elif 'draft' == export_type:
                         if 'publishing_status' not in extras.keys() or extras.get('publishing_status') != 'Draft':
                             continue
 
-                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map)
+                    redaction_enabled = ('redacted' == export_type)
+                    datajson_entry = Package2Pod.convert_package(pkg, json_export_map, redaction_enabled)
                     errors = None
                     if 'errors' in datajson_entry.keys():
                         errors_json.append(datajson_entry)

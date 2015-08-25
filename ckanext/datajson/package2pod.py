@@ -25,11 +25,11 @@ class Package2Pod:
         return catalog
 
     @staticmethod
-    def convert_package(package, json_export_map):
+    def convert_package(package, json_export_map, redaction_enabled=False):
         import sys, os
 
         try:
-            dataset = Package2Pod.export_map_fields(package, json_export_map)
+            dataset = Package2Pod.export_map_fields(package, json_export_map, redaction_enabled)
 
             # skip validation if we export whole /data.json catalog
             if json_export_map.get('validation_enabled'):
@@ -43,7 +43,7 @@ class Package2Pod:
             raise e
 
     @staticmethod
-    def export_map_fields(package, json_export_map):
+    def export_map_fields(package, json_export_map, redaction_enabled=False):
         import string
         import sys, os
 
@@ -65,6 +65,12 @@ class Package2Pod:
                 split = field_map.get('split')
                 wrapper = field_map.get('wrapper')
                 default = field_map.get('default')
+
+                if redaction_enabled and field:
+                    redaction_mask = get_extra(package, 'redacted_' + field, False)
+                    if redaction_mask:
+                        dataset[key] = '[[REDACTED-EX ' + redaction_mask + ']]'
+                        continue
 
                 if 'direct' == field_type and field:
                     if is_extra:
