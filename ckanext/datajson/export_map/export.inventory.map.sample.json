@@ -1,5 +1,6 @@
 {
   "validation_enabled": true,
+  "debug": false,
   "catalog_headers": {
     "conformsTo": "https://project-open-data.cio.gov/v1.1/schema",
     "describedBy": "https://project-open-data.cio.gov/v1.1/schema/catalog.json",

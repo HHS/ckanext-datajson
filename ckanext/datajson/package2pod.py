@@ -267,9 +267,9 @@ class Wrappers:
 
             fn = ''
             if Wrappers.redaction_enabled:
-                    redaction_mask = get_extra(package, 'redacted_' + contact_point_map.get('fn').get('field'), False)
-                    if redaction_mask:
-                        fn = '[[REDACTED-EX ' + redaction_mask + ']]'
+                redaction_mask = get_extra(package, 'redacted_' + contact_point_map.get('fn').get('field'), False)
+                if redaction_mask:
+                    fn = '[[REDACTED-EX ' + redaction_mask + ']]'
 
             if not fn:
                 if contact_point_map.get('fn').get('extra'):
@@ -285,10 +285,10 @@ class Wrappers:
 
             email = ''
             if Wrappers.redaction_enabled:
-                    redaction_mask = get_extra(package,
-                                               'redacted_' + contact_point_map.get('hasEmail').get('field'), False)
-                    if redaction_mask:
-                        email = '[[REDACTED-EX ' + redaction_mask + ']]'
+                redaction_mask = get_extra(package, 'redacted_' + contact_point_map.get('hasEmail').get('field'), False)
+
+                if redaction_mask:
+                    email = '[[REDACTED-EX ' + redaction_mask + ']]'
 
             if not email:
                 if contact_point_map.get('hasEmail').get('extra'):
