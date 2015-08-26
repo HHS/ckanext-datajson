@@ -72,7 +72,7 @@ class Package2Pod:
                 wrapper = field_map.get('wrapper')
                 default = field_map.get('default')
 
-                if redaction_enabled and field:
+                if redaction_enabled and field and 'publisher' != field:
                     redaction_mask = get_extra(package, 'redacted_' + field, False)
                     # keywords(tags) have some UI-related issues with this, so we'll check both versions here
                     if not redaction_mask and 'tags' == field:
@@ -200,6 +200,16 @@ class Wrappers:
 
         currentPackageOrg = publisher
 
+        if Wrappers.redaction_enabled:
+            redaction_mask = get_extra(Wrappers.pkg, 'redacted_' + Wrappers.current_field_map.get('field'), False)
+            if redaction_mask:
+                return OrderedDict(
+                    [
+                        ('@type', 'org:Organization'),  # optional
+                        ('name', '[[REDACTED-EX ' + redaction_mask + ']]'),  # required
+                    ]
+                )
+
         organization_list = list()
         organization_list.append([
             ('@type', 'org:Organization'),  # optional
@@ -207,21 +217,24 @@ class Wrappers:
         ])
 
         for i in range(1, 6):
-            pub_key = 'publisher_' + str(i)
-            if get_extra(Wrappers.pkg, pub_key):
+            pub_key = 'publisher_' + str(i)  # e.g. publisher_1
+            if get_extra(Wrappers.pkg, pub_key):  # e.g. package.extras.publisher_1
                 organization_list.append([
                     ('@type', 'org:Organization'),  # optional
                     ('name', get_extra(Wrappers.pkg, pub_key)),  # required
                 ])
-                currentPackageOrg = get_extra(Wrappers.pkg, pub_key)
+                currentPackageOrg = get_extra(Wrappers.pkg, pub_key)  # e.g. GSA
+        # so now we should have list() organization_list e.g.
+        # (
+        #   [('@type', 'org:Org'), ('name','GSA')],
+        #   [('@type', 'org:Org'), ('name','OCSIT')]
+        # )
 
-        size = len(organization_list)
+        size = len(organization_list)   # e.g. 2
 
-        tree = False
-        for i in range(0, size):
-            if tree:
-                organization_list[i] += [('subOrganizationOf', OrderedDict(tree))]
-            tree = organization_list[i]
+        tree = organization_list[0]
+        for i in range(1, size):
+            tree = organization_list[i] + [('subOrganizationOf', OrderedDict(tree))]
 
         return OrderedDict(tree)
 
