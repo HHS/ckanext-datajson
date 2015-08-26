@@ -47,6 +47,10 @@ class Package2Pod:
         import string
         import sys, os
 
+        public_access_level = get_extra(package, 'public_access_level')
+        if not public_access_level or public_access_level not in ['non-public', 'restricted public']:
+            redaction_enabled = False
+
         Wrappers.redaction_enabled = redaction_enabled
 
         json_fields = json_export_map.get('dataset_fields_map')
