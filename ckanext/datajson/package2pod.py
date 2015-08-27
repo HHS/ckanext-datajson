@@ -123,6 +123,8 @@ class Package2Pod:
     def validate(pkg, dataset_dict):
         import sys, os
 
+        global currentPackageOrg
+
         try:
             # When saved from UI DataQuality value is stored as "on" instead of True.
             # Check if value is "on" and replace it with True.
@@ -145,9 +147,7 @@ class Package2Pod:
                 for error in errors:
                     log.warn(error)
 
-                try:
-                    currentPackageOrg
-                except NameError:
+                if not currentPackageOrg:
                     currentPackageOrg = 'unknown'
 
                 errors_dict = OrderedDict([
