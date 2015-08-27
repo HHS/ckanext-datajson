@@ -1,15 +1,10 @@
 ckanext-datajson
 ================
 
-A CKAN extension containinig plugins ``datajson`` and ``datajson_export``.
+A CKAN extension containinig plugins ``datajson``.
 First is used by http://catalog.data.gov/ to harvest data sources 
 from a remote /data.json file according to the U.S. Project
 Open Data metadata specification (https://project-open-data.cio.gov/).
-
-Plugin ``datajson_export`` creates a new view at /data.json (or other configurable
-path) that outputs the contents of the data catalog in the Project
-Open Data JSON metadata format. It also creates a view at /data.jsonld
-which outputs the same in JSON-LD format.
 
 Plugin ``datajson`` provides a harvester to import datasets from other
 remote /data.json files. See below for setup instructions.
@@ -28,10 +23,10 @@ Python path.
 	pip install -r pip-requirements.txt
 	python setup.py develop
 
-Then in your CKAN .ini file, add ``datajson`` or/and ``datajson_export`` 
+Then in your CKAN .ini file, add ``datajson``
 to your ckan.plugins line:
 
-	ckan.plugins = (other plugins here...) datajson datajson_export
+	ckan.plugins = (other plugins here...) datajson
 
 That's the plugin for /data.json output. To make the harvester available,
 also add:
