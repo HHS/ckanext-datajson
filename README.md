@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/GSA/ckanext-datajson.svg?branch=develop)](https://travis-ci.org/GSA/ckanext-datajson)
+[![Coverage Status](https://coveralls.io/repos/GSA/ckanext-datajson/badge.svg?branch=develop&service=github)](https://coveralls.io/github/GSA/ckanext-datajson?branch=develop)
+
 ckanext-datajson
 ================
 
