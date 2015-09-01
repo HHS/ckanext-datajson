@@ -34,6 +34,7 @@ cd ckan
 paster db init -c test-core.ini
 cd -
 
+cd ..
 echo "Installing Harverter"
 git clone https://github.com/gsa/ckanext-harvest
 cd ckanext-harvest
