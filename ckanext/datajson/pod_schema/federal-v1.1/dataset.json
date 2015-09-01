@@ -523,8 +523,16 @@
         "downloadURL": {
           "properties": {
             "mediaType": {
-              "type": "string",
-              "pattern": "^[-\\w]+/[-\\w]+(\\.[-\\w]+)*([+][-\\w]+)?$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[-\\w]+/[-\\w]+(\\.[-\\w]+)*([+][-\\w]+)?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
+                }
+              ]
             }
           },
           "required": [
@@ -581,6 +589,10 @@
             },
             {
               "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
             }
           ]
         },
@@ -611,6 +623,10 @@
             },
             {
               "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
             }
           ]
         },
@@ -624,6 +640,10 @@
             },
             {
               "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
             }
           ]
         },
