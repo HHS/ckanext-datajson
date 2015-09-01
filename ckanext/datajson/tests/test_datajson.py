@@ -40,7 +40,7 @@ class TestDatajsonPlugin(object):
         self.package_dict = tests.call_action_api(self.app, 'package_create', apikey=self.sysadmin.apikey,
                                              name='my_package_000',
                                              title='my package',
-                                             notes='my package notes',
+                                             notes='my package note',
                                              tag_string='my_package',
                                              ower_org = self.org_dict['id']
                                              )
@@ -62,7 +62,7 @@ class TestDatajsonPlugin(object):
         # tests that run after ours.
         plugins.unload('datajson')
 
-     #test is dataset is getting created successfully
+    #test is dataset is getting created successfully
     def test_package_creation(self):
         package_dict = tests.call_action_api(self.app, 'package_create', apikey=self.sysadmin.apikey,
                                              name='my_package',
