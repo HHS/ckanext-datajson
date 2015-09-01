@@ -21,7 +21,6 @@ python setup.py develop
 cp ./ckan/public/base/css/main.css ./ckan/public/base/css/main.debug.css
 pip install -r requirements.txt --allow-all-external
 pip install -r dev-requirements.txt --allow-all-external
-pip install jsonschema
 
 cd -
 
@@ -30,14 +29,28 @@ sudo -u postgres psql -c "CREATE USER ckan_default WITH PASSWORD 'pass';"
 sudo -u postgres psql -c 'CREATE DATABASE ckan_test WITH OWNER ckan_default;'
 sudo -u postgres psql -c 'CREATE DATABASE datastore_test WITH OWNER ckan_default;'
 
-#echo "Initialising the database..."
-#cd ckan
-#paster db init -c test-core.ini
-#cd -
+echo "Initialising the database..."
+cd ckan
+paster db init -c test-core.ini
+cd -
 
-echo "Installing ckanext-pages and its requirements..."
+echo "Installing Harverter"
+git clone https://github.com/gsa/ckanext-harvest
+cd ckanext-harvest
+if [ $CKANVERSION == 'release-datagov' ]
+then
+	git checkout inventory
+fi
+
 python setup.py develop
-#pip install -r dev-requirements.txt
+pip install -r pip-requirements.txt --allow-all-external
+cd -
+
+echo "Installing ckanext-datajson and its requirements..."
+cd ckanext-datajson
+pip install -r pip-requirements.txt --allow-all-external
+python setup.py develop
+
 
 echo "Moving test.ini into a subdir..."
 mkdir subdir
