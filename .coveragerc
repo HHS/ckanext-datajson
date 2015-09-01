@@ -1,0 +1,5 @@
+z[report]
+omit =
+    */site-packages/*
+    */python?.?/*
+    ckan/*
