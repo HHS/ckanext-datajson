@@ -9,7 +9,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
     A Harvester for /data.json files.
     '''
 
-    HARVESTER_VERSION = "0.9al" # increment to force an update even if nothing has changed
+    HARVESTER_VERSION = "0.9al"  # increment to force an update even if nothing has changed
 
     def info(self):
         return {

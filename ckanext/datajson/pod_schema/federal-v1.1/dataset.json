@@ -72,13 +72,21 @@
     "bureauCode": {
       "title": "Bureau Code",
       "description": "Federal agencies, combined agency and bureau code from <a href=\"http://www.whitehouse.gov/sites/default/files/omb/assets/a11_current_year/app_c.pdf\">OMB Circular A-11, Appendix C</a> in the format of <code>015:010</code>.",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "[0-9]{3}:[0-9]{2}"
-      },
-      "minItems": 1,
-      "uniqueItems": true
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[0-9]{3}:[0-9]{2}"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        {
+          "type": "string",
+          "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
+        }
+      ]
     },
     "contactPoint": {
       "$ref": "#/definitions/vcard"
@@ -248,18 +256,18 @@
       "description": "The language of the dataset.",
       "anyOf": [
         {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^(((([A-Za-z]{2,3}(-([A-Za-z]{3}(-[A-Za-z]{3}){0,2}))?)|[A-Za-z]{4}|[A-Za-z]{5,8})(-([A-Za-z]{4}))?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-([0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*(-(x(-[A-Za-z0-9]{1,8})+))?)|(x(-[A-Za-z0-9]{1,8})+)|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$"
-          }
-        },
-        {
           "type": "null"
         },
         {
           "type": "string",
           "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(((([A-Za-z]{2,3}(-([A-Za-z]{3}(-[A-Za-z]{3}){0,2}))?)|[A-Za-z]{4}|[A-Za-z]{5,8})(-([A-Za-z]{4}))?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-([0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*(-(x(-[A-Za-z0-9]{1,8})+))?)|(x(-[A-Za-z0-9]{1,8})+)|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$"
+          }
         }
       ]
     },
@@ -322,13 +330,21 @@
     "programCode": {
       "title": "Program Code",
       "description": "Federal agencies, list the primary program related to this data asset, from the <a href=\"http://goals.performance.gov/sites/default/files/images/FederalProgramInventory_FY13_MachineReadable_091613.xls\">Federal Program Inventory</a>. Use the format of <code>015:001</code>",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "[0-9]{3}:[0-9]{3}"
-      },
-      "minItems": 1,
-      "uniqueItems": true
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[0-9]{3}:[0-9]{3}"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        {
+          "type": "string",
+          "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
+        }
+      ]
     },
     "publisher": {
       "$ref": "#/definitions/organization"
