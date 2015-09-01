@@ -172,10 +172,16 @@ class DatasetHarvesterBase(HarvesterBase):
             if is_parent and pkg.get("state") == "active":
                 existing_parents[sid] = pkg
 
-        # which parents has been demoted to child level?
+        # which parent has been demoted to child level?
         existing_parents_demoted = set(
             identifier for identifier in existing_parents.keys() \
             if identifier not in parent_identifiers)
+
+        # which dataset has been promoted to parent level?
+        existing_datasets_promoted = set(
+                identifier for identifier in existing_datasets.keys() \
+                if identifier in parent_identifiers \
+                and identifier not in existing_parents.keys())
 
         # if there is any new parents, we will have to harvest parents
         # first, mark the status in harvest_source config, which
@@ -281,6 +287,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 # don't look like they've changed.
                 if pkg.get("state") == "active" \
                     and dataset['identifier'] not in existing_parents_demoted \
+                    and dataset['identifier'] not in existing_datasets_promoted \
                     and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, harvest_job.source, catalog_extras, schema_version):
                     continue
             else:
