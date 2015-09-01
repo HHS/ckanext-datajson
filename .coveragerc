@@ -1,4 +1,4 @@
-z[report]
+[report]
 omit =
     */site-packages/*
     */python?.?/*
