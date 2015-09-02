@@ -230,7 +230,7 @@ class Wrappers:
         #   [('@type', 'org:Org'), ('name','OCSIT')]
         # )
 
-        size = len(organization_list)   # e.g. 2
+        size = len(organization_list)  # e.g. 2
 
         tree = organization_list[0]
         for i in range(1, size):
@@ -360,11 +360,17 @@ class Wrappers:
 
             for pod_key, json_map in distribution_map.iteritems():
                 value = strip_if_string(r.get(json_map.get('field'), json_map.get('default')))
+                if Wrappers.redaction_enabled:
+                    if 'redacted_' + json_map.get('field') in r and r.get('redacted_' + json_map.get('field')):
+                        value = '[[REDACTED-EX ' + r.get('redacted_' + json_map.get('field')) + ']]'
                 if value:
                     resource[pod_key] = value
 
             # inventory rules
             res_url = strip_if_string(r.get('url'))
+            if Wrappers.redaction_enabled:
+                if 'redacted_url' in r and r.get('redacted_url'):
+                    res_url = '[[REDACTED-EX ' + r.get('redacted_url') + ']]'
             if res_url:
                 res_url = res_url.replace('http://[[REDACTED', '[[REDACTED')
                 res_url = res_url.replace('http://http', 'http')
