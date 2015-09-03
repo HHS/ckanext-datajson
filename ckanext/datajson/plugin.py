@@ -123,6 +123,7 @@ class DataJsonController(BaseController):
         return "Invalid type"
 
     def generate_output(self, fmt='json', org_id=None):
+        self._errors_json = []
         # set content type (charset required or pylons throws an error)
         response.content_type = 'application/json; charset=UTF-8'
 
