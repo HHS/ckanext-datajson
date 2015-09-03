@@ -199,21 +199,21 @@ class DataJsonController(BaseController):
                     # redacted = public-only, non-draft datasets
                     if export_type in ['unredacted', 'redacted']:
                         if 'Draft' == extras.get('publishing_status'):
-                            publisher = detect_publisher(extras)
-                            logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted (%s)\n",
-                                        pkg.get('id'), pkg.get('title'), publisher,
-                                        'publishing_status: Draft')
-                            self._errors_json.append(OrderedDict([
-                                ('id', pkg.get('id')),
-                                ('name', pkg.get('name')),
-                                ('title', pkg.get('title')),
-                                ('errors', [(
-                                    'publishing_status: Draft',
-                                    [
-                                        'publishing_status: Draft'
-                                    ]
-                                )])
-                            ]))
+                            # publisher = detect_publisher(extras)
+                            # logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted (%s)\n",
+                            #             pkg.get('id'), pkg.get('title'), publisher,
+                            #             'publishing_status: Draft')
+                            # self._errors_json.append(OrderedDict([
+                            #     ('id', pkg.get('id')),
+                            #     ('name', pkg.get('name')),
+                            #     ('title', pkg.get('title')),
+                            #     ('errors', [(
+                            #         'publishing_status: Draft',
+                            #         [
+                            #             'publishing_status: Draft'
+                            #         ]
+                            #     )])
+                            # ]))
 
                             continue
                             # if 'redacted' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
