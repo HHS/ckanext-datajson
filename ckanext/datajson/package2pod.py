@@ -379,12 +379,14 @@ class Wrappers:
                 res_url = res_url.replace('http://http', 'http')
                 if r.get('resource_type') in ['api', 'accessurl']:
                     resource['accessURL'] = res_url
+                    if 'mediaType' in resource:
+                        resource.pop('mediaType')
                 else:
                     if 'accessURL' in resource:
                         resource.pop('accessURL')
                     resource['downloadURL'] = res_url
                     if 'mediaType' not in resource:
-                        log.warn("Missing mediaType sdf for resource in package ['%s']", package.get('id'))
+                        log.warn("Missing mediaType for resource in package ['%s']", package.get('id'))
             else:
                 log.warn("Missing downloadURL for resource in package ['%s']", package.get('id'))
 
