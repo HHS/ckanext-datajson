@@ -1,8 +1,9 @@
-[![Build Status](https://travis-ci.org/GSA/ckanext-datajson.svg?branch=develop)](https://travis-ci.org/GSA/ckanext-datajson)
-[![Coverage Status](https://coveralls.io/repos/GSA/ckanext-datajson/badge.svg?branch=develop&service=github)](https://coveralls.io/github/GSA/ckanext-datajson?branch=develop)
-
 ckanext-datajson
 ================
+
+[![Build Status](https://travis-ci.org/GSA/ckanext-datajson.svg?branch=develop)](https://travis-ci.org/GSA/ckanext-datajson)
+[![Codacy Badge](https://api.codacy.com/project/badge/c4816041270448b6a0c9760933065b7e)](https://www.codacy.com/app/alexandr-perfilov/ckanext-datajson)
+[![Coverage Status](https://coveralls.io/repos/GSA/ckanext-datajson/badge.svg?branch=develop&service=github)](https://coveralls.io/github/GSA/ckanext-datajson?branch=develop)
 
 A CKAN extension containinig plugins ``datajson``.
 First is used by http://catalog.data.gov/ to harvest data sources 
