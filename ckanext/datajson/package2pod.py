@@ -25,6 +25,34 @@ class Package2Pod:
         return catalog
 
     @staticmethod
+    def filter(content):
+        if not isinstance(content, (str, unicode)):
+            return content
+        content = Package2Pod.strip_redacted_tags(content)
+        content = strip_if_string(content)
+        return content
+
+    @staticmethod
+    def strip_redacted_tags(content):
+        if not isinstance(content, (str, unicode)):
+            return content
+        return re.sub(REDACTED_TAGS_REGEX, '', content)
+
+    @staticmethod
+    def mask_redacted(content, reason):
+        if not content:
+            content = ''
+        if reason:
+            # check if field is partial redacted
+            masked = content
+            for redact in re.findall(PARTIAL_REDACTION_REGEX, masked):
+                masked = masked.replace(redact, '')
+            if len(masked) < len(content):
+                return masked
+            return '[[REDACTED-EX ' + reason + ']]'
+        return content
+
+    @staticmethod
     def convert_package(package, json_export_map, redaction_enabled=False):
         import sys, os
 
@@ -92,8 +120,10 @@ class Package2Pod:
                         redaction_reason = get_extra(package, 'redacted_' + field, False)
                         # keywords(tags) have some UI-related issues with this, so we'll check both versions here
                         if redaction_reason:
-                            dataset[key] = mask_redacted(dataset[key], redaction_reason)
+                            dataset[key] = Package2Pod.mask_redacted(dataset[key], redaction_reason)
                             continue
+                    else:
+                        dataset[key] = Package2Pod.filter(dataset[key])
 
                 elif 'array' == field_type:
                     if is_extra:
@@ -102,11 +132,11 @@ class Package2Pod:
                             if is_redacted(found_element):
                                 dataset[key] = found_element
                             elif split:
-                                dataset[key] = [strip_if_string(x) for x in string.split(found_element, split)]
+                                dataset[key] = [Package2Pod.filter(x) for x in string.split(found_element, split)]
 
                     else:
                         if array_key:
-                            dataset[key] = [strip_if_string(t[array_key]) for t in package.get(field, {})]
+                            dataset[key] = [Package2Pod.filter(t[array_key]) for t in package.get(field, {})]
                 if wrapper:
                     # log.debug('wrapper: %s', wrapper)
                     method = getattr(Wrappers, wrapper)
@@ -160,9 +190,9 @@ class Package2Pod:
 
                 errors_dict = OrderedDict([
                     ('id', pkg.get('id')),
-                    ('name', pkg.get('name')),
-                    ('title', pkg.get('title')),
-                    ('organization', currentPackageOrg),
+                    ('name', Package2Pod.filter(pkg.get('name'))),
+                    ('title', Package2Pod.filter(pkg.get('title'))),
+                    ('organization', Package2Pod.filter(currentPackageOrg)),
                     ('errors', errors),
                 ])
 
@@ -221,7 +251,7 @@ class Wrappers:
         organization_list = list()
         organization_list.append([
             ('@type', 'org:Organization'),  # optional
-            ('name', publisher),  # required
+            ('name', Package2Pod.filter(publisher)),  # required
         ])
 
         for i in range(1, 6):
@@ -229,9 +259,9 @@ class Wrappers:
             if get_extra(Wrappers.pkg, pub_key):  # e.g. package.extras.publisher_1
                 organization_list.append([
                     ('@type', 'org:Organization'),  # optional
-                    ('name', get_extra(Wrappers.pkg, pub_key)),  # required
+                    ('name', Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))),  # required
                 ])
-                currentPackageOrg = get_extra(Wrappers.pkg, pub_key)  # e.g. GSA
+                currentPackageOrg = Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))  # e.g. GSA
         # so now we should have list() organization_list e.g.
         # (
         #   [('@type', 'org:Org'), ('name','GSA')],
@@ -307,7 +337,9 @@ class Wrappers:
             if Wrappers.redaction_enabled:
                 redaction_reason = get_extra(package, 'redacted_' + contact_point_map.get('fn').get('field'), False)
                 if redaction_reason:
-                    fn = mask_redacted(fn, redaction_reason)
+                    fn = Package2Pod.mask_redacted(fn, redaction_reason)
+            else:
+                fn = Package2Pod.filter(fn)
 
             if contact_point_map.get('hasEmail').get('extra'):
                 email = get_extra(package, contact_point_map.get('hasEmail').get('field'),
@@ -320,9 +352,12 @@ class Wrappers:
                 email = 'mailto:' + email
 
             if Wrappers.redaction_enabled:
-                redaction_reason = get_extra(package, 'redacted_' + contact_point_map.get('hasEmail').get('field'), False)
+                redaction_reason = get_extra(package, 'redacted_' + contact_point_map.get('hasEmail').get('field'),
+                                             False)
                 if redaction_reason:
-                    email = mask_redacted(email, redaction_reason)
+                    email = Package2Pod.mask_redacted(email, redaction_reason)
+            else:
+                email = Package2Pod.filter(email)
 
             contact_point = OrderedDict([('@type', 'vcard:Contact')])
             if fn:
@@ -365,7 +400,9 @@ class Wrappers:
                 value = strip_if_string(r.get(json_map.get('field'), json_map.get('default')))
                 if Wrappers.redaction_enabled:
                     if 'redacted_' + json_map.get('field') in r and r.get('redacted_' + json_map.get('field')):
-                        value = mask_redacted(value, r.get('redacted_' + json_map.get('field')))
+                        value = Package2Pod.mask_redacted(value, r.get('redacted_' + json_map.get('field')))
+                else:
+                    value = Package2Pod.filter(value)
                 if value:
                     resource[pod_key] = value
 
@@ -374,6 +411,9 @@ class Wrappers:
             if Wrappers.redaction_enabled:
                 if 'redacted_url' in r and r.get('redacted_url'):
                     res_url = '[[REDACTED-EX ' + r.get('redacted_url') + ']]'
+            else:
+                res_url = Package2Pod.filter(res_url)
+
             if res_url:
                 res_url = res_url.replace('http://[[REDACTED', '[[REDACTED')
                 res_url = res_url.replace('http://http', 'http')
@@ -433,17 +473,3 @@ class Wrappers:
         for bureau in code_list:
             Wrappers.bureau_code_list[bureau['Agency']] = bureau
         return Wrappers.bureau_code_list
-
-
-def mask_redacted(content, reason):
-    if not content:
-        content = ''
-    if reason:
-        # check if field is partial redacted
-        masked = content
-        for redact in re.findall(r'\[\[REDACTED-EX B[\d]\]\](.*?\[\[/REDACTED\]\])', masked):
-            masked = masked.replace(redact, '')
-        if len(masked) < len(content):
-            return masked
-        return '[[REDACTED-EX ' + reason + ']]'
-    return content

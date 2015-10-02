@@ -15,6 +15,14 @@ REDACTED_REGEX = re.compile(
     r'^(\[\[REDACTED).*?(\]\])$'
 )
 
+REDACTED_TAGS_REGEX = re.compile(
+    r'\[\[/?REDACTED(-EX\sB\d)?\]\]'
+)
+
+PARTIAL_REDACTION_REGEX = re.compile(
+    r'\[\[REDACTED-EX B[\d]\]\](.*?\[\[/REDACTED\]\])'
+)
+
 log = logging.getLogger(__name__)
 
 
