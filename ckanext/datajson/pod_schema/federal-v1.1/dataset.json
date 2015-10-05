@@ -589,10 +589,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string",
-              "pattern": "^(\\[\\[REDACTED).*?(\\]\\])$"
             }
           ]
         },

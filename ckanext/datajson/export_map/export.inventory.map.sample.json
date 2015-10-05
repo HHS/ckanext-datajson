@@ -118,7 +118,7 @@
           "field": "name"
         },
         "description": {
-          "field": "notes"
+          "field": "description"
         },
         "conformsTo": {
           "field": "conformsTo"
