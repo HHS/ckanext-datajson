@@ -710,7 +710,9 @@ class DatasetHarvesterBase(HarvesterBase):
         # does this by creating the association before the package is saved by
         # overriding the GUID creation on a new package. That's too difficult.
         # So here we end up indexing twice.
-        PackageSearchIndex().index_package(pkg) 
+        # !!! DISABLED - causes showing wrong number of datasets, when you try to
+        # !!! list datasets by harvest source /harvest/{source_id}
+        # PackageSearchIndex().index_package(pkg)
 
         return True
         
