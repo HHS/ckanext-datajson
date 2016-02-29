@@ -238,16 +238,6 @@ class Wrappers:
 
         currentPackageOrg = publisher
 
-        if Wrappers.redaction_enabled:
-            redaction_mask = get_extra(Wrappers.pkg, 'redacted_' + Wrappers.current_field_map.get('field'), False)
-            if redaction_mask:
-                return OrderedDict(
-                    [
-                        ('@type', 'org:Organization'),  # optional
-                        ('name', '[[REDACTED-EX ' + redaction_mask + ']]'),  # required
-                    ]
-                )
-
         organization_list = list()
         organization_list.append([
             ('@type', 'org:Organization'),  # optional
@@ -262,6 +252,17 @@ class Wrappers:
                     ('name', Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))),  # required
                 ])
                 currentPackageOrg = Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))  # e.g. GSA
+
+        if Wrappers.redaction_enabled:
+            redaction_mask = get_extra(Wrappers.pkg, 'redacted_' + Wrappers.current_field_map.get('field'), False)
+            if redaction_mask:
+                return OrderedDict(
+                    [
+                        ('@type', 'org:Organization'),  # optional
+                        ('name', '[[REDACTED-EX ' + redaction_mask + ']]'),  # required
+                    ]
+                )
+
         # so now we should have list() organization_list e.g.
         # (
         #   [('@type', 'org:Org'), ('name','GSA')],
