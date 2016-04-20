@@ -17,6 +17,8 @@ import uuid, datetime, hashlib, urllib2, json, yaml, json, os
 from jsonschema.validators import Draft4Validator
 from jsonschema import FormatChecker
 
+from sqlalchemy.exc import IntegrityError
+
 import logging
 log = logging.getLogger("harvester")
 
@@ -691,6 +693,13 @@ class DatasetHarvesterBase(HarvesterBase):
             try:
                 pkg = get_action('package_create')(self.context(), pkg)
                 log.warn('created package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
+            except IntegrityError:
+                # sometimes one fetch worker does not see new pkg added
+                # by other workers. it gives db error for pkg with same title.
+                model.Session.rollback()
+                pkg['name'] = self.make_package_name(dataset_processed["title"], harvest_object.guid)
+                pkg = get_action('package_create')(self.context(), pkg)
+                log.warn('created package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
             except:
                 log.error('failed to create package %s from %s' % (pkg["name"], harvest_object.source.url))
                 raise
@@ -704,6 +713,7 @@ class DatasetHarvesterBase(HarvesterBase):
         harvest_object.package_id = pkg['id']
         harvest_object.current = True
         harvest_object.save()
+        model.Session.commit()
 
         # Now that the package and the harvest source are associated, re-index the
         # package so it knows it is part of the harvest source. The CKAN harvester
