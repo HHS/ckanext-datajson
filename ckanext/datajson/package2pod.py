@@ -400,16 +400,19 @@ class Wrappers:
 
             for pod_key, json_map in distribution_map.iteritems():
                 value = strip_if_string(r.get(json_map.get('field'), json_map.get('default')))
-                wrapper = json_map.get('wrapper')
+
                 if Wrappers.redaction_enabled:
                     if 'redacted_' + json_map.get('field') in r and r.get('redacted_' + json_map.get('field')):
                         value = Package2Pod.mask_redacted(value, r.get('redacted_' + json_map.get('field')))
                 else:
                     value = Package2Pod.filter(value)
-                    if wrapper:
-                        method = getattr(Wrappers, wrapper)
-                        if method:
-                            value = method(value)
+
+                # filtering/wrapping if defined by export_map
+                wrapper = json_map.get('wrapper')
+                if wrapper:
+                    method = getattr(Wrappers, wrapper)
+                    if method:
+                        value = method(value)
 
                 if value:
                     resource[pod_key] = value
@@ -492,5 +495,6 @@ class Wrappers:
             mime_type = formats[format_clean][0]
         else:
             mime_type = value
-        log.debug(value + ' ... BECOMES ... ' + mime_type)
+        msg = value + ' ... BECOMES ... ' + mime_type
+        log.debug(msg)
         return mime_type
