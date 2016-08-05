@@ -299,7 +299,7 @@ class Wrappers:
         'semimonthly': 'R/P0.5M',
         'three times a year': 'R/P4M',
         'weekly': 'R/P1W',
-        'hourly': 'R/P1H',
+        'hourly': 'R/PT1H',
         'continual': 'R/PT1S',
         'fortnightly': 'R/P0.5M',
         'annually': 'R/P1Y',
