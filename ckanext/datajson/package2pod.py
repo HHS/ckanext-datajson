@@ -215,6 +215,7 @@ class Wrappers:
     current_field_map = None
     full_field_map = None
     bureau_code_list = None
+    resource_formats = None
 
     @staticmethod
     def catalog_publisher(value):
@@ -238,16 +239,6 @@ class Wrappers:
 
         currentPackageOrg = publisher
 
-        if Wrappers.redaction_enabled:
-            redaction_mask = get_extra(Wrappers.pkg, 'redacted_' + Wrappers.current_field_map.get('field'), False)
-            if redaction_mask:
-                return OrderedDict(
-                    [
-                        ('@type', 'org:Organization'),  # optional
-                        ('name', '[[REDACTED-EX ' + redaction_mask + ']]'),  # required
-                    ]
-                )
-
         organization_list = list()
         organization_list.append([
             ('@type', 'org:Organization'),  # optional
@@ -262,6 +253,17 @@ class Wrappers:
                     ('name', Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))),  # required
                 ])
                 currentPackageOrg = Package2Pod.filter(get_extra(Wrappers.pkg, pub_key))  # e.g. GSA
+
+        if Wrappers.redaction_enabled:
+            redaction_mask = get_extra(Wrappers.pkg, 'redacted_' + Wrappers.current_field_map.get('field'), False)
+            if redaction_mask:
+                return OrderedDict(
+                    [
+                        ('@type', 'org:Organization'),  # optional
+                        ('name', '[[REDACTED-EX ' + redaction_mask + ']]'),  # required
+                    ]
+                )
+
         # so now we should have list() organization_list e.g.
         # (
         #   [('@type', 'org:Org'), ('name','GSA')],
@@ -297,6 +299,7 @@ class Wrappers:
         'semimonthly': 'R/P0.5M',
         'three times a year': 'R/P4M',
         'weekly': 'R/P1W',
+        'hourly': 'R/PT1H',
         'continual': 'R/PT1S',
         'fortnightly': 'R/P0.5M',
         'annually': 'R/P1Y',
@@ -398,11 +401,20 @@ class Wrappers:
 
             for pod_key, json_map in distribution_map.iteritems():
                 value = strip_if_string(r.get(json_map.get('field'), json_map.get('default')))
+
                 if Wrappers.redaction_enabled:
                     if 'redacted_' + json_map.get('field') in r and r.get('redacted_' + json_map.get('field')):
                         value = Package2Pod.mask_redacted(value, r.get('redacted_' + json_map.get('field')))
                 else:
                     value = Package2Pod.filter(value)
+
+                # filtering/wrapping if defined by export_map
+                wrapper = json_map.get('wrapper')
+                if wrapper:
+                    method = getattr(Wrappers, wrapper)
+                    if method:
+                        value = method(value)
+
                 if value:
                     resource[pod_key] = value
 
@@ -473,3 +485,17 @@ class Wrappers:
         for bureau in code_list:
             Wrappers.bureau_code_list[bureau['Agency']] = bureau
         return Wrappers.bureau_code_list
+
+    @staticmethod
+    def mime_type_it(value):
+        if not value:
+            return value
+        formats = h.resource_formats()
+        format_clean = value.lower()
+        if format_clean in formats:
+            mime_type = formats[format_clean][0]
+        else:
+            mime_type = value
+        msg = value + ' ... BECOMES ... ' + mime_type
+        log.debug(msg)
+        return mime_type
