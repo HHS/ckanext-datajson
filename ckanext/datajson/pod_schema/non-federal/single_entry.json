@@ -59,6 +59,7 @@
             "Semimonthly",
             "Three times a year",
             "Weekly",
+            "Hourly",
             "Completely irregular"
           ]
         },

@@ -109,7 +109,8 @@
           "field": "url"
         },
         "mediaType": {
-          "field": "format"
+          "field": "format",
+          "wrapper": "mime_type_it"
         },
         "format": {
           "field": "formatReadable"
