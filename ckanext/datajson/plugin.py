@@ -335,12 +335,12 @@ class DataJsonController(BaseController):
         # Errors in json format
         if errors_json:
             # logger.debug('writing errors.json')
-            zf.writestr('errors.json', json.dumps(errors_json).encode('utf8').replace("\n","\r\n"))
+            zf.writestr('errors.json', json.dumps(errors_json).encode('utf8'))
 
         # Write the error log
         if error:
             # logger.debug('writing errorlog.txt')
-            zf.writestr('errorlog.txt', error.encode('utf8'))
+            zf.writestr('errorlog.txt', error.encode('utf8').replace("\n","\r\n"))
 
         zf.close()
         o.seek(0)
