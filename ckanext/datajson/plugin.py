@@ -297,7 +297,8 @@ class DataJsonController(BaseController):
         """
         error = best_match(draft4validator.iter_errors(instance))
         if error:
-            logger.warn("Validation failed, best guess of error = %s", error)
+            logger.warn("===================================================\r\n"+
+                        "Validation failed, best guess of error:\r\n %s\r\nFor this dataset:\r\n", error)
             return False
         return True
 
@@ -334,7 +335,7 @@ class DataJsonController(BaseController):
         # Errors in json format
         if errors_json:
             # logger.debug('writing errors.json')
-            zf.writestr('errors.json', json.dumps(errors_json).encode('utf8'))
+            zf.writestr('errors.json', json.dumps(errors_json).encode('utf8').replace("\n","\r\n"))
 
         # Write the error log
         if error:
