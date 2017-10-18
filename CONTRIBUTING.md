@@ -1,12 +1,12 @@
 ## Welcome!
 
-We're so glad you're thinking about contributing to Data.gov!
+We're so glad you're thinking about contributing to ckanext-datajson!
 
 Before contributing, we encourage you to read our CONTRIBUTING guide (you are here), our [LICENSE](LICENSE.md), and our [README](README.md), all of which should be in this repository. If you have any questions, you can email the Data.gov team at [datagov@gsa.gov](mailto:datagov@gsa.gov).
 
 ## Ways to Contribute
 
-**The Data.gov team manages all Data.gov updates, bugs, and feature additions via GitHub's public [issue tracker](/issues) in this repository.** 
+**The Data.gov team manages all Data.gov updates, bugs, and feature additions via GitHub's public [issue tracker](https://github.com/GSA/ckanext-datajson/issues) in this repository.** 
 
 If you do not already have a GitHub account, you can [sign up for GitHub here](https://github.com/). In the spirit of open source software, everyone is encouraged to help improve this project. Here are some ways you can contribute:
 - by reporting bugs
