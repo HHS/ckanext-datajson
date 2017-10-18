@@ -174,4 +174,4 @@ public domain dedication (which can be found at http://creativecommons.org/publi
 ## Ways to Contribute
 We're so glad you're thinking about contributing to ckanext-datajson!
 
-Before contributing to Data.gov we encourage you to read our [CONTRIBUTING](CONTRIBUTING.md) guide, our [LICENSE](LICENSE.md), and our README (you are here), all of which should be in this repository. If you have any questions, you can email the Data.gov team at [datagov@gsa.gov](mailto:datagov@gsa.gov).
+Before contributing to ckanext-datajson we encourage you to read our [CONTRIBUTING](CONTRIBUTING.md) guide, our [LICENSE](LICENSE.md), and our README (you are here), all of which should be in this repository. If you have any questions, you can email the Data.gov team at [datagov@gsa.gov](mailto:datagov@gsa.gov).
