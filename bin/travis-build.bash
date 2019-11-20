@@ -8,18 +8,8 @@ echo "Installing the packages that CKAN requires..."
 sudo apt-get update -qq
 sudo apt-get install solr-jetty libcommons-fileupload-java libpq-dev postgresql postgresql-contrib
 
-pip install setuptools -U
-
-# if [ $CKANVERSION == '2.8' ]
-# then
-# 	sudo apt-get install postgresql-9.6
-# elif [ $CKANVERSION == '2.3' ]
-# then
-# 	sudo apt-get install postgresql-9.1
-# fi
-
 echo "-----------------------------------------------------------------"
-echo "Installing CKAN and its Python dependencies..."
+echo "Installing CKAN and its dependencies..."
 
 cd .. # CircleCI starts inside ckanext-datajson folder
 pwd
@@ -38,6 +28,7 @@ then
 	git checkout release-v2.3
 elif [ $CKANVERSION == 'inventory' ]
 then
+	sudo apt-get install swig
 	git clone https://github.com/GSA/ckan
 	cd ckan
 	git checkout inventory
@@ -47,6 +38,12 @@ then
 	cd ckan
 	git checkout datagov
 fi
+
+echo "-----------------------------------------------------------------"
+echo "Installing Python dependencies..."
+
+pip install setuptools -U
+
 python setup.py develop
 cp ./ckan/public/base/css/main.css ./ckan/public/base/css/main.debug.css
 pip install -r requirements.txt
