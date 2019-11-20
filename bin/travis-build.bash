@@ -29,6 +29,7 @@ then
 elif [ $CKANVERSION == 'inventory' ]
 then
 	sudo apt-get install swig
+	pip install testrepository
 	git clone https://github.com/GSA/ckan
 	cd ckan
 	git checkout inventory
