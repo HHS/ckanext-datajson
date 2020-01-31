@@ -43,6 +43,7 @@ fi
 echo "-----------------------------------------------------------------"
 echo "Installing Python dependencies..."
 
+pip install wheel
 pip install setuptools -U
 
 python setup.py develop
