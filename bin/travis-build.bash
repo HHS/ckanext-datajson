@@ -20,7 +20,7 @@ if [ $CKANVERSION == '2.8' ]
 then
 	git clone https://github.com/ckan/ckan
 	cd ckan
-	git checkout master
+	git checkout 2.8
 elif [ $CKANVERSION == '2.3' ]
 then
 	git clone https://github.com/ckan/ckan
