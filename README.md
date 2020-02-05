@@ -19,6 +19,8 @@ at http://ckanhostname/pod/validate.
 Installation
 ------------
 
+To install using a docker development environment, refer [here](ckan-docker/README.md)
+
 To install, activate your CKAN virtualenv, install dependencies, and
 install the module in develop mode, which just puts the directory in your
 Python path.
