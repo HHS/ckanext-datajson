@@ -1,22 +1,21 @@
-import logging
 import StringIO
 import json
+import logging
 import sys
 
-import ckan.plugins as p
-from ckan.lib.base import BaseController, render, c
-from pylons import request, response
-import re
-import ckan.model as model
-import os
 import ckan.lib.dictization.model_dictize as model_dictize
-
+import ckan.model as model
+import ckan.plugins as p
+import os
+import re
+from ckan.lib.base import BaseController, render, c
 from jsonschema.exceptions import best_match
+from pylons import request, response
 
 from helpers import get_export_map_json, detect_publisher, get_validator
 from package2pod import Package2Pod
 
-logger = logging.getLogger('datajson')
+logger = logging.getLogger(__name__)
 draft4validator = get_validator()
 
 try:
@@ -27,6 +26,7 @@ except ImportError:
 
 class DataJsonPlugin(p.SingletonPlugin):
     p.implements(p.interfaces.IConfigurer)
+    p.implements(p.ITemplateHelpers)
     p.implements(p.interfaces.IRoutes, inherit=True)
 
     def update_config(self, config):
@@ -50,6 +50,15 @@ class DataJsonPlugin(p.SingletonPlugin):
         # Adds our local templates directory. It's smart. It knows it's
         # relative to the path of *this* file. Wow.
         p.toolkit.add_template_directory(config, "templates")
+
+    @staticmethod
+    def datajson_inventory_links_enabled():
+        return DataJsonPlugin.inventory_links_enabled
+
+    def get_helpers(self):
+        return {
+            'datajson_inventory_links_enabled': self.datajson_inventory_links_enabled
+        }
 
     def before_map(self, m):
         return m
