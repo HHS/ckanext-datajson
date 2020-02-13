@@ -17,8 +17,6 @@ at http://ckanhostname/pod/validate.
 Installation
 ------------
 
-To install using a docker development environment, refer [here](ckan-docker/README.md)
-
 To install, activate your CKAN virtualenv, install dependencies, and
 install the module in develop mode, which just puts the directory in your
 Python path.
@@ -54,7 +52,29 @@ Then restart your server and check out:
 	http://yourdomain.com/data.jsonld
 	   and
 	http://yourdomain.com/pod/validate	
-	
+
+## Using the Docker Dev Environment
+
+### Build Environment
+
+To start environment, run:
+```docker-compose build```
+```docker-compose up```
+
+CKAN will start at localhost:5000
+
+To shut down environment, run:
+
+```docker-compose down```
+
+To docker exec into the CKAN image, run:
+
+```docker-compose exec ckan /bin/bash```
+
+### Run Tests with Docker
+
+```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"```
+
 Caching The Response
 --------------------
 
