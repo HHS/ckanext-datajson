@@ -7,13 +7,12 @@ import SimpleHTTPServer
 import SocketServer
 from threading import Thread
 
+import pkg_resources
 from ckanext import datajson
 
 log = logging.getLogger("harvester")
 
 PORT = 8998
-SAMPLES_PATH = os.path.join(datajson.__path__[0], 'tests/datajson-samples')
-
 
 class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -48,7 +47,7 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                             content_type='application/json')
 
     def respond_json_sample_file(self, file_path, status=200):
-        pt = os.path.join(SAMPLES_PATH, file_path)
+        pt = pkg_resources.resource_filename(__name__, "/datajson-samples/{}".format(file_path))
         data = open(pt, 'r')
         content = data.read()
         log.info('mock respond {}'.format(content[:90]))
