@@ -1,9 +1,7 @@
 ckanext-datajson
 ================
 
-[![Build Status](https://travis-ci.org/GSA/ckanext-datajson.svg?branch=master)](https://travis-ci.org/GSA/ckanext-datajson)
-[![Codacy Badge](https://api.codacy.com/project/badge/c4816041270448b6a0c9760933065b7e)](https://www.codacy.com/app/alexandr-perfilov/ckanext-datajson)
-[![Coverage Status](https://coveralls.io/repos/GSA/ckanext-datajson/badge.svg?branch=master&service=github)](https://coveralls.io/github/GSA/ckanext-datajson?branch=master)
+[![CircleCI](https://circleci.com/gh/GSA/ckanext-datajson.svg?style=svg)](https://circleci.com/gh/GSA/ckanext-datajson)
 
 A CKAN extension containinig plugins ``datajson``.
 First is used by http://catalog.data.gov/ to harvest data sources 
@@ -54,7 +52,29 @@ Then restart your server and check out:
 	http://yourdomain.com/data.jsonld
 	   and
 	http://yourdomain.com/pod/validate	
-	
+
+## Using the Docker Dev Environment
+
+### Build Environment
+
+To start environment, run:
+```docker-compose build```
+```docker-compose up```
+
+CKAN will start at localhost:5000
+
+To shut down environment, run:
+
+```docker-compose down```
+
+To docker exec into the CKAN image, run:
+
+```docker-compose exec ckan /bin/bash```
+
+### Run Tests with Docker
+
+```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"```
+
 Caching The Response
 --------------------
 

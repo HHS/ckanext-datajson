@@ -1,19 +1,18 @@
 from __future__ import print_function
 
-import os
 import json
-import re
-import copy
-import urllib
-
+import logging
+import os
 import SimpleHTTPServer
 import SocketServer
 from threading import Thread
-import logging
+
+import pkg_resources
+from ckanext import datajson
+
 log = logging.getLogger("harvester")
 
 PORT = 8998
-
 
 class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -23,7 +22,6 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         # Its value is recorded and then removed from the path
         self.test_name = None
         self.sample_datajson_file = None
-        self.samples_path = 'ckanext/datajson/tests/datajson-samples'
         if self.path == '/arm':
             self.sample_datajson_file = 'arm.data.json'
             self.test_name = 'arm'
@@ -36,7 +34,7 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         elif self.path == '/500':
             self.test_name = 'e500'
             self.respond('Error', status=500)
-        
+
         if self.sample_datajson_file is not None:
             log.info('return json file {}'.format(self.sample_datajson_file))
             self.respond_json_sample_file(file_path=self.sample_datajson_file)
@@ -47,9 +45,9 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def respond_json(self, content_dict, status=200):
         return self.respond(json.dumps(content_dict), status=status,
                             content_type='application/json')
-    
+
     def respond_json_sample_file(self, file_path, status=200):
-        pt = os.path.join(self.samples_path, file_path)
+        pt = pkg_resources.resource_filename(__name__, "/datajson-samples/{}".format(file_path))
         data = open(pt, 'r')
         content = data.read()
         log.info('mock respond {}'.format(content[:90]))
