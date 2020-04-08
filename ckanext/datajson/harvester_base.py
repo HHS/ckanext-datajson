@@ -434,8 +434,9 @@ class DatasetHarvesterBase(HarvesterBase):
 
         # do title check here
         # https://github.com/GSA/datagov-deploy/issues/953
+        title_to_check = self.make_package_name(dataset.get('title'), harvest_object.guid)
         try:
-            name_validator(dataset.get('title').lower(), None)
+            name_validator(title_to_check, None)
         except Invalid as e:
             invalid_message = "title: %s. %s." % (dataset.get('title'), e.error)
             self._save_object_error(invalid_message, harvest_object, 'Import')
