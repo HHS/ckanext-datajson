@@ -76,13 +76,15 @@ class TestDataJSONHarvester(object):
         log.info('result 2=%s', result)
         log.info('ho pkg id=%s', harvest_object.package_id)
         dataset = model.Package.get(harvest_object.package_id)
-        log.info('dataset name=%s', dataset.name)
+        if dataset:
+            log.info('dataset name=%s', dataset.name)
+        errors = harvest_object.errors
 
-        return harvest_object, result, dataset
+        return harvest_object, result, dataset, errors
 
     def test_datason_arm(self):
         url = 'http://127.0.0.1:%s/arm' % mock_datajson_source.PORT
-        harvest_object, result, dataset = self.run_source(url=url)
+        harvest_object, result, dataset, errors = self.run_source(url=url)
 
         # assert_equal(first element on list
         expected_title = "NCEP GFS: vertical profiles of met quantities at standard pressures, at Barrow"
@@ -93,7 +95,7 @@ class TestDataJSONHarvester(object):
     
     def test_datason_usda(self):
         url = 'http://127.0.0.1:%s/usda' % mock_datajson_source.PORT
-        harvest_object, result, dataset = self.run_source(url=url)
+        harvest_object, result, dataset, errors = self.run_source(url=url)
         expected_title = "Department of Agriculture Congressional Logs for Fiscal Year 2014"
         assert_equal(dataset.title, expected_title)
         tags = [tag.name for tag in dataset.get_tags()]
