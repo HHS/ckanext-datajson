@@ -101,6 +101,14 @@ class TestDataJSONHarvester(object):
         tags = [tag.name for tag in dataset.get_tags()]
         assert_in(munge_title_to_name("Congressional Logs"), tags)
         assert_equal(len(dataset.resources), 1)
+
+    def test_datajson_reserverd_word_as_title(self):
+        url = 'http://127.0.0.1:%s/error-reserved-title' % mock_datajson_source.PORT
+        harvest_object, result, dataset, errors = self.run_source(url=url)
+        expected_error_stage = "Import"
+        assert_equal(errors[0].stage, expected_error_stage)
+        expected_error_message = "title: Search. That name cannot be used."
+        assert_equal(errors[0].message, expected_error_message)
     
     def test_datason_404(self):
         url = 'http://127.0.0.1:%s/404' % mock_datajson_source.PORT
