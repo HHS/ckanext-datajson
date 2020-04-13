@@ -401,8 +401,6 @@ class DatasetHarvesterBase(HarvesterBase):
                     key, MAX_SIZE, len(value)
             ))
 
-        return True
-
     def import_stage(self, harvest_object):
         # The import stage actually creates the dataset.
         
