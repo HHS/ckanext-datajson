@@ -3,6 +3,7 @@ from ckan import model
 from ckan import plugins as p
 from ckan.model import Session, Package
 from ckan.logic import ValidationError, NotFound, get_action
+from ckan.logic.validators import name_validator
 from ckan.lib.munge import munge_title_to_name
 from ckan.lib.search.index import PackageSearchIndex
 from ckan.lib.navl.dictization_functions import Invalid, DataError
@@ -440,6 +441,17 @@ class DatasetHarvesterBase(HarvesterBase):
                 self._save_object_error(parent_check_message, harvest_object,
                     'Import')
                 return None
+
+
+        # do title check here
+        # https://github.com/GSA/datagov-deploy/issues/953
+        title_to_check = self.make_package_name(dataset.get('title'), harvest_object.guid)
+        try:
+            name_validator(title_to_check, None)
+        except Invalid as e:
+            invalid_message = "title: %s. %s." % (dataset.get('title'), e.error)
+            self._save_object_error(invalid_message, harvest_object, 'Import')
+            return None
 
         # Get default values.
         dataset_defaults = self.load_config(harvest_object.source)["defaults"]
