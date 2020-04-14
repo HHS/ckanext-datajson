@@ -6,7 +6,7 @@ from ckan.logic import ValidationError, NotFound, get_action
 from ckan.logic.validators import name_validator
 from ckan.lib.munge import munge_title_to_name
 from ckan.lib.search.index import PackageSearchIndex
-from ckan.lib.navl.dictization_functions import Invalid
+from ckan.lib.navl.dictization_functions import Invalid, DataError
 from ckan.lib.navl.validators import ignore_empty
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
@@ -27,6 +27,11 @@ VALIDATION_SCHEMA = [
                         ('', 'Project Open Data (Federal)'),
                         ('non-federal', 'Project Open Data (Non-Federal)'),
                     ]
+
+# watch out for these keys that their string values might go beyond Solr capacity
+# https://github.com/GSA/datagov-deploy/issues/953
+SIZE_CHECK_KEYS = ['spatial']
+MAX_SIZE = 32766
 
 def validate_schema(schema):
     if schema not in [s[0] for s in VALIDATION_SCHEMA]:
@@ -391,6 +396,12 @@ class DatasetHarvesterBase(HarvesterBase):
 
         return elem + msg
 
+    def _size_check(self, key, value):
+        if key in SIZE_CHECK_KEYS and len(value) >= MAX_SIZE:
+            raise DataError('%s: Maximum allowed size is %i. Actual size is %i.' % (
+                    key, MAX_SIZE, len(value)
+            ))
+
     def import_stage(self, harvest_object):
         # The import stage actually creates the dataset.
         
@@ -619,6 +630,13 @@ class DatasetHarvesterBase(HarvesterBase):
         unmapped = []
 
         for key, value in dataset_processed.iteritems():
+
+            try:
+                self._size_check(key, value)
+            except DataError, e:
+                self._save_object_error(e.error, harvest_object, 'Import')
+                return None
+
             if key in skip_processed:
                 continue
             new_key = mapping_processed.get(key)

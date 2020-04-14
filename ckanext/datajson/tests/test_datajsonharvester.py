@@ -110,6 +110,14 @@ class TestDataJSONHarvester(object):
         expected_error_message = "title: Search. That name cannot be used."
         assert_equal(errors[0].message, expected_error_message)
     
+    def test_datajson_large_spatial(self):
+        url = 'http://127.0.0.1:%s/error-large-spatial' % mock_datajson_source.PORT
+        harvest_object, result, dataset, errors = self.run_source(url=url)
+        expected_error_stage = "Import"
+        assert_equal(errors[0].stage, expected_error_stage)
+        expected_error_message = "spatial: Maximum allowed size is 32766. Actual size is 309643."
+        assert_equal(errors[0].message, expected_error_message)
+   
     def test_datason_404(self):
         url = 'http://127.0.0.1:%s/404' % mock_datajson_source.PORT
         with assert_raises(URLError) as harvest_context:
