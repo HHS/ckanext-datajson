@@ -117,6 +117,12 @@ class TestDataJSONHarvester(object):
         assert_equal(errors[0].stage, expected_error_stage)
         expected_error_message = "spatial: Maximum allowed size is 32766. Actual size is 309643."
         assert_equal(errors[0].message, expected_error_message)
+
+    def test_datajson_null_spatial(self):
+        url = 'http://127.0.0.1:%s/null-spatial' % mock_datajson_source.PORT
+        harvest_object, result, dataset, errors = self.run_source(url=url)
+        expected_title = "Sample Title NUll Spatial"
+        assert_equal(dataset.title, expected_title)
    
     def test_datason_404(self):
         url = 'http://127.0.0.1:%s/404' % mock_datajson_source.PORT

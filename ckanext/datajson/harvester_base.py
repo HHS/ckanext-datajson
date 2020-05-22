@@ -397,7 +397,7 @@ class DatasetHarvesterBase(HarvesterBase):
         return elem + msg
 
     def _size_check(self, key, value):
-        if key in SIZE_CHECK_KEYS and len(value) >= MAX_SIZE:
+        if key in SIZE_CHECK_KEYS and value is not None and len(value) >= MAX_SIZE:
             raise DataError('%s: Maximum allowed size is %i. Actual size is %i.' % (
                     key, MAX_SIZE, len(value)
             ))
