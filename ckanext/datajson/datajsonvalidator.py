@@ -89,7 +89,7 @@ import csv
 import os
 
 omb_burueau_codes = set()
-# for row in csv.DictReader(urllib.urlopen("https://project-open-data.cio.gov/data/omb_bureau_codes.csv")):
+# for row in csv.DictReader(urllib.urlopen("https://resources.data.gov/schemas/dcat-us/v1.1/omb_bureau_codes.csv")):
 #    omb_burueau_codes.add(row["Agency Code"] + ":" + row["Bureau Code"])
 
 with open(os.path.join(os.path.dirname(__file__), "resources", "omb_bureau_codes.csv"), "r") as csvfile:
@@ -139,7 +139,7 @@ def do_validation(doc, errors_array, seen_identifiers):
                         elif bc not in omb_burueau_codes:
                             add_error(errs, 5, "Invalid Required Field Value",
                                       "The bureau code \"%s\" was not found in our list "
-                                      "(https://project-open-data.cio.gov/data/omb_bureau_codes.csv)." % bc,
+                                      "(https://resources.data.gov/schemas/dcat-us/v1.1/omb_bureau_codes.csv)." % bc,
                                       dataset_name)
 
             # contactPoint # required
