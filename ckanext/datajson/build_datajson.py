@@ -242,7 +242,7 @@
 #     # 'extrasRollup', 'format', 'accessURL', 'notes', 'publisher_1', 'publisher_2', 'publisher_3',
 #     # 'publisher_4', 'publisher_5']
 #     #
-#     # # Append any free extras (key/value pairs) that aren't part of common core but have been associated with the dataset
+#     # # Append any free extras (key/value pairs) that aren't part of DCAT-US but have been associated with the dataset
 #     # # TODO really hackey, short on time, had to hardcode a lot of the names to remove. there's much better ways, maybe
 #     # # generate a list of keys to ignore by calling a specific function to get the extras
 #     # retlist_keys = [x for x, y in retlist]
