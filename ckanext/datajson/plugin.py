@@ -301,7 +301,7 @@ class DataJsonController(BaseController):
 
     def is_valid(self, instance):
         """
-        Validates a data.json entry against the project open data's JSON schema.
+        Validates a data.json entry against the DCAT_US JSON schema.
         Log a warning message on validation error
         """
         error = best_match(draft4validator.iter_errors(instance))

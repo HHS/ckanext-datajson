@@ -6,7 +6,7 @@ ckanext-datajson
 A CKAN extension containinig plugins ``datajson``.
 First is used by http://catalog.data.gov/ to harvest data sources 
 from a remote /data.json file according to the U.S. Project
-Open Data metadata specification (https://project-open-data.cio.gov/).
+Open Data metadata specification (https://resources.data.gov/schemas/dcat-us/v1.1/).
 
 Plugin ``datajson`` provides a harvester to import datasets from other
 remote /data.json files. See below for setup instructions.
