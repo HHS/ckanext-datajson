@@ -191,9 +191,6 @@ class DatasetHarvesterBase(HarvesterBase):
                 if identifier in parent_identifiers \
                 and identifier not in existing_parents.keys())
 
-        # if there is any new parents, we will have to harvest parents
-        # first, mark the status in harvest_source config, which
-        # triggers a children harvest_job after parents job is finished.
         source = harvest_job.source
         
         if parent_identifiers:
@@ -211,8 +208,13 @@ class DatasetHarvesterBase(HarvesterBase):
         seen_datasets = set()
         unique_datasets = set()
         
+<<<<<<< HEAD
         filters = self.load_config(harvest_job.source)["filters"]
         
+=======
+        filters = self.load_config(source)["filters"]
+
+>>>>>>> facc185... Clean comment
         for dataset in source_datasets:
             # Create a new HarvestObject for this dataset and save the
             # dataset metdata inside it for later.
@@ -249,7 +251,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 if pkg.get("state") == "active" \
                     and dataset['identifier'] not in existing_parents_demoted \
                     and dataset['identifier'] not in existing_datasets_promoted \
-                    and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, harvest_job.source, catalog_extras, schema_version):
+                    and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, source, catalog_extras, schema_version):
                     continue
             else:
                 pkg_id = uuid.uuid4().hex
@@ -367,11 +369,22 @@ class DatasetHarvesterBase(HarvesterBase):
                     key, MAX_SIZE, len(value)
             ))
     
+    def get_harvest_source_id(self, package_id):
+        harvest_object = model.Session.query(HarvestObject) \
+            .filter(HarvestObject.package_id == package_id) \
+            .filter(HarvestObject.current==True).first()
+
+        return harvest_object.source.id if harvest_object else None
+
     def is_part_of_to_package_id(self, ipo, harvest_object):
-        """ get an identifier from external source (isPartOf)
-            and return the dataset (or False if is not found) """
+        """ Get an identifier from external source using isPartOf
+            and return a tuple:
+                is_harvested: the parent is already harvested and we have its package_id
+                dataset: the parent dataset using the identifier (IPO:isPartOf)
+            Only search for datasets that are the parent of a collection.
+            """
         ps = p.toolkit.get_action('package_search')
-        query = 'extras_identifier:{}'.format(ipo)
+        query = 'extras_identifier:{} AND extras_collection_metadata:true'.format(ipo)
         results = ps(self.context(), {"fq": query})
         
         if results['count'] == 0:
@@ -379,7 +392,7 @@ class DatasetHarvesterBase(HarvesterBase):
             harvest_object_error = HarvestObjectError(message=msg, object=harvest_object)
             harvest_object_error.save()
             log.error(msg)
-            return False
+            return False, None
         elif results['count'] > 1:  
             # possible check identifier collision
             # check the URL of the source to validate
@@ -387,20 +400,27 @@ class DatasetHarvesterBase(HarvesterBase):
             harvest_source = harvest_object.source
             
             for dataset in datasets:
-                hs_ids = [extra['value'] for extra in dataset.get('extras', []) if extra['key'] == 'harvest_source_id'] 
-                if harvest_source.id in hs_ids:
-                    log.info('Parent dataset identified correctly')
-                    return dataset
-                else:
-                    log.info('{} not found at {}'.format(harvest_source.id, hs_ids))
+                extras = dataset.get('extras', [])
+                identifiers = [extra['value'] for extra in extras if extra['key'] == 'identifier']
+                if ipo not in identifiers:
+                    log.error('BAD SEARCH for {}:{}'.format(ipo, identifiers))
+                    continue
 
-            msg = 'Unable to identify parent for: "{}"'.format(ipo)
+                dataset_harvest_source_id = self.get_harvest_source_id(dataset['id'])
+                
+                if harvest_source.id == dataset_harvest_source_id:
+                    log.info('Parent dataset identified correctly')
+                    return True, dataset
+                else:
+                    log.info('{} not found at {} for {}'.format(harvest_source.id, dataset_harvest_source_id, ipo))
+
+            msg = 'Unable to identify parent for: "{}" ({})'.format(ipo, results['count'])
             harvest_object_error = HarvestObjectError(message=msg, object=harvest_object)
             harvest_object_error.save()
             log.error(msg)
-            return False
+            return False, None
         else:
-            return results['results'][0]
+            return True, results['results'][0]
 
     def import_stage(self, harvest_object):
         # The import stage actually creates the dataset.
@@ -496,8 +516,9 @@ class DatasetHarvesterBase(HarvesterBase):
 
                     #  check if parent is already harvested
                     parent_identifier = parent_pkg_id.replace('IPO:', '') 
-                    parent = self.is_part_of_to_package_id(parent_identifier, harvest_object)
-                    if not parent:
+                    parent_is_harvested, parent = self.is_part_of_to_package_id(parent_identifier, harvest_object)
+                    if not parent_is_harvested:
+                        log.error('No parent for harvested dataset. IPO:'.format(parent_identifier))
                         return False
 <<<<<<< HEAD
                     else:
