@@ -2,21 +2,22 @@ import json
 import logging
 from urllib2 import URLError
 
+import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import mock_datajson_source
 from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
-
 from factories import HarvestJobObj, HarvestSourceObj
-from nose.tools import (assert_equal, assert_false, assert_in, assert_raises,
-                        assert_true, assert_is_none)
+from mock import Mock, patch
+from nose.tools import (assert_equal, assert_false, assert_in, assert_is_none,
+                        assert_raises, assert_true)
 
 try:
     from ckan.tests.helpers import reset_db, call_action, mock_action
     from ckan.tests.factories import Organization, Group
 except ImportError:
-    from ckan.new_tests.helpers import reset_db, call_action, mock_action
+    from ckan.new_tests.helpers import reset_db, call_action
     from ckan.new_tests.factories import Organization, Group
 
 log = logging.getLogger(__name__)
@@ -254,28 +255,6 @@ class TestDataJSONHarvester(object):
         dataset = self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
         assert_is_none(dataset)
 
-    @mock_action('package_search')
-    def test_is_part_of_to_package_id_fail_no_results(self, mock_package_search):
-        """ unit test for is_part_of_to_package_id function """
-
-        mock_package_search.return_value = {'count': 0}
-        
-        harvester = DataJsonHarvester()
-        dataset = harvester.is_part_of_to_package_id('identifier', None)
-        assert mock_package_search.called
-        assert_is_none(dataset)
-    
-    @mock_action('package_search')
-    def test_is_part_of_to_package_id_one_result(self, mock_package_search):
-        """ unit test for is_part_of_to_package_id function """
-        
-        mock_package_search.return_value = {'count': 1, 'results': [{'name': 'dataset-1'}]}
-        
-        harvester = DataJsonHarvester()
-        dataset = harvester.is_part_of_to_package_id('identifier', None)
-        assert mock_package_search.called
-        assert_equal(dataset['name'], 'dataset-1')
-
     def test_datajson_reserverd_word_as_title(self):
         url = 'http://127.0.0.1:%s/error-reserved-title' % mock_datajson_source.PORT
         self.run_source(url=url)
@@ -310,3 +289,61 @@ class TestDataJSONHarvester(object):
         url = 'http://127.0.0.1:%s/500' % mock_datajson_source.PORT
         with assert_raises(URLError):
             self.run_source(url=url)
+
+    @patch('ckan.plugins.toolkit.get_action')
+    def test_is_part_of_to_package_id_fail_no_results(self, mock_get_action):
+        """ unit test for is_part_of_to_package_id function """
+
+        def get_user():
+            return {'name': 'default'}
+
+        def get_action(action_name):
+            if action_name == 'package_search':
+                return {'count': 0}
+            elif action_name == 'get_site_user':
+                return get_user()
+
+        mock_get_action.side_effect=get_action
+        
+        harvester = DataJsonHarvester()
+        dataset = harvester.is_part_of_to_package_id('identifier', None)
+        assert mock_package_search.called
+        assert_is_none(dataset)
+    
+    @mock_action('package_search')
+    def test_is_part_of_to_package_id_one_result(self, mock_package_search):
+        """ unit test for is_part_of_to_package_id function """
+        
+        mock_package_search.return_value = {'count': 1, 'results': [{'name': 'dataset-1'}]}
+        
+        harvester = DataJsonHarvester()
+        dataset = harvester.is_part_of_to_package_id('identifier', None)
+        assert mock_package_search.called
+        assert_equal(dataset['name'], 'dataset-1')
+    
+    @mock_action('package_search')
+    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id', side_effect=lambda x: 'hsi-{}'.format(x))
+    def test_is_part_of_to_package_id_two_result(self, mock_package_search, mock_get_harvest_source_id):
+        """ unit test for is_part_of_to_package_id function 
+            Test for 2 parents with the same identifier. 
+            Just one belongs to the right harvest source """
+        
+        results = [
+            {'id': 'pkg-1',
+             'name': 'dataset-1', 
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
+            {'id': 'pkg-2',
+             'name': 'dataset-2',
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
+            ]
+        mock_package_search.return_value = {'count': 2, 'results': results}
+
+        harvest_source = Mock()
+        harvest_source.id = 'hsi-pkg-2'
+        harvest_object = Mock()
+        harvest_object.source = harvest_source
+        
+        harvester = DataJsonHarvester()
+        dataset = harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
+        assert mock_package_search.called
+        assert_equal(dataset['name'], 'dataset-2')
