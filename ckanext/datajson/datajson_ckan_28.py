@@ -1,26 +1,33 @@
+from ckan import model
 from ckan import plugins as p
+from ckan.model import Session, Package, PackageExtra
+from ckan.logic import ValidationError, NotFound, get_action
+from ckan.logic.validators import name_validator
+from ckan.lib.munge import munge_title_to_name
+from ckan.lib.search.index import PackageSearchIndex
+from ckan.lib.navl.dictization_functions import Invalid, DataError
+from ckan.lib.navl.validators import ignore_empty
 
+from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
+                                    HarvestObjectError, HarvestObjectExtra
+from ckanext.harvest.harvesters.base import HarvesterBase
+from ckanext.datajson.exceptions import ParentNotHarvestedException
+import uuid, datetime, hashlib, urllib2, json, yaml, json, os
 
-if p.toolkit.check_ckan_version(min_version='2.8.0'):
-    from ckanext.datajson.datajson_ckan_28 import DatasetHarvesterBase
-else:
-    from ckanext.datajson.datajson_ckan_23 import DatasetHarvesterBase
+from jsonschema.validators import Draft4Validator
+from jsonschema import FormatChecker
 
-<<<<<<< HEAD
 from sqlalchemy.exc import IntegrityError
 
 import logging
 log = logging.getLogger("harvester")
 
-VALIDATION_SCHEMA = [
-                        ('', 'Project Open Data (Federal)'),
-                        ('non-federal', 'Project Open Data (Non-Federal)'),
-                    ]
-
 # watch out for these keys that their string values might go beyond Solr capacity
 # https://github.com/GSA/datagov-deploy/issues/953
 SIZE_CHECK_KEYS = ['spatial']
 MAX_SIZE = 32766
+VALIDATION_SCHEMA = [('', 'Project Open Data (Federal)'),
+                     ('non-federal', 'Project Open Data (Non-Federal)'),]
 
 def validate_schema(schema):
     if schema not in [s[0] for s in VALIDATION_SCHEMA]:
@@ -182,8 +189,6 @@ class DatasetHarvesterBase(HarvesterBase):
 
         source = harvest_job.source
         source_config = json.loads(source.config or '{}')
-        # run status: None, or parents_run, or children_run?
-        run_status = source_config.get('datajson_collection')
         
         if parent_identifiers:
             for parent in parent_identifiers & child_identifiers:
@@ -193,53 +198,15 @@ class DatasetHarvesterBase(HarvesterBase):
 
             new_parents = set(identifier for identifier in parent_identifiers \
                 if identifier not in existing_parents.keys())
-            
-            if new_parents:
-                if not run_status:
-                    # fresh start
-                    run_status = 'parents_run'
-                    source_config['datajson_collection'] = run_status
-                    source.config = json.dumps(source_config)
-                    source.save()
-                elif run_status == 'children_run':
-                    # it means new parents are tried and failed.
-                    # but skip some which have previously reported with
-                    # parent_identifiers & child_identifiers
-                    for parent in new_parents - \
-                        (parent_identifiers & child_identifiers):
-                        self._save_gather_error("Collection identifier '%s' \
-                            not found. Records which are part of this \
-                            collection will not be harvested." \
-                            % parent, harvest_job)
-                else:
-                    # run_status was parents_run, and did not finish.
-                    # something wrong but not sure what happened.
-                    # let's leave it as it is, let it run one more time.
-                    pass
-            else:
-                # all parents are already in place. run it as usual.
-                run_status = None
-            
-        elif run_status:
-            # need to clear run_status
-            run_status = None
-            source_config['datajson_collection'] = run_status
-            source.config = json.dumps(source_config)
-            source.save()
-                    
+                           
         # Create HarvestObjects for any records in the remote catalog.
             
         object_ids = []
         seen_datasets = set()
         unique_datasets = set()
         
-<<<<<<< HEAD
-        filters = self.load_config(harvest_job.source)["filters"]
-        
-=======
         filters = self.load_config(source)["filters"]
 
->>>>>>> facc185... Clean comment
         for dataset in source_datasets:
             # Create a new HarvestObject for this dataset and save the
             # dataset metdata inside it for later.
@@ -253,23 +220,6 @@ class DatasetHarvesterBase(HarvesterBase):
                     matched_filters = False
             if not matched_filters:
                 continue
-
-            if p.toolkit.check_ckan_version(max_version='2.7.99'):
-                # Skip children datasets from new parents. This will run in a second job
-                if parent_identifiers and new_parents \
-                    and dataset['identifier'] not in parent_identifiers \
-                    and dataset.get('isPartOf') in new_parents:
-                    if run_status == 'parents_run':
-                        # skip those whose parents still need to run.
-                        continue
-                    else:
-                        # which is 'children_run'.
-                        # error out since parents got issues.
-                        self._save_gather_error(
-                            "Record with identifier '%s': isPartOf '%s' points to \
-                            an erroneous record." % (dataset['identifier'],
-                                dataset.get('isPartOf')), harvest_job)
-                        continue
 
             # Some source contains duplicate identifiers. skip all except the first one
             if dataset['identifier'] in unique_datasets:
@@ -297,7 +247,7 @@ class DatasetHarvesterBase(HarvesterBase):
                     continue
             else:
                 pkg_id = uuid.uuid4().hex
-            
+
             # Create a new HarvestObject and store in it the GUID of the
             # existing dataset (if it exists here already) and the dataset's
             # metadata from the remote catalog file.
@@ -326,8 +276,8 @@ class DatasetHarvesterBase(HarvesterBase):
                 content=json.dumps(dataset, sort_keys=True)) # use sort_keys to preserve field order so hashes of this string are constant from run to run
             obj.save()
         
-            # when we harvest a child we NEED a parent already harvested
-            # so, we harvest first parents and then children.
+            # we are sorting parent datasets in the list first and then children so that the parents are 
+            # harvested first, we then use the parent id to associate the children to the parent
             if dataset['identifier'] in parent_identifiers:
                 object_ids.insert(0, obj.id)
             else:    
@@ -481,74 +431,6 @@ class DatasetHarvesterBase(HarvesterBase):
                 is_collection = True
             if extra.key == 'collection_pkg_id' and extra.value:
                 parent_pkg_id = extra.value
-<<<<<<< HEAD
-<<<<<<< HEAD
-                if parent_pkg_id.startswith('IPO:'):
-                    # it's an IsPartOf ("identifier" at the external source)
-                    log.info('IPO found {}'.format(parent_pkg_id))
-                    parent_identifier = parent_pkg_id.replace('IPO:', '') 
-
-                    # check if parent is already harvested
-<<<<<<< HEAD
-                    expected_value = '"identifier": "{}"'.format(parent_identifier)
-                    results = Session.query(PackageExtra).filter(PackageExtra.key == 'extras_rollup', 
-                        PackageExtra.value.contains(expected_value))
-
-                    if results.count() == 0:
-                        # the parent still not exists, move this to the bottom
-                        log.error('Parent not found: {}'.format(parent_identifier))
-                        # TODO duplicate harvest_object
-                        harvest_object_error = HarvestObjectError(message='Parent not found', object=harvest_object)
-                        harvest_object_error.save()
-                        raise Exception('Parent not found: {}'.format(parent_identifier))
-                        return False
-                    else:
-                        child = results.first()
-                        log.error('Parent found: {} -> {}'.format(parent_identifier, child.package_id))
-                        parent_pkg_id = child.package_id
-                    
-=======
-                    try:
-                        # result = Session.query(PackageExtra).filter(PackageExtra.key == 'extras_rollup', 
-                        #                                             PackageExtra.value.contains(parent_identifier)).first()
-                        ps = p.toolkit.get_action('package_search')
-                        ctx = {'model': model, 'ignore_auth': True}
-                        dd = {'extras': {'identifier': parent_identifier}}
-                        parents = ps(ctx, dd)
-                        results = parents['results']
-                        parent = None
-                        for dataset in results:
-                            extras = dataset.get('extras', [])
-                            for ex in extras:
-                                if ex['key'] == 'identifier':
-                                    if ex['value'] == parent_identifier:
-                                        parent = dataset
-                        if parent is None:
-                            # move this to the queue
-                            raise ValueError('Move to the Queue')
-                        else:
-                            log.info('parent FOUND {}'.format(parent_identifier))
-                            raise ValueError('Found')
-
-                    except:
-                        raise
->>>>>>> 3d3c0e4... add possible query update
-=======
-
-                #  check if parent is already harvested
-                expected_value = '"identifier": "{}"'.format(parent_pkg_id)
-                results = Session.query(PackageExtra).filter(PackageExtra.key == 'extras_rollup',
-                                                             PackageExtra.value.contains(expected_value))
-                if results.count() == 0:
-                    harvest_object_error = HarvestObjectError(message='Parent not found', object=harvest_object)
-                    harvest_object_error.save()
-                    raise Exception('Parent not found: {}'.format(parent_pkg_id))
-                    return False
-                else:
-                    child = results.first()
-                    log.error('Parent found: {} -> {}'.format(parent_pkg_id, child.package_id))
-                    parent_pkg_id = child.package_id
-=======
                 if parent_pkg_id.startswith('IPO:'):
                     # it's an IsPartOf ("identifier" at the external source)
                     log.info('IPO found {}'.format(parent_pkg_id))
@@ -556,23 +438,8 @@ class DatasetHarvesterBase(HarvesterBase):
                     #  check if parent is already harvested
                     parent_identifier = parent_pkg_id.replace('IPO:', '') 
                     parent = self.is_part_of_to_package_id(parent_identifier, harvest_object)
-<<<<<<< HEAD
-                    if not parent:
-                        log.error('No parent for harvested dataset. IPO:'.format(parent_identifier))
-                        return False
-<<<<<<< HEAD
-                    else:
-                        child = results.first()
-                        log.error('Parent found: {} -> {}'.format(parent_pkg_id, child.package_id))
-                        parent_pkg_id = child.package_id
->>>>>>> 1f41dc6... add back IPO because we need it
-=======
-=======
->>>>>>> c78171a... Test for DCAT-US harvest in old and new catalog
                     parent_pkg_id = parent['id']
->>>>>>> 350c584... Avoid Identifier collision while search for parent datasets
 
->>>>>>> 8d76e83... update variable name
             if extra.key.startswith('catalog_'):
                 catalog_extras[extra.key] = extra.value
 
@@ -957,6 +824,3 @@ class DatasetHarvesterBase(HarvesterBase):
         # Append some random text to the URL. Hope that with five character
         # there will be no collsion.
         return name + "-" + str(uuid.uuid4())[:5]
-=======
-__all__ = ["DatasetHarvesterBase"]
->>>>>>> 449f23e... Divide DCAT-US harvesters for CKAN 2.8 or CKAN 2.3
