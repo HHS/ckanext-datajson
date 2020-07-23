@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 import logging
 from urllib2 import URLError
-
+from pylons import config
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import ckanext.harvest.queue as queue
@@ -27,7 +27,9 @@ log = logging.getLogger(__name__)
 
 from nose.plugins.skip import SkipTest
 
-class TestDataJSONHarvester28(object):
+class TestIntegrationDataJSONHarvester28(object):
+    """Integration tests using a complete CKAN 2.8+ harvest stack. Unlike unit tests,
+    these tests are only run on a complete CKAN 2.8 stack."""
 
     @classmethod
     def setup_class(cls):
@@ -268,30 +270,41 @@ class TestDataJSONHarvester28(object):
         """ if a harvest job for a child fails because 
             parent still not exists we need to ensure
             this job will be retried. 
-            This test emulate te case we harvest children first
+            This test emulate the case we harvest children first
             (e.g. if we have several active queues).
             Just for CKAN 2.8 env"""
         
+        # start harvest process with gather to create harvest objects
         url = 'http://127.0.0.1:%s/collection-1-parent-2-children.data.json' % self.mock_port
         self.run_gather(url=url)
+        assert_equal(len(self.harvest_objects), 3)
         
-        # consumer = queue.get_gather_consumer()
-        consumer_fetch = queue.get_fetch_consumer()
-        # consumer.queue_purge(queue=queue.get_gather_queue_name())
-        consumer_fetch.queue_purge(queue=queue.get_fetch_queue_name())
-
-        # each harvest object have a "retry_times" property
+        # create a publisher to send this objects to the fetch queue
+        publisher = queue.get_fetch_publisher()
+        
         for ho in self.harvest_objects:
-            ho.retry_times = 0
+            ho = harvest_model.HarvestObject.get(ho.id)  # refresh
+            ho_data = json.loads(ho.content)
+            assert_equal(ho.state, 'WAITING')
+            log.info('HO: {}\n\tCurrent: {}'.format(ho_data['identifier'], ho.current))
+            assert_equal(ho.retry_times, 0)
+            publisher.send({'harvest_object_id': ho.id})
+            log.info('Harvest object sent to the fetch queue {} as {}'.format(ho_data['identifier'], ho.id))
+
+        publisher.close()
+        
+        # run fetch for elements in the wrong order (first a child, the a parent)
 
         class FakeMethod(object):
             ''' This is to act like the method returned by AMQP'''
             def __init__(self, message):
                 self.delivery_tag = message
 
-        # run the queue in wrong order
-
-        # first a child to get an error
+        # get the fetch
+        consumer_fetch = queue.get_fetch_consumer()
+        qname = queue.get_fetch_queue_name()
+        
+        # first a child and assert to get an error
         r2 = json.dumps({"harvest_object_id": self.harvest_objects[1].id})
         r0 = FakeMethod(r2)
         with assert_raises(ParentNotHarvestedException):
@@ -306,10 +319,201 @@ class TestDataJSONHarvester28(object):
         assert_equal(self.harvest_objects[0].retry_times, 1)
         assert_equal(self.harvest_objects[0].state, "COMPLETE")
         
-        # retry the child and validate the retry counter
-        r2 = json.dumps({"harvest_object_id": self.harvest_objects[1].id})
-        r0 = FakeMethod(r2)
-        queue.fetch_callback(consumer_fetch, r0, None, r2)
-        self.harvest_objects[1] = harvest_model.HarvestObject.get(self.harvest_objects[1].id)  # refresh
-        assert_equal(self.harvest_objects[1].retry_times, 2)
-        assert_equal(self.harvest_objects[1].state, "COMPLETE")
+        # Check status on harvest objects
+        # We expect one child with error, parent ok and second child still waiting
+        for ho in self.harvest_objects:
+            ho = harvest_model.HarvestObject.get(ho.id)  # refresh
+            ho_data = json.loads(ho.content)
+            idf = ho_data['identifier']
+            log.info('\nHO2: {}\n\tState: {}\n\tCurrent: {}\n\tGathered {}'.format(idf, ho.state, ho.current, ho.gathered))
+            if idf == 'OPM-ERround-0001':
+                assert_equal(ho.state, 'COMPLETE')
+            elif idf == 'OPM-ERround-0001-AWOL':
+                assert_equal(ho.state, 'ERROR')
+                ho_awol_id = ho.id
+            elif idf == 'OPM-ERround-0001-Retire':
+                assert_equal(ho.state, 'WAITING')
+                ho_retire_id = ho.id
+            else:
+                raise Exception('Unexpected identifier: "{}"'.format(idf))
+
+        # resubmit jobs and objects as harvest_jobs_run does
+        # we expect the errored harvest object is in this queue
+        queue.resubmit_jobs()
+        queue.resubmit_objects()
+
+        # iterate over the fetch consumer queue again and check pending harvest objects
+        harvest_objects = []
+        while True:
+            method, header, body = consumer_fetch.basic_get(queue=qname)
+            if body is None:
+                break
+            
+            body_data = json.loads(body)
+            ho_id = body_data.get('harvest_object_id', None)
+            log.info('Adding ho_id {}'.format(ho_id))
+            if ho_id is not None:
+                ho = harvest_model.HarvestObject.get(ho_id)
+                if ho is not None:
+                    harvest_objects.append(ho)
+                    content = json.loads(ho.content)
+                    log.info('Harvest object found {}: {} '.format(content['identifier'], ho.state))
+                else:
+                    log.info('Harvest object not found {}'.format(ho_id))
+        
+        ho_ids = [ho.id for ho in harvest_objects]
+        
+        # Now, we expect the waiting child and the errored one to be in the fetch queue
+        
+        log.info('Searching wainting object "Retire ID"')
+        assert_in(ho_retire_id, ho_ids)
+        
+        log.info('Searching errored object "Awol ID"')
+        assert_in(ho_awol_id, ho_ids)
+
+    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
+    @patch('ckan.plugins.toolkit.get_action')
+    def test_parent_not_harvested_exception(self, mock_get_action, mock_get_harvest_source_id):
+        """ unit test for is_part_of_to_package_id function 
+            Test for 2 parents with the same identifier. 
+            Just one belongs to the right harvest source """
+        
+        results = {
+            'count': 2,
+            'results':[
+            {'id': 'pkg-1',
+             'name': 'dataset-1', 
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
+            {'id': 'pkg-2',
+             'name': 'dataset-2',
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
+            ]}
+            
+        def get_action(action_name):
+            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
+            if action_name == 'package_search':
+                return lambda ctx, data: results
+            elif action_name == 'get_site_user':
+                return lambda ctx, data: {'name': 'default'}
+
+        mock_get_action.side_effect = get_action
+        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
+
+        harvest_source = Mock()
+        harvest_source.id = 'hsi-pkg-99'  # raise error, not found
+        harvest_object = Mock()
+        harvest_object.source = harvest_source
+        
+        harvester = DataJsonHarvester()
+        with assert_raises(ParentNotHarvestedException):
+            harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
+        
+        assert mock_get_action.called
+    
+    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
+    @patch('ckan.plugins.toolkit.get_action')
+    def test_is_part_of_to_package_id_one_result(self, mock_get_action, mock_get_harvest_source_id):
+        """ unit test for is_part_of_to_package_id function """
+        
+        results = {
+            'count': 1, 
+            'results': [
+                {'id': 'pkg-1', 
+                 'name': 'dataset-1', 
+                 'extras': [{'key': 'identifier', 'value': 'identifier'}]}
+                ]}
+        def get_action(action_name):
+            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
+            if action_name == 'package_search':
+                return lambda ctx, data: results
+            elif action_name == 'get_site_user':
+                return lambda ctx, data: {'name': 'default'}
+
+        mock_get_action.side_effect = get_action
+        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
+        
+        harvest_source = Mock()
+        harvest_source.id = 'hsi-pkg-1'
+        harvest_object = Mock()
+        harvest_object.source = harvest_source
+
+        harvester = DataJsonHarvester()
+        dataset = harvester.is_part_of_to_package_id('identifier', harvest_object)
+        assert mock_get_action.called
+        assert_equal(dataset['name'], 'dataset-1')
+    
+    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
+    @patch('ckan.plugins.toolkit.get_action')
+    def test_is_part_of_to_package_id_two_result(self, mock_get_action, mock_get_harvest_source_id):
+        """ unit test for is_part_of_to_package_id function 
+            Test for 2 parents with the same identifier. 
+            Just one belongs to the right harvest source """
+        
+        results = {
+            'count': 2,
+            'results':[
+            {'id': 'pkg-1',
+             'name': 'dataset-1', 
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
+            {'id': 'pkg-2',
+             'name': 'dataset-2',
+             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
+            ]}
+            
+        def get_action(action_name):
+            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
+            if action_name == 'package_search':
+                return lambda ctx, data: results
+            elif action_name == 'get_site_user':
+                return lambda ctx, data: {'name': 'default'}
+
+        mock_get_action.side_effect = get_action
+        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
+
+        harvest_source = Mock()
+        harvest_source.id = 'hsi-pkg-2'
+        harvest_object = Mock()
+        harvest_object.source = harvest_source
+        
+        harvester = DataJsonHarvester()
+        dataset = harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
+        assert mock_get_action.called
+        assert_equal(dataset['name'], 'dataset-2')
+    
+    @patch('ckan.plugins.toolkit.get_action')
+    def test_is_part_of_to_package_id_fail_no_results(self, mock_get_action):
+        """ unit test for is_part_of_to_package_id function """
+
+        def get_action(action_name):
+            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
+            if action_name == 'package_search':
+                return lambda ctx, data: {'count': 0}
+            elif action_name == 'get_site_user':
+                return lambda ctx, data: {'name': 'default'}
+
+        mock_get_action.side_effect = get_action
+        
+        harvester = DataJsonHarvester()
+        with assert_raises(ParentNotHarvestedException):
+            harvester.is_part_of_to_package_id('identifier', None)
+    
+    def test_datajson_is_part_of_package_id(self):
+        url = 'http://127.0.0.1:%s/collection-1-parent-2-children.data.json' % self.mock_port
+        obj_ids = self.run_gather(url=url)
+        self.run_fetch()
+        self.run_import()
+
+        for obj_id in obj_ids:
+            harvest_object = harvest_model.HarvestObject.get(obj_id)
+            content = json.loads(harvest_object.content)
+            # get the dataset with this identifier only if is a parent in a collection
+            if content['identifier'] == 'OPM-ERround-0001':
+                dataset = self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
+                assert_equal(dataset['title'], 'Employee Relations Roundtables')
+
+            if content['identifier'] in ['OPM-ERround-0001-AWOL', 'OPM-ERround-0001-Retire']:
+                with assert_raises(ParentNotHarvestedException):
+                    self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
+            
+        with assert_raises(ParentNotHarvestedException):
+            self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)

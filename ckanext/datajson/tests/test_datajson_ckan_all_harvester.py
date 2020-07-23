@@ -10,7 +10,6 @@ import mock_datajson_source
 from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
-from ckanext.datajson.exceptions import ParentNotHarvestedException
 from factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
 from nose.tools import (assert_equal, assert_false, assert_in, assert_is_none,
@@ -164,27 +163,6 @@ class TestDataJSONHarvester(object):
                 parent = model.Package.get(parent_package_id)
                 assert_equal(parent.title, 'Employee Relations Roundtables 2') 
 
-    def test_datajson_is_part_of_package_id(self):
-        url = 'http://127.0.0.1:%s/collection-1-parent-2-children.data.json' % self.mock_port
-        obj_ids = self.run_gather(url=url)
-        self.run_fetch()
-        self.run_import()
-
-        for obj_id in obj_ids:
-            harvest_object = harvest_model.HarvestObject.get(obj_id)
-            content = json.loads(harvest_object.content)
-            # get the dataset with this identifier only if is a parent in a collection
-            if content['identifier'] == 'OPM-ERround-0001':
-                dataset = self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
-                assert_equal(dataset['title'], 'Employee Relations Roundtables')
-
-            if content['identifier'] in ['OPM-ERround-0001-AWOL', 'OPM-ERround-0001-Retire']:
-                with assert_raises(ParentNotHarvestedException):
-                    self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
-            
-        with assert_raises(ParentNotHarvestedException):
-            self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
-
     def test_datajson_reserverd_word_as_title(self):
         url = 'http://127.0.0.1:%s/error-reserved-title' % self.mock_port
         self.run_source(url=url)
@@ -219,132 +197,3 @@ class TestDataJSONHarvester(object):
         url = 'http://127.0.0.1:%s/500' % self.mock_port
         with assert_raises(URLError):
             self.run_source(url=url)
-
-    @patch('ckan.plugins.toolkit.get_action')
-    def test_is_part_of_to_package_id_fail_no_results(self, mock_get_action):
-        """ unit test for is_part_of_to_package_id function """
-
-        def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
-            if action_name == 'package_search':
-                return lambda ctx, data: {'count': 0}
-            elif action_name == 'get_site_user':
-                return lambda ctx, data: {'name': 'default'}
-
-        mock_get_action.side_effect = get_action
-        
-        harvester = DataJsonHarvester()
-        with assert_raises(ParentNotHarvestedException):
-            harvester.is_part_of_to_package_id('identifier', None)
-        
-    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
-    @patch('ckan.plugins.toolkit.get_action')
-    def test_is_part_of_to_package_id_one_result(self, mock_get_action, mock_get_harvest_source_id):
-        """ unit test for is_part_of_to_package_id function """
-        
-        results = {
-            'count': 1, 
-            'results': [
-                {'id': 'pkg-1', 
-                 'name': 'dataset-1', 
-                 'extras': [{'key': 'identifier', 'value': 'identifier'}]}
-                ]}
-        def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
-            if action_name == 'package_search':
-                return lambda ctx, data: results
-            elif action_name == 'get_site_user':
-                return lambda ctx, data: {'name': 'default'}
-
-        mock_get_action.side_effect = get_action
-        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
-        
-        harvest_source = Mock()
-        harvest_source.id = 'hsi-pkg-1'
-        harvest_object = Mock()
-        harvest_object.source = harvest_source
-
-        harvester = DataJsonHarvester()
-        dataset = harvester.is_part_of_to_package_id('identifier', harvest_object)
-        assert mock_get_action.called
-        assert_equal(dataset['name'], 'dataset-1')
-    
-    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
-    @patch('ckan.plugins.toolkit.get_action')
-    def test_is_part_of_to_package_id_two_result(self, mock_get_action, mock_get_harvest_source_id):
-        """ unit test for is_part_of_to_package_id function 
-            Test for 2 parents with the same identifier. 
-            Just one belongs to the right harvest source """
-        
-        results = {
-            'count': 2,
-            'results':[
-            {'id': 'pkg-1',
-             'name': 'dataset-1', 
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
-            {'id': 'pkg-2',
-             'name': 'dataset-2',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
-            ]}
-            
-        def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
-            if action_name == 'package_search':
-                return lambda ctx, data: results
-            elif action_name == 'get_site_user':
-                return lambda ctx, data: {'name': 'default'}
-
-        mock_get_action.side_effect = get_action
-        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
-
-        harvest_source = Mock()
-        harvest_source.id = 'hsi-pkg-2'
-        harvest_object = Mock()
-        harvest_object.source = harvest_source
-        
-        harvester = DataJsonHarvester()
-        dataset = harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
-        assert mock_get_action.called
-        assert_equal(dataset['name'], 'dataset-2')
-
-    @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
-    @patch('ckan.plugins.toolkit.get_action')
-    def test_parent_not_harvested_exception(self, mock_get_action, mock_get_harvest_source_id):
-        """ unit test for is_part_of_to_package_id function 
-            Test for 2 parents with the same identifier. 
-            Just one belongs to the right harvest source """
-        
-        results = {
-            'count': 2,
-            'results':[
-            {'id': 'pkg-1',
-             'name': 'dataset-1', 
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
-            {'id': 'pkg-2',
-             'name': 'dataset-2',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
-            ]}
-            
-        def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
-            if action_name == 'package_search':
-                return lambda ctx, data: results
-            elif action_name == 'get_site_user':
-                return lambda ctx, data: {'name': 'default'}
-
-        mock_get_action.side_effect = get_action
-        mock_get_harvest_source_id.side_effect = lambda package_id: 'hsi-{}'.format(package_id)
-
-        harvest_source = Mock()
-        harvest_source.id = 'hsi-pkg-99'  # raise error, not found
-        harvest_object = Mock()
-        harvest_object.source = harvest_source
-        
-        harvester = DataJsonHarvester()
-        with assert_raises(ParentNotHarvestedException):
-            harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
-        
-        assert mock_get_action.called
-        
-
-        

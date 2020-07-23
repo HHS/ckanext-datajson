@@ -75,6 +75,20 @@ To docker exec into the CKAN image, run:
 
 ```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"```
 
+### Run test with Classic catalog-app (CKAN 2.3)
+
+Using the [catalog-app](https://github.com/GSA/catalog-app) repo it's possible to run tests
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.local.yml exec app bash
+	source /usr/lib/ckan/bin/activate
+	cd /usr/lib/ckan/src/ckanext-datajson
+	pip install -r dev-classic-catalog-requirements.txt
+	nosetests --ckan \
+		--with-pylons=test-classic-catalog-ckan-2.3.ini \
+		ckanext.datajson.tests
+```
+
 Caching The Response
 --------------------
 

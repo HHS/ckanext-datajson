@@ -10,7 +10,6 @@ import mock_datajson_source
 from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
-from ckanext.datajson.exceptions import ParentNotHarvestedException
 from factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
 from nose.tools import (assert_equal, assert_false, assert_in, assert_is_none,
@@ -27,7 +26,9 @@ log = logging.getLogger(__name__)
 
 from nose.plugins.skip import SkipTest
 
-class TestDataJSONHarvester23(object):
+class TestIntegrationDataJSONHarvester23(object):
+    """Integration tests using a complete CKAN 2.3 harvest stack. Unlike unit tests,
+    these tests are only run on a complete CKAN 2.3 stack."""
 
     @classmethod
     def setup_class(cls):
