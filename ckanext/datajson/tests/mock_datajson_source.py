@@ -12,8 +12,6 @@ from ckanext import datajson
 
 log = logging.getLogger("harvester")
 
-PORT = 8998
-
 class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_GET(self):
         log.info('GET mock at: {}'.format(self.path))
@@ -28,6 +26,12 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         elif self.path == '/usda':
             self.sample_datajson_file = 'usda.gov.data.json'
             self.test_name = 'usda'
+        elif self.path == '/collection-1-parent-2-children.data.json':
+            self.sample_datajson_file = 'collection-1-parent-2-children.data.json'
+            self.test_name = 'collection-1-parent-2-children.data.json'
+        elif self.path == '/collection-2-parent-4-children.data.json':
+            self.sample_datajson_file = 'collection-2-parent-4-children.data.json'
+            self.test_name = 'collection-2-parent-4-children.data.json'
         elif self.path == '/error-reserved-title':
             self.sample_datajson_file = 'reserved-title.data.json'
             self.test_name = 'error-reserved-title'
@@ -71,7 +75,7 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         self.wfile.close()
 
 
-def serve(port=PORT):
+def serve(port=8998):
     '''Runs a CKAN-alike app (over HTTP) that is used for harvesting tests'''
 
     # Choose the directory to serve files from
@@ -81,10 +85,9 @@ def serve(port=PORT):
     class TestServer(SocketServer.TCPServer):
         allow_reuse_address = True
 
-    httpd = TestServer(("", PORT), MockDataJSONHandler)
+    httpd = TestServer(("", port), MockDataJSONHandler)
 
-    info = 'Serving test HTTP server at port {}'.format(PORT)
-    print(info)
+    info = 'Serving test HTTP server at port {}'.format(port)
     log.info(info)
 
     httpd_thread = Thread(target=httpd.serve_forever)
