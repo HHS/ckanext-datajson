@@ -25,7 +25,9 @@ then
 	git checkout datagov-newcatalog
 elif [ $CKANVERSION == '2.3' ]
 then
-	git checkout release-v2.3
+	git checkout datagov
+	echo "Fix debug css"
+	cp ckan/public/base/css/main.css ckan/public/base/css/main.debug.css
 elif [ $CKANVERSION == 'inventory' ]
 then
 	sudo apt-get install swig
