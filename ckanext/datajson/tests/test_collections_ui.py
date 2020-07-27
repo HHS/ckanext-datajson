@@ -2,11 +2,12 @@ import json
 import logging
 import mock_datajson_source
 from ckan import model
+import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from nose.tools import assert_equal, assert_not_in, assert_in
 from factories import HarvestJobObj, HarvestSourceObj
-
+from nose.plugins.skip import SkipTest
 try:
     from ckan.tests import helpers, factories
 except ImportError:
@@ -19,7 +20,8 @@ class TestCollectionUI(helpers.FunctionalTestBase):
 
     @classmethod
     def setup_class(cls):
-
+        if p.toolkit.check_ckan_version(max_version='2.3'):
+            raise SkipTest('Just for CKAN 2.8, collections runs in two jobs with 2.3')
         helpers.reset_db()
         super(TestCollectionUI, cls).setup_class()
         harvest_model.setup()
