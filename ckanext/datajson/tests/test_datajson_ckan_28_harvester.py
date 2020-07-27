@@ -165,9 +165,10 @@ class TestIntegrationDataJSONHarvester28(object):
         
         for dataset in datasets:
             assert dataset.title in titles
+            extras = self.fix_extras(dataset.extras.items())
             
-            is_parent = dataset.extras.get('collection_metadata', 'false').lower() == 'true'
-            is_child = dataset.extras.get('collection_package_id', None) is not None
+            is_parent = extras.get('collection_metadata', 'false').lower() == 'true'
+            is_child = extras.get('collection_package_id', None) is not None
 
             log.info('Harvested dataset {} {} {}'.format(dataset.title, is_parent, is_child))
 
@@ -244,6 +245,21 @@ class TestIntegrationDataJSONHarvester28(object):
         datasets = self.get_datasets_from_2_collection()
         assert_equal(len(datasets), 6)
     
+    def fix_extras(self, extras):
+        """ fix extras rolled up at geodatagov """
+        new_extras = {}
+        for e in extras:
+            k = e[0]
+            v = e[1]
+            if k == 'extras_rollup':
+                extras_rollup_dict = json.loads(v)
+                for rk, rv in extras_rollup_dict.items():
+                    new_extras[rk] = rv
+            else:
+                new_extras[e[0]] = e[1]
+        
+        return new_extras
+
     def test_parent_child_counts(self):
         """ Test count for parent and children """
         
@@ -253,9 +269,9 @@ class TestIntegrationDataJSONHarvester28(object):
         child_counter = 0
         
         for dataset in datasets:
-            
-            is_parent = dataset.extras.get('collection_metadata', 'false').lower() == 'true'
-            parent_package_id = dataset.extras.get('collection_package_id', None)
+            extras = self.fix_extras(dataset.extras.items())
+            is_parent = extras.get('collection_metadata', 'false').lower() == 'true'
+            parent_package_id = extras.get('collection_package_id', None)
             is_child = parent_package_id is not None
 
             if is_parent:

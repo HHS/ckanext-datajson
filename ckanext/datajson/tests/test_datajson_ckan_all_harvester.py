@@ -146,14 +146,30 @@ class TestDataJSONHarvester(object):
         self.run_fetch()
         datasets = self.run_import()
         return datasets
+    
+    def fix_extras(self, extras):
+        """ fix extras rolled up at geodatagov """
+        new_extras = {}
+        for e in extras:
+            k = e[0]
+            v = e[1]
+            if k == 'extras_rollup':
+                extras_rollup_dict = json.loads(v)
+                for rk, rv in extras_rollup_dict.items():
+                    new_extras[rk] = rv
+            else:
+                new_extras[e[0]] = e[1]
         
+        return new_extras
+
     def test_harvesting_parent_child_2_collections(self):
         """ Test that we have the right parents in each case """
         
         datasets = self.get_datasets_from_2_collection()
         
         for dataset in datasets:
-            parent_package_id = dataset.extras.get('collection_package_id', None)
+            extras = self.fix_extras(dataset.extras.items())
+            parent_package_id = extras.get('collection_package_id', None)
             
             if dataset.title == 'Addressing AWOL':
                 parent = model.Package.get(parent_package_id)

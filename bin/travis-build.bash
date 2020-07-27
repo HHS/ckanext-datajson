@@ -17,28 +17,22 @@ cd .. # CircleCI starts inside ckanext-datajson folder
 pwd
 ls -la
 
-
+git clone https://github.com/GSA/ckan
+cd ckan
+	
 if [ $CKANVERSION == '2.8' ]
 then
-	git clone https://github.com/ckan/ckan
-	cd ckan
-	git checkout 2.8
+	git checkout datagov-newcatalog
 elif [ $CKANVERSION == '2.3' ]
 then
-	git clone https://github.com/ckan/ckan
-	cd ckan
 	git checkout release-v2.3
 elif [ $CKANVERSION == 'inventory' ]
 then
 	sudo apt-get install swig
 	pip install testrepository
-	git clone https://github.com/GSA/ckan
-	cd ckan
 	git checkout inventory
 elif [ $CKANVERSION == 'datagov' ]
 then
-	git clone https://github.com/GSA/ckan
-	cd ckan
 	git checkout datagov
 fi
 
