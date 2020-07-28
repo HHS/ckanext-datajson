@@ -69,7 +69,7 @@ jobs:
       - checkout
       - run:
           name: install
-          command: bin/travis-build.bash
+          command: bin/travis-build-inventory.bash
       - run:
           name: test
           command: bin/travis-run.sh
