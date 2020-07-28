@@ -98,14 +98,17 @@ git checkout master
 python setup.py develop
 pip install -r pip-requirements.txt
 
-cd ..
-echo "-----------------------------------------------------------------"
-echo "Installing DataGovTheme"
-git clone https://github.com/GSA/ckanext-datagovtheme
-cd ckanext-datagovtheme
-git checkout master
+elif [ $CKANVERSION == 'inventory' ]
+	then
+	cd ..
+	echo "-----------------------------------------------------------------"
+	echo "Installing DataGovTheme"
+	git clone https://github.com/GSA/ckanext-datagovtheme
+	cd ckanext-datagovtheme
+	git checkout master
 
-python setup.py develop
+	python setup.py develop
+fi
 
 cd ..
 echo "-----------------------------------------------------------------"
