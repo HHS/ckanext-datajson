@@ -7,8 +7,7 @@ echo "-----------------------------------------------------------------"
 echo "Installing the packages that CKAN requires..."
 sudo apt-get update -qq
 sudo apt-get install solr-jetty libcommons-fileupload-java \
-	libpq-dev postgresql postgresql-contrib redis-server \
-	python-lxml postgresql-9.3-postgis-2.1
+	libpq-dev postgresql postgresql-contrib redis-server
 
 echo "-----------------------------------------------------------------"
 echo "Installing CKAN and its dependencies..."
@@ -18,20 +17,10 @@ pwd
 ls -la
 
 git clone https://github.com/GSA/ckan
-cd ckan
-	
-if [ $CKANVERSION == '2.8' ]
-then
-	git checkout datagov-newcatalog
-elif [ $CKANVERSION == '2.3' ]
-then
-	git checkout datagov
-	echo "Fix debug css"
-	cp ckan/public/base/css/main.css ckan/public/base/css/main.debug.css
-elif [ $CKANVERSION == 'datagov' ]
-then
-	git checkout datagov
-fi
+cd ckan	
+sudo apt-get install swig
+pip install testrepository
+git checkout inventory
 
 echo "-----------------------------------------------------------------"
 echo "Installing Python dependencies..."
@@ -63,11 +52,6 @@ sudo -u postgres psql -c "CREATE USER ckan_default WITH PASSWORD 'pass';"
 sudo -u postgres psql -c 'CREATE DATABASE ckan_test WITH OWNER ckan_default;'
 sudo -u postgres psql -c 'CREATE DATABASE datastore_test WITH OWNER ckan_default;'
 
-echo "Setting up PostGIS on the database..."
-sudo -u postgres psql -d ckan_test -c 'CREATE EXTENSION postgis;'
-sudo -u postgres psql -d ckan_test -c 'ALTER VIEW geometry_columns OWNER TO ckan_default;'
-sudo -u postgres psql -d ckan_test -c 'ALTER TABLE spatial_ref_sys OWNER TO ckan_default;'
-
 echo "-----------------------------------------------------------------"
 echo "Initialising the database..."
 cd ckan
@@ -75,50 +59,11 @@ paster db init -c test-core.ini
 
 cd ..
 echo "-----------------------------------------------------------------"
-echo "Installing Spatial"
-git clone https://github.com/ckan/ckanext-spatial
-cd ckanext-spatial
-git checkout master
-
-python setup.py develop
-pip install -r pip-requirements.txt
-
-cd ..
-echo "-----------------------------------------------------------------"
-echo "Installing Geodatagov"
-git clone https://github.com/GSA/ckanext-geodatagov
-cd ckanext-geodatagov
-git checkout master
-
-python setup.py develop
-pip install -r pip-requirements.txt
-
-cd ..
-echo "-----------------------------------------------------------------"
-echo "Installing DataGovTheme"
-git clone https://github.com/GSA/ckanext-datagovtheme
-cd ckanext-datagovtheme
-git checkout master
-
-python setup.py develop
-
-cd ..
-echo "-----------------------------------------------------------------"
 echo "Installing Harvester"
 
 git clone https://github.com/GSA/ckanext-harvest
 cd ckanext-harvest
-	
-if [ $CKANVERSION == '2.8' ]
-then
-	git checkout datagov-catalog
-elif [ $CKANVERSION == '2.3' ]
-then
-	git checkout datagov
-elif [ $CKANVERSION == 'datagov' ]
-then
-	git checkout datagov
-fi
+git checkout datagov
 
 python setup.py develop
 pip install -r pip-requirements.txt
@@ -135,6 +80,6 @@ python setup.py develop
 echo "-----------------------------------------------------------------"
 echo "Moving test.ini into a subdir..."
 mkdir subdir
-mv test.ini subdir
+mv test-inventory.ini subdir
 
 echo "travis-build.bash is done."

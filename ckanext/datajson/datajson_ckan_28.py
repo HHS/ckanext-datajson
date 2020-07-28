@@ -20,7 +20,7 @@ from jsonschema import FormatChecker
 from sqlalchemy.exc import IntegrityError
 
 import logging
-log = logging.getLogger("harvester")
+log = logging.getLogger(__name__)
 
 # watch out for these keys that their string values might go beyond Solr capacity
 # https://github.com/GSA/datagov-deploy/issues/953
@@ -244,6 +244,7 @@ class DatasetHarvesterBase(HarvesterBase):
                     and dataset['identifier'] not in existing_parents_demoted \
                     and dataset['identifier'] not in existing_datasets_promoted \
                     and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, source, catalog_extras, schema_version):
+                    log.info('SKIP: {}'.format(dataset['identifier']))
                     continue
             else:
                 pkg_id = uuid.uuid4().hex
