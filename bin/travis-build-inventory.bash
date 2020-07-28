@@ -80,6 +80,6 @@ python setup.py develop
 echo "-----------------------------------------------------------------"
 echo "Moving test.ini into a subdir..."
 mkdir subdir
-mv test.ini subdir
+mv test-inventory.ini subdir
 
 echo "travis-build.bash is done."

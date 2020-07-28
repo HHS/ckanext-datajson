@@ -72,7 +72,7 @@ jobs:
           command: bin/travis-build-inventory.bash
       - run:
           name: test
-          command: bin/travis-run.sh
+          command: bin/travis-run-inventory.sh
   
   build_gsa_ckan_datagov:
     working_directory: ~/ckanext-datajson
