@@ -30,6 +30,9 @@ class DataJsonHarvester(DatasetHarvesterBase):
                 datasets = json.load(urllib2.urlopen(req), 'cp1252')
             except:
                 datasets = json.load(urllib2.urlopen(req), 'iso-8859-1')
+        except urllib2.HTTPError as e:
+            self._save_gather_error("Error getting json source: %s." % (e), harvest_job)
+            return []
         except:
             # remove BOM
             datasets = json.loads(lstrip_bom(urllib2.urlopen(req).read()))
