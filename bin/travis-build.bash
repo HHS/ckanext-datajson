@@ -105,18 +105,16 @@ python setup.py develop
 cd ..
 echo "-----------------------------------------------------------------"
 echo "Installing Harvester"
-
-git clone https://github.com/GSA/ckanext-harvest
-cd ckanext-harvest
 	
 if [ $CKANVERSION == '2.8' ]
 then
-	git checkout datagov-catalog
-elif [ $CKANVERSION == '2.3' ]
+	git clone https://github.com/ckan/ckanext-harvest
+	cd ckanext-harvest
+	git checkout master
+elif [ $CKANVERSION == '2.3' ] || [ $CKANVERSION == 'inventory' ] || [ $CKANVERSION == 'datagov' ]
 then
-	git checkout datagov
-elif [ $CKANVERSION == 'datagov' ]
-then
+  git clone https://github.com/GSA/ckanext-harvest
+	cd ckanext-harvest
 	git checkout datagov
 fi
 
