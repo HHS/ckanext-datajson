@@ -23,16 +23,22 @@ class DataJsonHarvester(DatasetHarvesterBase):
         # todo: into config and across harvester
         req.add_header('User-agent', 'Data.gov/2.0')
         try:
-            datasets = json.load(urllib2.urlopen(req))
+            response = urllib2.urlopen(req)
+        except urllib2.HTTPError as e:
+            self._save_gather_error("HTTP Error getting json source: %s." % (e), harvest_job)
+            return []
+        except urllib2.URLError as e:
+            self._save_gather_error("URL Error getting json source: %s." % (e), harvest_job)
+            return []
+
+        try:
+            datasets = json.load(response)
         except UnicodeDecodeError:
             # try different encode
             try:
-                datasets = json.load(urllib2.urlopen(req), 'cp1252')
+                datasets = json.load(response, 'cp1252')
             except:
-                datasets = json.load(urllib2.urlopen(req), 'iso-8859-1')
-        except urllib2.HTTPError as e:
-            self._save_gather_error("Error getting json source: %s." % (e), harvest_job)
-            return []
+                datasets = json.load(response, 'iso-8859-1')
         except:
             # remove BOM
             datasets = json.loads(lstrip_bom(urllib2.urlopen(req).read()))

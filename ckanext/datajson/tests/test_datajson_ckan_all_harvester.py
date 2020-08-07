@@ -1,6 +1,6 @@
 import json
 import logging
-from urllib2 import HTTPError
+from urllib2 import HTTPError, URLError
 
 import ckanext.harvest.model as harvest_model
 import mock_datajson_source
@@ -142,7 +142,16 @@ class TestDataJSONHarvester(object):
         self.run_source(url)
 
         assert_raises(HTTPError)
-        assert_equal(self.job.gather_errors[0].message, "Error getting json source: HTTP Error 404: Not Found.")
+        assert_equal(self.job.gather_errors[0].message, "HTTP Error getting json source: HTTP Error 404: Not Found.")
+        assert_equal(self.job.gather_errors[1].message, "Error loading json content: need more than 0 values to unpack.")
+
+    def test_source_returning_url_error(self):
+        # URL failing SSL
+        url = 'https://127.0.0.1:%s' % self.mock_port
+        self.run_source(url)
+
+        assert_raises(URLError)
+        assert_in("URL Error getting json source: <urlopen error", self.job.gather_errors[0].message)
         assert_equal(self.job.gather_errors[1].message, "Error loading json content: need more than 0 values to unpack.")
 
     def get_datasets_from_2_collection(self):
