@@ -151,7 +151,7 @@ class TestDataJSONHarvester(object):
         self.run_source(url)
 
         assert_raises(URLError)
-        assert_equal(self.job.gather_errors[0].message, "URL Error getting json source: <urlopen error [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:726)>.")
+        assert_in("URL Error getting json source: <urlopen error", self.job.gather_errors[0].message)
         assert_equal(self.job.gather_errors[1].message, "Error loading json content: need more than 0 values to unpack.")
 
     def get_datasets_from_2_collection(self):
