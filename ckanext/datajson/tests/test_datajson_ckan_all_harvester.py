@@ -138,7 +138,7 @@ class TestDataJSONHarvester(object):
         assert_in(munge_title_to_name("Congressional Logs"), tags)
 
     def test_source_returning_http_error(self):
-        url = 'http://www.cpsc.gov/data.json'
+        url = 'http://127.0.0.1:%s/404' % self.mock_port
         self.run_source(url)
 
         assert_raises(HTTPError)
