@@ -52,7 +52,7 @@ class DatasetHarvesterBase(HarvesterBase):
     def validate_config(self, config):
         if not config:
             return config
-        config_obj = yaml.load(config)
+        config_obj = yaml.safe_load(config)
         return config
 
     def load_config(self, harvest_source):
@@ -66,7 +66,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
         }
 
-        source_config = yaml.load(harvest_source.config, Loader=yaml.FullLoader)
+        source_config = yaml.safe_load_all(harvest_source.config)
 
         try:
             ret["filters"].update(source_config["filters"])
