@@ -535,5 +535,11 @@ class TestIntegrationDataJSONHarvester28(object):
             self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
 
     def test_datajson_non_federal(self):
-        url = 'http://127.0.0.1:%s/rossi' % self.mock_port
-        datasets = self.run_source(url=url)
+        url = 'http://127.0.0.1:%s/ny' % self.mock_port
+        obj_ids = self.run_gather(url=url)
+
+        for obj_id in obj_ids:
+            harvest_object = harvest_model.HarvestObject.get(obj_id)
+            harvest_object.source
+            source_config = self.harvester.load_config(harvest_object.source)
+            assert_equal(source_config, {'validator_schema': 'non-federal', 'default_groups': 'local', 'private_datasets': 'False'})
