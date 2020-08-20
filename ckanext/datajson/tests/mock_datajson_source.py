@@ -26,6 +26,9 @@ class MockDataJSONHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         elif self.path == '/usda':
             self.sample_datajson_file = 'usda.gov.data.json'
             self.test_name = 'usda'
+        elif self.path == '/rossi':
+            self.sample_datajson_file = 'rossi.data.json'
+            self.test_name = 'rossi'
         elif self.path == '/collection-1-parent-2-children.data.json':
             self.sample_datajson_file = 'collection-1-parent-2-children.data.json'
             self.test_name = 'collection-1-parent-2-children.data.json'

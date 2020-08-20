@@ -533,3 +533,7 @@ class TestIntegrationDataJSONHarvester28(object):
             
         with assert_raises(ParentNotHarvestedException):
             self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
+
+    def test_datajson_non_federal(self):
+        url = 'http://127.0.0.1:%s/rossi' % self.mock_port
+        datasets = self.run_source(url=url)

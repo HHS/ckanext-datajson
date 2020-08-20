@@ -66,7 +66,7 @@ class DatasetHarvesterBase(HarvesterBase):
         search_dict = {'id': harvest_source.id}
         source_dict = p.toolkit.get_action('harvest_source_show')({}, search_dict)
         source_config = json.loads(source_dict.get('config', '{}'))
-        
+        log.debug('SOURCE CONFIG {}'.format(source_config))
         ret.update(source_config)
 
         return ret
