@@ -47,8 +47,9 @@ class TestIntegrationDataJSONHarvester28(object):
         if not p.toolkit.check_ckan_version(min_version='2.8.0'):
             raise SkipTest('Just for CKAN 2.3')
         
-    def run_gather(self, url):
-        self.source = HarvestSourceObj(url=url)
+    def run_gather(self, url, config_str='{}'):
+
+        self.source = HarvestSourceObj(url=url, config=config_str)
         self.job = HarvestJobObj(source=self.source)
 
         self.harvester = DataJsonHarvester()
@@ -119,8 +120,8 @@ class TestIntegrationDataJSONHarvester28(object):
 
         return datasets
 
-    def run_source(self, url):
-        self.run_gather(url)
+    def run_source(self, url, config_str='{}'):
+        self.run_gather(url, config_str)
         self.run_fetch()
         datasets = self.run_import()
 
@@ -533,3 +534,20 @@ class TestIntegrationDataJSONHarvester28(object):
             
         with assert_raises(ParentNotHarvestedException):
             self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
+
+    def test_datajson_non_federal(self):
+        """ validate we get the coinfig we sent """
+        url = 'http://127.0.0.1:%s/ny' % self.mock_port
+        config = '{"validator_schema": "non-federal", "private_datasets": "False", "default_groups": "local"}'
+        self.run_source(url, config)
+        
+        source_config = self.harvester.load_config(self.source)
+        # include default values (filers and default)
+        expected_config = {
+            'defaults': {}, 
+            'filters': {},
+            'validator_schema': 'non-federal',
+            'default_groups': 'local',
+            'private_datasets': 'False'
+            }
+        assert_equal(source_config, expected_config)

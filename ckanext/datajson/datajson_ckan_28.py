@@ -56,31 +56,18 @@ class DatasetHarvesterBase(HarvesterBase):
         return config
 
     def load_config(self, harvest_source):
-        # Load the harvest source's configuration data. We expect it to be a YAML
-        # string. Unfortunately I went ahead of CKAN on this. The stock CKAN harvester
-        # only allows JSON in the configuration box. My fork is necessary for this
-        # to work: https://github.com/joshdata/ckanext-harvest
+        # Load the harvest source's configuration data.
 
         ret = {
-            "filters": { }, # map data.json field name to list of values one of which must be present
-            "defaults": { }, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
+            "filters": {}, # map data.json field name to list of values one of which must be present
+            "defaults": {}, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
         }
 
-        source_config = yaml.safe_load_all(harvest_source.config)
-
-        try:
-            ret["filters"].update(source_config["filters"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
-
-        try:
-            ret["defaults"].update(source_config["defaults"])
-        except TypeError:
-            pass
-        except KeyError:
-            pass
+        search_dict = {'id': harvest_source.id}
+        source_dict = p.toolkit.get_action('harvest_source_show')({}, search_dict)
+        source_config = json.loads(source_dict.get('config', '{}'))
+        log.debug('SOURCE CONFIG {}'.format(source_config))
+        ret.update(source_config)
 
         return ret
 
@@ -188,7 +175,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 and identifier not in existing_parents.keys())
 
         source = harvest_job.source
-        source_config = json.loads(source.config or '{}')
+        source_config = self.load_config(source)
         
         if parent_identifiers:
             for parent in parent_identifiers & child_identifiers:
@@ -205,7 +192,7 @@ class DatasetHarvesterBase(HarvesterBase):
         seen_datasets = set()
         unique_datasets = set()
         
-        filters = self.load_config(source)["filters"]
+        filters = source_config["filters"]
 
         for dataset in source_datasets:
             # Create a new HarvestObject for this dataset and save the
@@ -472,9 +459,8 @@ class DatasetHarvesterBase(HarvesterBase):
             return None
 
         # Get default values.
-        dataset_defaults = self.load_config(harvest_object.source)["defaults"]
-
-        source_config = json.loads(harvest_object.source.config or '{}')
+        source_config = self.load_config(harvest_object.source)
+        dataset_defaults = source_config["defaults"]
         validator_schema = source_config.get('validator_schema')
         if schema_version == '1.0' and validator_schema != 'non-federal':
             lowercase_conversion = True
@@ -601,8 +587,6 @@ class DatasetHarvesterBase(HarvesterBase):
         if source_dataset.owner_org:
             owner_org = source_dataset.owner_org
 
-
-        source_config = json.loads(harvest_object.source.config or '{}')
         group_name = source_config.get('default_groups', '')
 
         # Assemble basic information about the dataset.
