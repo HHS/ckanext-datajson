@@ -542,4 +542,12 @@ class TestIntegrationDataJSONHarvester28(object):
             harvest_object = harvest_model.HarvestObject.get(obj_id)
             harvest_object.source
             source_config = self.harvester.load_config(harvest_object.source)
-            assert_equal(source_config, {'validator_schema': 'non-federal', 'default_groups': 'local', 'private_datasets': 'False'})
+            # include default values (filers and default)
+            expected_config = {
+                'defaults': {}, 
+                'filters': {},
+                'validator_schema': 'non-federal',
+                'default_groups': 'local',
+                'private_datasets': 'False'
+                }
+            assert_equal(source_config, expected_config)
