@@ -31,17 +31,18 @@ class DataJsonHarvester(DatasetHarvesterBase):
             self._save_gather_error("URL Error getting json source: %s." % (e), harvest_job)
             return []
 
+        data = response.read()
         try:
-            datasets = json.load(response)
+            datasets = json.loads(data)
         except UnicodeDecodeError:
             # try different encode
             try:
-                datasets = json.load(response, 'cp1252')
+                datasets = json.loads(data, 'cp1252')
             except:
-                datasets = json.load(response, 'iso-8859-1')
+                datasets = json.loads(data, 'iso-8859-1')
         except:
             # remove BOM
-            datasets = json.loads(lstrip_bom(urllib2.urlopen(req).read()))
+            datasets = json.loads(lstrip_bom(data))
 
         # The first dataset should be for the data.json file itself. Check that
         # it is, and if so rewrite the dataset's title because Socrata exports
