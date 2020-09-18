@@ -65,9 +65,11 @@ class TestCollectionUI(helpers.FunctionalTestBase):
                 url = '/dataset/{}'.format(parent_name)
                 log.info('Goto URL {}'.format(url))
                 res = self.app.get(url)
-                expected_link = '<a href="/dataset?collection_package_id={}" class="btn">Search datasets within this collection</a>'.format(collection_package_id)
+                expected_link = '<a href="/dataset?collection_package_id={}"'.format(collection_package_id)
                 assert_in(expected_link, res.unicode_body)
-
+                expected_text = 'Search datasets within this collection'
+                assert_in(expected_text, res.unicode_body)
+                
                 # show children
                 url = '/dataset?collection_package_id={}'.format(collection_package_id)
                 log.info('Goto URL {}'.format(url))
