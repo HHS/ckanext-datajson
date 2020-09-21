@@ -38,8 +38,8 @@ echo "Installing Python dependencies..."
 
 pip install wheel
 
-# https://github.com/GSA/ckanext-datajson/issues/61
-pip install setuptools~=45.0
+pip install --upgrade pip
+pip install setuptools -U
 
 python setup.py develop
 cp ./ckan/public/base/css/main.css ./ckan/public/base/css/main.debug.css
