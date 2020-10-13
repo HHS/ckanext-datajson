@@ -38,7 +38,7 @@ class DataJsonPlugin(p.SingletonPlugin):
         # DataJsonPlugin.route_edata_path = config.get("ckanext.enterprisedatajson.path", "/enterprisedata.json")
         DataJsonPlugin.route_enabled = config.get("ckanext.datajson.url_enabled", "True") == 'True'
         DataJsonPlugin.route_path = config.get("ckanext.datajson.path", "/data.json")
-        DataJsonPlugin.route_ld_path = config.get(" ckanext.datajsonld.path",
+        DataJsonPlugin.route_ld_path = config.get("ckanext.datajsonld.path",
                                                   re.sub(r"\.json$", ".jsonld", DataJsonPlugin.route_path))
         DataJsonPlugin.ld_id = config.get("ckanext.datajsonld.id", config.get("ckan.site_url"))
         DataJsonPlugin.ld_title = config.get("ckan.site_title", "Catalog")
