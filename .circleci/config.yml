@@ -9,7 +9,8 @@ jobs:
           command: |
             pip install --upgrade pip
             pip install flake8
-            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics 
+            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+  
   test_local_docker:
     working_directory: ~/ckanext-datajson
     machine: true
@@ -39,21 +40,17 @@ jobs:
           name: Run ckanext-datajson Tests
           command: |
             docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"
+  
   build_ckan_28:
     working_directory: ~/ckanext-datajson
     machine:
       image: circleci/classic:201708-01
-      # image: circleci/postgres:9.6-alpine
-    environment:
-      CKANVERSION=2.8
     steps:
       - checkout
       - run:
-          name: install
-          command: bin/travis-build.bash
-      - run:
-          name: test
-          command: bin/travis-run.sh
+          name: install and test
+          command: bin/travis-build-2.8.bash
+    
   build_ckan_23:
     working_directory: ~/ckanext-datajson
     machine:
