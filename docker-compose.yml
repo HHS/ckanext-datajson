@@ -1,11 +1,9 @@
 version: "3.2"
 services:
   ckan:
-    build: 
-      context: ckan-docker
-    env_file:
-      - .env
-    links:
+    image: datagov/catalog.data.gov:latest
+    env_file: .env
+    depends_on:
       - db
       - solr
       - redis
