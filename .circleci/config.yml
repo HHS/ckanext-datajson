@@ -34,7 +34,7 @@ jobs:
           command: |
             docker-compose logs db
             docker-compose logs ckan
-            docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"
+            docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/"
   
   build_ckan_28:
     working_directory: ~/ckanext-datajson
