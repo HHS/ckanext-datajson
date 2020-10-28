@@ -73,7 +73,7 @@ To docker exec into the CKAN image, run:
 
 ### Run Tests with Docker
 
-```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src_extensions/datajson/docker_test.ini src_extensions/datajson/"```
+```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/"```
 
 ### Run test with Classic catalog-app (CKAN 2.3)
 

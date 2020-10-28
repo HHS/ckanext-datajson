@@ -43,13 +43,14 @@ class TestIntegrationDataJSONHarvester28(object):
         reset_db()
         harvest_model.setup()
         cls.user = Sysadmin()
+        cls.org = Organization()
 
         if not p.toolkit.check_ckan_version(min_version='2.8.0'):
             raise SkipTest('Just for CKAN 2.3')
         
     def run_gather(self, url, config_str='{}'):
 
-        self.source = HarvestSourceObj(url=url, config=config_str)
+        self.source = HarvestSourceObj(url=url, owner_org=self.org['id'], config=config_str)
         self.job = HarvestJobObj(source=self.source)
 
         self.harvester = DataJsonHarvester()
