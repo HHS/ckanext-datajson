@@ -60,13 +60,6 @@
                 "title": "NOAA Data Management Plan (DMP)", 
                 "description": "NOAA Data Management Plan for this record on InPort.", 
                 "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17780/dmp"
-              }, 
-              {
-                "@type": "dcat:Distribution", 
-                "format": "HTML", 
-                "title": "GCMD Keywords Page", 
-                "description": "This page describes the NASA GCMD Keywords, how\n                                                            to reference those keywords and provides download instructions.", 
-                "downloadURL": "http://gcmd.nasa.gov/learn/keyword_list.html"
               }
             ]
           },
@@ -121,13 +114,6 @@
                 "title": "NOAA Data Management Plan (DMP)",
                 "description": "NOAA Data Management Plan for this record on InPort.",
                 "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17781/dmp"
-              },
-              {
-                "@type": "dcat:Distribution",
-                "format": "HTML",
-                "title": "GCMD Keywords Page",
-                "description": "This page describes the NASA GCMD Keywords, how\n                                                            to reference those keywords and provides download instructions.",
-                "downloadURL": "http://gcmd.nasa.gov/learn/keyword_list.html"
               }
             ]
           }
