@@ -1,0 +1,123 @@
+{
+    "conformsTo": "https://project-open-data.cio.gov/v1.1/schema",
+    "describedBy": "https://project-open-data.cio.gov/v1.1/schema/catalog.json",
+    "@context": "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
+    "@type": "dcat:Catalog",
+    "dataset": [
+        {
+            "@type": "dcat:Dataset",
+            "title": "ConformsTo Example: Jellyfish movement data - Determining Movement Patterns of Jellyfish", 
+            "description": "This project is to determine horizontal and vertical movement patterns of two jellyfish species in Hood Canal, in relation to environmental variables. It is being conducted by NMFS scientists in collaboration with a NOAA Hollings Scholar; we also are making use of publicly available oceanographic data from the University of Washington. We used acoustic tags and receivers to track jellyfish movement patterns and correlated their movements with oceanographic data. This project will produce peer reviewed manuscripts. The target audience is fisheries and marine resource managers in Puget Sound and along the West Coast. This is a one-time, standalone project without a firm deadline.\nThis data set contains acoustic telemetry data for lions mane and fried egg jellyfish.", 
+            "modified": "2017-06-10T17:31:25.399151",
+            "bureauCode": [
+                "006:48"
+            ],
+            "programCode": [
+                "006:056"
+            ],
+            "keyword": [
+                "acoustic tracking",
+                "diel vertical movement",
+                "fried egg jellyfish",
+                "lion's mane jellyfish",
+                "source or sink"
+            ],
+            "theme": ["geospatial"],
+            "identifier": "gov.noaa.nmfs.inport:17780",
+            "accessLevel": "public",
+            "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-123.1304, 47.4051], [-123.1204, 47.4051], [-123.1204, 47.4151], [-123.1304, 47.4151], [-123.1304, 47.4051]]]}",
+            "publisher": {
+              "@type": "org:Organization",
+              "name": "National Oceanic and Atmospheric Administration"
+            }, 
+            "contactPoint": {
+              "@type": "vcard:Contact",
+              "fn": "(); Northwest Fisheries Science Center (Point of Contact, Custodian)",
+              "hasEmail": "mailto:Kelly.Andrews@noaa.gov"
+            }, 
+            "distribution": [
+              {
+                "@type": "dcat:Distribution",
+                "title": "Jellyfish movement data",
+                "accessURL": "https://www.webapps.nwfsc.noaa.gov/apex/parrdata/inventory/datasets/dataset/6244"
+              },
+              {
+                "@type": "dcat:Distribution",
+                "title": "[Anything valid here] Original Metadata",
+                "downloadURL": "https://data.noaa.gov/waf/NOAA/nmfs/nwfsc/iso/xml/17780.xml",
+                "conformsTo": "https://data.noaa.gov/resources/iso19139/schema.xsd",
+                "description": "[Not required] The metadata original format",
+                "mediaType": "text/xml",
+                "format": "XML"
+              },
+              {
+                "@type": "dcat:Distribution", 
+                "title": "Website", 
+                "description": "Website listed for this contact", 
+                "accessURL": "http://www.nwfsc.noaa.gov"
+              }, 
+              {
+                "@type": "dcat:Distribution", 
+                "title": "NOAA Data Management Plan (DMP)", 
+                "description": "NOAA Data Management Plan for this record on InPort.", 
+                "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17780/dmp"
+              }
+            ]
+          },
+          {
+            "@type": "dcat:Dataset",
+            "title": "describedBy Example: Ratfish data - Movement and habitat use patterns of top predators and keystone species in the benthic food web",
+            "description": "We have been using and continue to use acoustic telemetry methods to monitor the movement behavior and define habitat use of groundfish species in and out of Puget Sound waters. Detections of individual fishes has been collected at small and large scales over short and long term periods. We have data on sixgill and sevengill sharks, spiny dogfish, lingcod, copper, quillback, yellowtail and black rockfish, and spotted ratfish. These data are being used to describe the spatio-temporal patterns of behaviors expressed by top predators and other important members of the groundfish community in Puget Sound and along the West Coast. We intend for this information to inform the strength of inter- and intra-specific interactions quantified by ecosystem-scale models as well as the development of models used to determine the efficacy of spatial management strategies such as Marine Protected Areas. This has been a research topic since 2003, and will continue with work on listed species such as yelloweye and canary rockfish.\nAcoustic telemetry data for whitespotted ratfish.",
+            "modified": "2017-06-10T17:34:21.533948",
+            "bureauCode": [
+                "006:48"
+            ],
+            "programCode": [
+                "006:056"
+            ],
+            "keyword": [
+                "acoustic tracking",
+                "animal movement",
+                "demersal fish",
+                "home range",
+                "lingcod",
+                "marine reserves",
+                "Puget Sound"
+            ],
+            "theme": ["geospatial"],
+            "identifier": "gov.noaa.nmfs.inport:17781",
+            "accessLevel": "public",
+            "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-127.6976, 31.6397], [-119.1987, 31.6397], [-119.1987, 40.3965], [-127.6976, 40.3965], [-127.6976, 31.6397]]]}",
+            "publisher": {
+              "@type": "org:Organization",
+              "name": "National Oceanic and Atmospheric Administration"
+            },
+            "contactPoint": {
+              "@type": "vcard:Contact",
+              "fn": "Northwest Fisheries Science Center (Point of Contact, Custodian)",
+              "hasEmail": "mailto:Kelly.Andrews@noaa.gov"
+            },
+            "distribution": [
+              {
+                "@type": "dcat:Distribution",
+                "title": "Ratfish data",
+                "accessURL": "https://www.webapps.nwfsc.noaa.gov/apex/parrdata/inventory/datasets/dataset/6002",
+                "describedBy": "https://data.noaa.gov/waf/NOAA/nmfs/nwfsc/iso/xml/17781.xml",
+                "describedByType": "text/xml"
+              },
+              {
+                "@type": "dcat:Distribution",
+                "title": "Website",
+                "description": "Website listed for this contact",
+                "accessURL": "http://www.nwfsc.noaa.gov"
+              },
+              {
+                "@type": "dcat:Distribution",
+                "title": "NOAA Data Management Plan (DMP)",
+                "description": "NOAA Data Management Plan for this record on InPort.",
+                "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17781/dmp"
+              }
+            ]
+          }
+    ]
+}
