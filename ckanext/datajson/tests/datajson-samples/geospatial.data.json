@@ -20,9 +20,9 @@
                 "diel vertical movement",
                 "fried egg jellyfish",
                 "lion's mane jellyfish",
-                "source or sink",
-                "geospatial"
+                "source or sink"
             ],
+            "theme": ["geospatial"],
             "identifier": "gov.noaa.nmfs.inport:17780",
             "accessLevel": "public",
             "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-123.1304, 47.4051], [-123.1204, 47.4051], [-123.1204, 47.4151], [-123.1304, 47.4151], [-123.1304, 47.4051]]]}",
@@ -82,9 +82,9 @@
                 "home range",
                 "lingcod",
                 "marine reserves",
-                "Puget Sound",
-                "geospatial"
+                "Puget Sound"
             ],
+            "theme": ["geospatial"],
             "identifier": "gov.noaa.nmfs.inport:17781",
             "accessLevel": "public",
             "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-127.6976, 31.6397], [-119.1987, 31.6397], [-119.1987, 40.3965], [-127.6976, 40.3965], [-127.6976, 31.6397]]]}",
