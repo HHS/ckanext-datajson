@@ -3,64 +3,117 @@
   "describedBy": "https://project-open-data.cio.gov/v1.1/schema/catalog.json",
   "@context": "https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld",
   "@type": "dcat:Catalog",
-  "dataset": [{
-    "@type": "dcat:Dataset",
-    "title": "ConformsTo Example: Jellyfish movement data - Determining Movement Patterns of Jellyfish", 
-    "description": "This project is to determine horizontal and vertical movement patterns of two jellyfish species in Hood Canal, in relation to environmental variables. It is being conducted by NMFS scientists in collaboration with a NOAA Hollings Scholar; we also are making use of publicly available oceanographic data from the University of Washington. We used acoustic tags and receivers to track jellyfish movement patterns and correlated their movements with oceanographic data. This project will produce peer reviewed manuscripts. The target audience is fisheries and marine resource managers in Puget Sound and along the West Coast. This is a one-time, standalone project without a firm deadline.\nThis data set contains acoustic telemetry data for lions mane and fried egg jellyfish.", 
-    "modified": "2017-06-10T17:31:25.399151",
-    "bureauCode": [
-        "006:48"
-    ],
-    "programCode": [
-        "006:056"
-    ],
-    "keyword": [
-        "acoustic tracking",
-        "diel vertical movement",
-        "fried egg jellyfish",
-        "lion's mane jellyfish",
-        "source or sink"
-    ],
-    "theme": ["geospatial"],
-    "identifier": "gov.noaa.nmfs.inport:17780",
-    "accessLevel": "public",
-    "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-123.1304, 47.4051], [-123.1204, 47.4051], [-123.1204, 47.4151], [-123.1304, 47.4151], [-123.1304, 47.4051]]]}",
-    "publisher": {
-      "@type": "org:Organization",
-      "name": "National Oceanic and Atmospheric Administration"
-    }, 
-    "contactPoint": {
-      "@type": "vcard:Contact",
-      "fn": "(); Northwest Fisheries Science Center (Point of Contact, Custodian)",
-      "hasEmail": "mailto:Kelly.Andrews@noaa.gov"
-    }, 
-    "distribution": [
-      {
-        "@type": "dcat:Distribution",
-        "title": "Jellyfish movement data",
-        "accessURL": "https://www.webapps.nwfsc.noaa.gov/apex/parrdata/inventory/datasets/dataset/6244"
-      },
-      {
-        "@type": "dcat:Distribution",
-        "title": "[Anything valid here] Original Metadata",
-        "downloadURL": "https://data.noaa.gov/waf/NOAA/nmfs/nwfsc/iso/xml/17780.xml",
-        "conformsTo": "https://data.noaa.gov/resources/iso19139/schema.xsd",
-        "description": "[Not required] The metadata original format",
-        "mediaType": "text/xml",
-        "format": "XML"
-      },
-      {
-        "@type": "dcat:Distribution", 
-        "title": "Website", 
-        "description": "Website listed for this contact", 
-        "accessURL": "http://www.nwfsc.noaa.gov"
+  "dataset": [
+    {
+      "@type": "dcat:Dataset",
+      "title": "ConformsTo NOAA ISO Example: Jellyfish movement data - Determining Movement Patterns of Jellyfish", 
+      "description": "This project is to determine horizontal and vertical movement patterns of two jellyfish species in Hood Canal, in relation to environmental variables. It is being conducted by NMFS scientists in collaboration with a NOAA Hollings Scholar; we also are making use of publicly available oceanographic data from the University of Washington. We used acoustic tags and receivers to track jellyfish movement patterns and correlated their movements with oceanographic data. This project will produce peer reviewed manuscripts. The target audience is fisheries and marine resource managers in Puget Sound and along the West Coast. This is a one-time, standalone project without a firm deadline.\nThis data set contains acoustic telemetry data for lions mane and fried egg jellyfish.", 
+      "modified": "2017-06-10T17:31:25.399151",
+      "bureauCode": [
+          "006:48"
+      ],
+      "programCode": [
+          "006:056"
+      ],
+      "keyword": [
+          "acoustic tracking",
+          "diel vertical movement",
+          "fried egg jellyfish",
+          "lion's mane jellyfish",
+          "source or sink"
+      ],
+      "theme": ["geospatial"],
+      "identifier": "gov.noaa.nmfs.inport:17780",
+      "accessLevel": "public",
+      "spatial": "{\"type\": \"Polygon\", \"coordinates\": [[[-123.1304, 47.4051], [-123.1204, 47.4051], [-123.1204, 47.4151], [-123.1304, 47.4151], [-123.1304, 47.4051]]]}",
+      "publisher": {
+        "@type": "org:Organization",
+        "name": "National Oceanic and Atmospheric Administration"
       }, 
-      {
-        "@type": "dcat:Distribution", 
-        "title": "NOAA Data Management Plan (DMP)", 
-        "description": "NOAA Data Management Plan for this record on InPort.", 
-        "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17780/dmp"
-      }
-    ]
-  }]
+      "contactPoint": {
+        "@type": "vcard:Contact",
+        "fn": "(); Northwest Fisheries Science Center (Point of Contact, Custodian)",
+        "hasEmail": "mailto:Kelly.Andrews@noaa.gov"
+      }, 
+      "distribution": [
+        {
+          "@type": "dcat:Distribution",
+          "title": "Jellyfish movement data",
+          "accessURL": "https://www.webapps.nwfsc.noaa.gov/apex/parrdata/inventory/datasets/dataset/6244"
+        },
+        {
+          "@type": "dcat:Distribution",
+          "title": "[Anything valid here] Original Metadata",
+          "downloadURL": "https://data.noaa.gov/waf/NOAA/nmfs/nwfsc/iso/xml/17780.xml",
+          "conformsTo": "https://data.noaa.gov/resources/iso19139/schema.xsd",
+          "description": "[Not required] The metadata original format",
+          "mediaType": "text/xml",
+          "format": "XML"
+        },
+        {
+          "@type": "dcat:Distribution", 
+          "title": "Website", 
+          "description": "Website listed for this contact", 
+          "accessURL": "http://www.nwfsc.noaa.gov"
+        }, 
+        {
+          "@type": "dcat:Distribution", 
+          "title": "NOAA Data Management Plan (DMP)", 
+          "description": "NOAA Data Management Plan for this record on InPort.", 
+          "accessURL": "https://inport.nmfs.noaa.gov/inport/item/17780/dmp"
+        }
+      ]
+    },
+    {
+      "@type": "dcat:Dataset",
+      "title": "ConformsTo CSDGM Example: Comprehensive Global Database of Earthquake-Induced Landslide Events", 
+      "description": "Currently, there are many datasets describing landslides caused by individual earthquakes, and global inventories of earthquake-induced landslides (EQIL). However, until recently, there were no datasets that provide a comprehensive description of the impacts of earthquake-induced landslide events. In this data release, we present an up-to-date, comprehensive global database containing all literature-documented earthquake-induced landslide events for the 244-year period from 1772 through May 2020.The database represents an update of the catalog developed by Nowicki Jessee et al. (2020), which summarized events through 2016. The revised catalog contains 264 historical earthquakes, 153 of which include documented landslide fatality counts. The database includes (where available) information on earthquake size (moment magnitude (Mw), surface-wave magnitude (Ms), and body-wave magnitude (mb)), depth, earthquake fault type, date and time, location, the availability of a ShakeMap, which estimates the spatial distribution of ground shaking from the USGS ShakeMap system (Worden and Wald, 2016), the availability of a geospatial landslide inventory, information about landslide occurrence (number of landslides, area or volume of landsliding, area affected by landsliding, landslide magnitude), earthquake/landslide impact (total fatalities, landslide fatalities, and number of injuries due to the effects of the earthquake), and USGS Ground Failure Tool estimates (estimated area and population exposed to landsliding). The full dataset of all known landslide-triggering events is provided as “EQIL Database 2020.csv,” including information on the data source(s) for each data component. A subset of the dataset, showing only those events for which landslide fatality counts are available, is provided as “EQIL Database LSFatality 2020.csv.”", 
+      "modified": "2020-07-13T17:31:25.399151",
+      "bureauCode": [
+          "010:12"
+      ],
+      "programCode": [
+          "010:171"
+      ],
+      "keyword": [
+          "USGS",
+          "GHSC",
+          "Earthquake Hazards",
+          "Earthquake",
+          "Landslide Hazards",
+          "Landslide",
+          "Earthquake-induced landslide",
+          "Database"
+      ],
+      "theme": ["geospatial"],
+      "identifier": "USGS:5ec70f9d82ce476925eddc9e",
+      "accessLevel": "public",
+      "spatial": "[[-90, -180], [90, 180]]",
+      "publisher": {
+        "@type": "org:Organization",
+        "name": "U.S. Geological Survey"
+      }, 
+      "contactPoint": {
+        "@type": "vcard:Contact",
+        "fn": "Anna Nowicki Jessee",
+        "hasEmail": "mailto:manowick@iu.edu"
+      }, 
+      "distribution": [
+        {
+          "@type": "dcat:Distribution",
+          "title": "Digital Data",
+          "accessURL": "https://doi.org/10.5066/P9NWIRZZ"
+        },
+        {
+          "@type": "dcat:Distribution",
+          "title": "[Anything valid here] Original Metadata",
+          "downloadURL": "https://data.usgs.gov/metadata/Geologic_Hazards_Science_Center/5ec70f9d82ce476925eddc9e.xml",
+          "conformsTo": "FGDC-STD-001-1998",
+          "description": "[Not required] The metadata original format",
+          "mediaType": "text/xml",
+          "format": "XML"
+        }
+      ]
+    }
+  ]
 }
