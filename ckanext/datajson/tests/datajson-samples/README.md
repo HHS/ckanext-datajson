@@ -14,3 +14,4 @@ Best practice also includes the following:
 - Use the `downloadURL` field as long as the url is a direct access link to the file
 - Include an accurate [mediaType](https://resources.data.gov/resources/dcat-us/#distribution-mediaType) and [format](https://resources.data.gov/resources/dcat-us/#distribution-format) (probably `text/xml` and `XML`, respectively)
 - Utilize a consistent title and description so that your users will quickly recognize the resource (and be able to skip over or dig into the details as appropriate)
+- Include the [geospatial theme](./geospatial.data.json#L24) so that your dataset will be marked as geospatial
