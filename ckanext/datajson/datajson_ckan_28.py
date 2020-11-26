@@ -63,6 +63,8 @@ class DatasetHarvesterBase(HarvesterBase):
             "defaults": {}, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
         }
 
+        if harvest_source.config is None or harvest_source.config == '':
+            harvest_source.config = '{}'
         source_config = json.loads(harvest_source.config)
         log.debug('SOURCE CONFIG {}'.format(source_config))
         ret.update(source_config)
