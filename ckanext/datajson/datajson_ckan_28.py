@@ -9,7 +9,7 @@ from ckan.lib.navl.dictization_functions import Invalid, DataError
 from ckan.lib.navl.validators import ignore_empty
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
-                                    HarvestObjectError, HarvestObjectExtra
+                                    HarvestObjectError, HarvestObjectExtra, HarvestSource
 from ckanext.harvest.harvesters.base import HarvesterBase
 from ckanext.datajson.exceptions import ParentNotHarvestedException
 import uuid, datetime, hashlib, urllib2, json, yaml, json, os
@@ -63,9 +63,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "defaults": {}, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
         }
 
-        search_dict = {'id': harvest_source.id}
-        source_dict = p.toolkit.get_action('harvest_source_show')({}, search_dict)
-        source_config = json.loads(source_dict.get('config', '{}'))
+        source_config = json.loads(harvest_source.config)
         log.debug('SOURCE CONFIG {}'.format(source_config))
         ret.update(source_config)
 
