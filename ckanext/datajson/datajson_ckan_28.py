@@ -66,7 +66,7 @@ class DatasetHarvesterBase(HarvesterBase):
         if harvest_source.config is None or harvest_source.config == '':
             harvest_source.config = '{}'
         source_config = json.loads(harvest_source.config)
-        log.debug('SOURCE CONFIG {}'.format(source_config))
+        log.debug('SOURCE CONFIG from DB {}'.format(source_config))
         ret.update(source_config)
 
         return ret
@@ -732,8 +732,8 @@ class DatasetHarvesterBase(HarvesterBase):
                 pkg['name'] = self.make_package_name(dataset_processed["title"], harvest_object.guid)
                 pkg = get_action('package_create')(self.context(), pkg)
                 log.warn('created package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
-            except:
-                log.error('failed to create package %s from %s' % (pkg["name"], harvest_object.source.url))
+            except Exception as e:
+                log.error('Failed to create package %s from %s\n\t%s\n\t%s' % (pkg["name"], harvest_object.source.url, unicode(pkg), unicode(e)))
                 raise
 
         # Flag the other HarvestObjects linking to this package as not current anymore
