@@ -34,7 +34,7 @@ jobs:
           command: |
             docker-compose logs db
             docker-compose logs ckan
-            docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/"
+            docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests"
   
   build_ckan_28:
     working_directory: ~/ckanext-datajson
@@ -75,6 +75,21 @@ jobs:
       - run:
           name: test
           command: bin/travis-run-inventory.sh
+
+  build_gsa_ckan_inventory_next:
+    working_directory: ~/ckanext-datajson
+    machine:
+      image: circleci/classic:201708-01
+    environment:
+      CKANVERSION=inventory-next
+    steps:
+      - checkout
+      - run:
+          name: install
+          command: bin/travis-build-inventory.bash
+      - run:
+          name: test
+          command: bin/travis-run-inventory.sh
   
   build_gsa_ckan_datagov:
     working_directory: ~/ckanext-datajson
@@ -96,6 +111,9 @@ workflows:
   build_and_test:
     jobs:
       - lint
+      - build_gsa_ckan_inventory_next:
+          requires:
+              - lint
       - test_local_docker:
           requires:
             - lint
