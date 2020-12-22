@@ -7,7 +7,7 @@ echo "-----------------------------------------------------------------"
 echo "Installing the packages that CKAN requires..."
 sudo apt-get update -qq
 sudo apt-get install solr-jetty libcommons-fileupload-java \
-	libpq-dev postgresql postgresql-contrib redis-server
+	libpq-dev postgresql postgresql-contrib redis-server swig
 
 echo "-----------------------------------------------------------------"
 echo "Installing CKAN and its dependencies..."
@@ -16,11 +16,20 @@ cd .. # CircleCI starts inside ckanext-datajson folder
 pwd
 ls -la
 
-git clone https://github.com/GSA/ckan
-cd ckan	
-sudo apt-get install swig
+
+if [ $CKANVERSION == 'inventory-next' ]
+then
+	git clone https://github.com/ckan/ckan
+	cd ckan	
+	git checkout 2.8
+elif [ $CKANVERSION == 'inventory' ]
+then
+	git clone https://github.com/GSA/ckan
+	cd ckan	
+	git checkout inventory	
+fi
+
 pip install testrepository
-git checkout inventory
 
 echo "-----------------------------------------------------------------"
 echo "Installing Python dependencies..."
@@ -61,16 +70,34 @@ cd ..
 echo "-----------------------------------------------------------------"
 echo "Installing Harvester"
 
-git clone https://github.com/GSA/ckanext-harvest
-cd ckanext-harvest
-git checkout datagov
+if [ $CKANVERSION == 'inventory-next' ]
+then
+	git clone https://github.com/ckan/ckanext-harvest
+	cd ckanext-harvest
+	git checkout master
+elif [ $CKANVERSION == 'inventory' ]
+then
+	git clone https://github.com/GSA/ckanext-harvest
+	cd ckanext-harvest
+	git checkout datagov	
+fi
 
 python setup.py develop
 pip install -r pip-requirements.txt
 
-paster harvester initdb -c ../ckan/test-core.ini
 
 cd ..
+
+if [ $CKANVERSION == 'inventory-next' ]
+then
+	pip install -e git+https://github.com/GSA/USMetadata.git@ckan-2-8#egg=ckanext-usmetadata
+elif [ $CKANVERSION == 'inventory' ]
+then
+	pip install -e git+https://github.com/GSA/USMetadata.git@master#egg=ckanext-usmetadata	
+fi
+
+pip install ckanext-dcat-usmetadata~=0.2
+
 echo "-----------------------------------------------------------------"
 echo "Installing ckanext-datajson and its requirements..."
 cd ckanext-datajson

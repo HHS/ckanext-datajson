@@ -116,20 +116,35 @@ class DataJsonController(BaseController):
         return self.generate('draft', org_id=org_id)
 
     def generate(self, export_type='datajson', org_id=None):
-        if export_type in ['draft', 'redacted', 'unredacted']:
-            # If user is not editor or admin of the organization then don't allow unredacted download
-            if p.toolkit.check_access('package_create', {'model': model, 'user': c.user},
-                                      {'owner_org': org_id}):
-                if org_id:
-                    # set content type (charset required or pylons throws an error)
-                    response.content_type = 'application/json; charset=UTF-8'
+        """ generate a JSON response """
+        logger.debug('Generating JSON for {} to {} ({})'.format(export_type, org_id, c.user))
 
-                    # allow caching of response (e.g. by Apache)
-                    del response.headers["Cache-Control"]
-                    del response.headers["Pragma"]
-                    return self.make_json(export_type, org_id)
+        if export_type not in ['draft', 'redacted', 'unredacted']:
+            return "Invalid type"
+        if org_id is None:
             return "Invalid organization id"
-        return "Invalid type"
+
+        # If user is not editor or admin of the organization then don't allow unredacted download
+        try: 
+            auth = p.toolkit.check_access(
+                        'package_create',
+                        {'model': model, 'user': c.user},
+                        {'owner_org': org_id}
+                        )
+        except p.toolkit.NotAuthorized:
+            logger.error('NotAuthorized to generate JSON for {} to {} ({})'.format(export_type, org_id, c.user))
+            auth = False
+        
+        if not auth:
+            return "Not Authorized"
+
+        # set content type (charset required or pylons throws an error)
+        response.content_type = 'application/json; charset=UTF-8'
+
+        # allow caching of response (e.g. by Apache)
+        del response.headers["Cache-Control"]
+        del response.headers["Pragma"]
+        return self.make_json(export_type, org_id)
 
     def generate_output(self, fmt='json', org_id=None):
         self._errors_json = []
