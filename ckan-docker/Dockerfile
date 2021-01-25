@@ -14,7 +14,8 @@ RUN cd /geos && \
 # Install any extensions needed by your CKAN instance
 # (Make sure to add the plugins to CKAN__PLUGINS in the .env file)
 
-RUN pip install -e git+https://github.com/ckan/ckanext-spatial#egg=ckanext-spatial && \
+RUN pip install pip==20.3.3 && \
+    pip install -e git+https://github.com/ckan/ckanext-spatial#egg=ckanext-spatial && \
     pip install -r https://raw.githubusercontent.com/ckan/ckanext-spatial/master/pip-requirements.txt && \
     pip install -e git+https://github.com/ckan/ckanext-harvest.git#egg=ckanext-harvest && \
     pip install -r https://raw.githubusercontent.com/ckan/ckanext-harvest/master/pip-requirements.txt && \

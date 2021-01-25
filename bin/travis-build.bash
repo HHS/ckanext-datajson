@@ -38,7 +38,7 @@ echo "Installing Python dependencies..."
 
 pip install wheel
 
-pip install --upgrade pip
+pip install pip==20.3.3
 pip install setuptools -U
 
 python setup.py develop

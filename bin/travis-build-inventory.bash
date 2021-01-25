@@ -29,6 +29,7 @@ then
 	git checkout inventory	
 fi
 
+pip install pip==20.3.3
 pip install testrepository
 
 echo "-----------------------------------------------------------------"
