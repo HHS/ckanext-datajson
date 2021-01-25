@@ -29,6 +29,7 @@ then
 	git checkout inventory	
 fi
 
+pip install pip==20.3.3
 pip install testrepository
 
 echo "-----------------------------------------------------------------"
@@ -37,7 +38,7 @@ echo "Installing Python dependencies..."
 pip install wheel
 
 # https://github.com/GSA/ckanext-datajson/issues/61
-pip install setuptools~=45.0
+pip install setuptools==44.1.1
 
 python setup.py develop
 cp ./ckan/public/base/css/main.css ./ckan/public/base/css/main.debug.css
