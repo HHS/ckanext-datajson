@@ -45,36 +45,6 @@ jobs:
       - run:
           name: install and test
           command: bin/travis-build-2.8.bash
-    
-  build_ckan_23:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=2.3
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build.bash
-      - run:
-          name: test
-          command: bin/travis-run.sh
-
-  build_gsa_ckan_inventory:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=inventory
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build-inventory.bash
-      - run:
-          name: test
-          command: bin/travis-run-inventory.sh
 
   build_gsa_ckan_inventory_next:
     working_directory: ~/ckanext-datajson
@@ -90,21 +60,6 @@ jobs:
       - run:
           name: test
           command: bin/travis-run-inventory.sh
-  
-  build_gsa_ckan_datagov:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=datagov
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build.bash
-      - run:
-          name: test
-          command: bin/travis-run.sh
 
 workflows:
   version: 2
@@ -118,9 +73,6 @@ workflows:
           requires:
             - lint
       - build_ckan_28:
-          requires:
-            - lint
-      - build_ckan_23:
           requires:
             - lint
       - build_gsa_ckan_inventory:

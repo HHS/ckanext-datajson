@@ -20,8 +20,6 @@ class TestCollectionUI(helpers.FunctionalTestBase):
 
     @classmethod
     def setup_class(cls):
-        if p.toolkit.check_ckan_version(max_version='2.3'):
-            raise SkipTest('Just for CKAN 2.8, collections runs in two jobs with 2.3')
         helpers.reset_db()
         super(TestCollectionUI, cls).setup_class()
         harvest_model.setup()
