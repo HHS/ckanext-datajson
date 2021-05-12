@@ -75,9 +75,3 @@ workflows:
       - build_ckan_28:
           requires:
             - lint
-      - build_gsa_ckan_inventory:
-          requires:
-            - lint
-      - build_gsa_ckan_datagov:
-          requires:
-            - lint
