@@ -19,8 +19,6 @@ class TestExport(FunctionalTestBase):
 
     @classmethod
     def setup_class(cls):
-        if not p.toolkit.check_ckan_version(min_version='2.8'):
-            raise SkipTest('Just for CKAN 2.8')
         super(TestExport, cls).setup_class()
 
     def create_datasets(self):
