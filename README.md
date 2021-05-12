@@ -227,6 +227,43 @@ To run the extension tests, start the containers with `make up`, then:
 
     $ make test
 
+Lint the code.
+
+    $ make lint
+
+
+### Matrix builds
+
+The existing development environment assumes a full catalog.data.gov test setup. This makes
+it difficult to develop and test against new versions of CKAN (or really any
+dependency) because everything is tightly coupled and would require us to
+upgrade everything at once which doesn't really work. A new make target
+`test-new` is introduced with a new docker-compose file.
+
+The "new" development environment drops as many dependencies as possible. It is
+not meant to have feature parity with
+[GSA/catalog.data.gov](https://github.com/GSA/catalog.data.gov/). Tests should
+mock external dependencies where possible.
+
+In order to support multiple versions of CKAN, or even upgrade to new versions
+of CKAN, we support development and testing through the `CKAN_VERSION`
+environment variable.
+
+    $ make CKAN_VERSION=2.8 test
+    $ make CKAN_VERSION=2.9 test
+
+
+Legacy nose tests are still supported. You must specify `COMPOSE_FILE=docker-compose.legacy.yml`
+when interacting with this environment.
+
+    $ make COMPOSE_FILE=docker-compose.legacy.yml up
+    $ make COMPOSE_FILE=docker-compose.legacy.yml test-legacy
+
+Variable | Description | Default
+-------- | ----------- | -------
+CKAN_VERSION | Version of CKAN to use. | 2.8
+COMPOSE_FILE | docker-compose service description file. | docker-compose.yml
+
 
 ## Credit / Copying
 
