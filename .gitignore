@@ -1,5 +1,6 @@
 **.pyc
 build
+.coverage
 ckanext_datajson.egg-info
 .DS_Store
 ckanext/datajson/export_map/*.map.json
