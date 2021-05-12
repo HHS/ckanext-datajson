@@ -1,31 +1,58 @@
-ckanext-datajson
-================
+# ckanext-datajson
 
 [![CircleCI](https://circleci.com/gh/GSA/ckanext-datajson.svg?style=svg)](https://circleci.com/gh/GSA/ckanext-datajson)
 
-A CKAN extension containinig plugins ``datajson``.
-First is used by http://catalog.data.gov/ to harvest data sources 
+A CKAN extension containing plugins `datajson`.
+First is used by http://catalog.data.gov/ to harvest data sources
 from a remote /data.json file according to the U.S. Project
 Open Data metadata specification (https://resources.data.gov/schemas/dcat-us/v1.1/).
 
-Plugin ``datajson`` provides a harvester to import datasets from other
+Plugin `datajson` provides a harvester to import datasets from other
 remote /data.json files. See below for setup instructions.
 
 And the plugin also provides a new view to validate /data.json files
 at http://ckanhostname/pod/validate.
 
-Installation
-------------
+
+## Features
+
+_TODO_
+
+Three plugins are provided.
+
+- **datajson** provides data.json export and DCAT-US metadata UI integration
+- **datajson_harvest** extends [ckanext-harvest](https://github.com/ckan/ckanext-harvest/) to collect metadata from
+  remote data.json sources
+- **cmsdatanav_harvest** _???_
+
+
+## Usage
+
+
+### Requirements
+
+- [ckanext-harvest](https://github.com/ckan/ckanext-harvest/)
+
+This extension is compatible with these versions of CKAN.
+
+CKAN version | Compatibility
+------------ | -------------
+<=2.7        | no
+2.8          | yes
+2.9          | [in progress](https://github.com/GSA/datagov-ckan-multi/issues/564)
+
+
+### Installation
 
 To install, activate your CKAN virtualenv, install dependencies, and
 install the module in develop mode, which just puts the directory in your
 Python path.
 
 	. path/to/pyenv/bin/activate
-	pip install -r pip-requirements.txt
+	pip install -r requirements.txt
 	python setup.py develop
 
-Then in your CKAN .ini file, add ``datajson``
+Then in your CKAN .ini file, add `datajson`
 to your ckan.plugins line:
 
 	ckan.plugins = (other plugins here...) datajson
@@ -51,32 +78,10 @@ Then restart your server and check out:
 	   and
 	http://yourdomain.com/data.jsonld
 	   and
-	http://yourdomain.com/pod/validate	
+	http://yourdomain.com/pod/validate
 
-## Using the Docker Dev Environment
 
-### Build Environment
-
-To start environment, run:
-```docker-compose build```
-```docker-compose up```
-
-CKAN will start at localhost:5000
-
-To shut down environment, run:
-
-```docker-compose down```
-
-To docker exec into the CKAN image, run:
-
-```docker-compose exec ckan /bin/bash```
-
-### Run Tests with Docker
-
-```docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests"```
-
-Caching The Response
---------------------
+### Caching /data.json
 
 If you're deploying inside Apache, some caching would be a good idea
 because generating the /data.json file can take a good few moments.
@@ -97,8 +102,8 @@ And then in your Apache configuration add:
 
 And be sure to create /tmp/apache_cache and make it writable by the Apache process.
 
-Generating /data.json Off-Line
-------------------------------
+
+### Generating /data.json Off-Line
 
 Generating this file is a little slow, so an alternative instead of caching is
 to generate the file periodically (e.g. in a cron job). In that case, you'll want
@@ -128,12 +133,12 @@ map the URL /data.json to the static file. In your httpd.conf, add:
 	</Location>
 
 And then restart Apache. Wait for the cron job to run once, then check if
-/data.json loads (and it should be fast!). Also double check that 
+/data.json loads (and it should be fast!). Also double check that
 http://yourdomain.com/internal/data.json gives a 403 forbidden error when
 accessed from some other location.
 
-Options
--------
+
+### Configuration
 
 You can customize the URL that generates the data.json output:
 
@@ -152,8 +157,8 @@ specified.
 The option ckanext.datajsonld.id is the @id value used to identify the data
 catalog itself. If not given, it defaults to ckan.site_url.
 
-The Harvester
--------------
+
+### Harvesting
 
 To use the data.json harvester, you'll also need to set up the CKAN harvester
 extension. See the CKAN harvester README at https://github.com/okfn/ckanext-harvest
@@ -181,17 +186,62 @@ that may not be set in the source data.json files, e.g. enter something like thi
 
 This again is tied to the HealthData.gov metadata schema.
 
-Credit / Copying
-----------------
+
+## Development
+
+### Setup
+
+Build the docker containers.
+
+    $ make build
+
+Start the docker containers.
+
+    $ make up
+
+CKAN will start at [localhost:5000](http://localhost:5000/).
+
+Clean up any containers and volumes.
+
+    $ make down
+
+Open a shell to run commands in the container.
+
+    $ docker-compose exec ckan bash
+
+If you're unfamiliar with docker-compose, see our
+[cheatsheet](https://github.com/GSA/datagov-deploy/wiki/Docker-Best-Practices#cheatsheet)
+and the [official docs](https://docs.docker.com/compose/reference/).
+
+For additional make targets, see the help.
+
+    $ make help
+
+
+### Testing
+
+They follow the guidelines for [testing CKAN
+extensions](https://docs.ckan.org/en/2.8/extensions/testing-extensions.html#testing-extensions).
+
+To run the extension tests, start the containers with `make up`, then:
+
+    $ make test
+
+
+## Credit / Copying
 
 Original work written by the HealthData.gov team. It has been modified in support of Data.gov.
 
-As a work of the United States Government, this package is in the public 
-domain within the United States. Additionally, we waive copyright and 
-related rights in the work worldwide through the CC0 1.0 Universal 
+As a work of the United States Government, this package is in the public
+domain within the United States. Additionally, we waive copyright and
+related rights in the work worldwide through the CC0 1.0 Universal
 public domain dedication (which can be found at http://creativecommons.org/publicdomain/zero/1.0/).
 
 ## Ways to Contribute
 We're so glad you're thinking about contributing to ckanext-datajson!
 
-Before contributing to ckanext-datajson we encourage you to read our [CONTRIBUTING](CONTRIBUTING.md) guide, our [LICENSE](LICENSE.md), and our README (you are here), all of which should be in this repository. If you have any questions, you can email the Data.gov team at [datagov@gsa.gov](mailto:datagov@gsa.gov).
+Before contributing to ckanext-datajson we encourage you to read our
+[CONTRIBUTING](CONTRIBUTING.md) guide, our [LICENSE](LICENSE.md), and our README
+(you are here), all of which should be in this repository. If you have any
+questions, you can email the Data.gov team at
+[datagov@gsa.gov](mailto:datagov@gsa.gov).
