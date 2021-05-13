@@ -13,4 +13,4 @@ echo "Update ckanext-datajson"
 python setup.py develop
 
 echo "TESTING ckanext-datajson"
-nosetests --ckan --with-pylons=test-catalog-next.ini ckanext/datajson/tests/ --debug=ckanext
+nosetests --ckan --with-pylons=test-catalog-next.ini ckanext/datajson/tests/nose --debug=ckanext

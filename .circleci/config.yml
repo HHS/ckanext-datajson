@@ -48,21 +48,6 @@ jobs:
           name: install and test
           command: bin/travis-build-2.8.bash
 
-  build_gsa_ckan_inventory_next:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=inventory-next
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build-inventory.bash
-      - run:
-          name: test
-          command: bin/travis-run-inventory.sh
-
 workflows:
   version: 2
   build_and_test:
