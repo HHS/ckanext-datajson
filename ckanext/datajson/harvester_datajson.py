@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
 from ckanext.datajson.harvester_base import DatasetHarvesterBase
-from parse_datajson import parse_datajson_entry
+from .parse_datajson import parse_datajson_entry
 
 
-import urllib2, json
+import urllib.request, urllib.error, urllib.parse, json
 
 class DataJsonHarvester(DatasetHarvesterBase):
     '''
@@ -19,15 +22,15 @@ class DataJsonHarvester(DatasetHarvesterBase):
         }
 
     def load_remote_catalog(self, harvest_job):
-        req = urllib2.Request(harvest_job.source.url)
+        req = urllib.request.Request(harvest_job.source.url)
         # todo: into config and across harvester
         req.add_header('User-agent', 'Data.gov/2.0')
         try:
-            response = urllib2.urlopen(req)
-        except urllib2.HTTPError as e:
+            response = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as e:
             self._save_gather_error("HTTP Error getting json source: %s." % (e), harvest_job)
             return []
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             self._save_gather_error("URL Error getting json source: %s." % (e), harvest_job)
             return []
 

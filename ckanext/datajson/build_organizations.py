@@ -1,5 +1,8 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import simplejson as json
-import urllib2, os, sys
+import urllib.request, urllib.error, urllib.parse, os, sys
 
 #Change these variables based on environment
 big_datajson_source = 'http://localhost/data.json'
@@ -21,10 +24,10 @@ def main(dest=None):
     #Get the contents of the big data.json file
     response = None
     try:
-        response = urllib2.urlopen(big_datajson_source)
-    except urllib2.URLError:
+        response = urllib.request.urlopen(big_datajson_source)
+    except urllib.error.URLError:
         #Fall back on default
-        response = urllib2.urlopen('http://localhost:5000/data.json')
+        response = urllib.request.urlopen('http://localhost:5000/data.json')
 
     datasets = json.load(response)
 
@@ -38,19 +41,19 @@ def main(dest=None):
             datasets_grouped_by_org[org]=[dataset]
 
     #write the organization.json files
-    for org_name, org_datasets in datasets_grouped_by_org.iteritems():
+    for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir,org_name + '.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
 if __name__=="__main__":
     if len(sys.argv)>2:
-        print "build_organizations.py <optional:/path/to/output/folder>"
+        print("build_organizations.py <optional:/path/to/output/folder>")
 
     if len(sys.argv)==2:
         if not os.path.exists(sys.argv[1]):
-            print "Path does not exist: {0}".format(sys.argv[1])
+            print("Path does not exist: {0}".format(sys.argv[1]))
         elif not os.path.isdir(sys.argv[1]):
-            print "Not a directory: {0}".format(sys.argv[1])
+            print("Not a directory: {0}".format(sys.argv[1]))
         else:
             main(sys.argv[1])
     else:
@@ -69,10 +72,10 @@ def enterprise_main(dest=None):
     #Get the contents of the big data.json file
     response = None
     try:
-        response = urllib2.urlopen(enterprise_datajson_source)
-    except urllib2.URLError:
+        response = urllib.request.urlopen(enterprise_datajson_source)
+    except urllib.error.URLError:
         #Fall back on default
-        response = urllib2.urlopen('http://localhost:5000/enterprisedata.json')
+        response = urllib.request.urlopen('http://localhost:5000/enterprisedata.json')
 
     datasets = json.load(response)
 
@@ -86,19 +89,19 @@ def enterprise_main(dest=None):
             datasets_grouped_by_org[org]=[dataset]
 
     #write the organization.json files
-    for org_name, org_datasets in datasets_grouped_by_org.iteritems():
+    for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir,org_name + '_enterprise.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
 if __name__=="__main__":
     if len(sys.argv)>2:
-        print "build_organizations.py <optional:/path/to/output/folder>"
+        print("build_organizations.py <optional:/path/to/output/folder>")
 
     if len(sys.argv)==2:
         if not os.path.exists(sys.argv[1]):
-            print "Path does not exist: {0}".format(sys.argv[1])
+            print("Path does not exist: {0}".format(sys.argv[1]))
         elif not os.path.isdir(sys.argv[1]):
-            print "Not a directory: {0}".format(sys.argv[1])
+            print("Not a directory: {0}".format(sys.argv[1]))
         else:
             main(sys.argv[1])
     else:

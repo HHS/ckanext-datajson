@@ -1,4 +1,8 @@
-import StringIO
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+import io
 import json
 import logging
 import sys
@@ -12,8 +16,8 @@ from ckan.lib.base import BaseController, render, c
 from jsonschema.exceptions import best_match
 from pylons import request, response
 
-from helpers import get_export_map_json, detect_publisher, get_validator
-from package2pod import Package2Pod
+from .helpers import get_export_map_json, detect_publisher, get_validator
+from .package2pod import Package2Pod
 
 logger = logging.getLogger(__name__)
 draft4validator = get_validator()
@@ -180,7 +184,7 @@ class DataJsonController(BaseController):
 
     def make_json(self, export_type='datajson', owner_org=None):
         # Error handler for creating error log
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         eh = logging.StreamHandler(stream)
         eh.setLevel(logging.WARN)
         formatter = logging.Formatter('%(asctime)s - %(message)s')
@@ -244,13 +248,13 @@ class DataJsonController(BaseController):
                             #     continue
                     # draft = all draft-only datasets
                     elif 'draft' == export_type:
-                        if 'publishing_status' not in extras.keys() or extras.get('publishing_status') != 'Draft':
+                        if 'publishing_status' not in list(extras.keys()) or extras.get('publishing_status') != 'Draft':
                             continue
 
                     redaction_enabled = ('redacted' == export_type)
                     datajson_entry = Package2Pod.convert_package(pkg, json_export_map, redaction_enabled)
                     errors = None
-                    if 'errors' in datajson_entry.keys():
+                    if 'errors' in list(datajson_entry.keys()):
                         errors_json.append(datajson_entry)
                         errors = datajson_entry.get('errors')
                         datajson_entry = None
@@ -272,7 +276,7 @@ class DataJsonController(BaseController):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
+            logger.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, str(e))
 
         # Get the error log
         eh.flush()
@@ -334,7 +338,7 @@ class DataJsonController(BaseController):
         """
         import zipfile
 
-        o = StringIO.StringIO()
+        o = io.StringIO()
         zf = zipfile.ZipFile(o, mode='w')
 
         data_file_name = 'data.json'
@@ -383,28 +387,28 @@ class DataJsonController(BaseController):
             c.source_url = request.POST["url"]
             c.errors = []
 
-            import urllib
+            import urllib.request, urllib.parse, urllib.error
             import json
-            from datajsonvalidator import do_validation
+            from .datajsonvalidator import do_validation
 
             body = None
             try:
-                body = json.load(urllib.urlopen(c.source_url))
+                body = json.load(urllib.request.urlopen(c.source_url))
             except IOError as e:
-                c.errors.append(("Error Loading File", ["The address could not be loaded: " + unicode(e)]))
+                c.errors.append(("Error Loading File", ["The address could not be loaded: " + str(e)]))
             except ValueError as e:
-                c.errors.append(("Invalid JSON", ["The file does not meet basic JSON syntax requirements: " + unicode(
+                c.errors.append(("Invalid JSON", ["The file does not meet basic JSON syntax requirements: " + str(
                     e) + ". Try using JSONLint.com."]))
             except Exception as e:
                 c.errors.append((
                     "Internal Error",
-                    ["Something bad happened while trying to load and parse the file: " + unicode(e)]))
+                    ["Something bad happened while trying to load and parse the file: " + str(e)]))
 
             if body:
                 try:
                     do_validation(body, c.errors)
                 except Exception as e:
-                    c.errors.append(("Internal Error", ["Something bad happened: " + unicode(e)]))
+                    c.errors.append(("Internal Error", ["Something bad happened: " + str(e)]))
                 if len(c.errors) == 0:
                     c.errors.append(("No Errors", ["Great job!"]))
 

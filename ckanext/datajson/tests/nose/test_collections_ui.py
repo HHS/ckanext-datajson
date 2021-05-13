@@ -1,12 +1,13 @@
+from __future__ import absolute_import
 import json
 import logging
-import mock_datajson_source
+from . import mock_datajson_source
 from ckan import model
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from nose.tools import assert_equal, assert_not_in, assert_in
-from factories import HarvestJobObj, HarvestSourceObj
+from .factories import HarvestJobObj, HarvestSourceObj
 from nose.plugins.skip import SkipTest
 try:
     from ckan.tests import helpers, factories
@@ -43,12 +44,12 @@ class TestCollectionUI(helpers.FunctionalTestBase):
             is_collection = False
             # geodatagov roll-up extras
             log.info('extras: {}'.format(dataset.extras))
-            for e in dataset.extras.items():
+            for e in list(dataset.extras.items()):
                 k = e[0]
                 v = e[1]
                 if k == 'extras_rollup':
                     extras_rollup_dict = json.loads(v)
-                    for rk, rv in extras_rollup_dict.items():
+                    for rk, rv in list(extras_rollup_dict.items()):
                         log.info('Rolled extra {}: {}'.format(rk, rv))
                         if rk == 'collection_metadata':
                             is_collection = True

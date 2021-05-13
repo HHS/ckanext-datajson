@@ -1,6 +1,12 @@
+from __future__ import division
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
 from ckanext.datajson.harvester_base import DatasetHarvesterBase
 
-import urllib2, json, re, datetime
+import urllib.request, urllib.error, urllib.parse, json, re, datetime
 
 class CmsDataNavigatorHarvester(DatasetHarvesterBase):
     '''
@@ -17,7 +23,7 @@ class CmsDataNavigatorHarvester(DatasetHarvesterBase):
         }
 
     def load_remote_catalog(self, harvest_job):
-        catalog = json.load(urllib2.urlopen(harvest_job.source.url))
+        catalog = json.load(urllib.request.urlopen(harvest_job.source.url))
         for item in catalog:
             item["identifier"] = item["ID"]
             item["title"] = item["Name"].strip()
@@ -61,9 +67,9 @@ def parsedate(msdate):
     m = re.match(r"/Date\((\d+)([+\-]\d\d\d\d)\)\/", msdate)
     try:
         if not m: raise Exception("Invalid format.")
-        isodate = datetime.datetime.fromtimestamp(long(m.group(1))/1000).isoformat().replace("T", " ")
+        isodate = datetime.datetime.fromtimestamp(old_div(int(m.group(1)),1000)).isoformat().replace("T", " ")
     except e:
-        print "Invalid date in CMS Data Navigator: %s (%s)" % (msdate, str(e))
+        print("Invalid date in CMS Data Navigator: %s (%s)" % (msdate, str(e)))
         return None
     # We're ignoring the time zone offset because our HHS metadata format does not
     # support it, until we check on how Drupal indexing will handle it.

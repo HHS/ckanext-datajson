@@ -1,17 +1,21 @@
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 from datetime import datetime
 import json
 import logging
-from urllib2 import URLError
+from urllib.error import URLError
 from pylons import config
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import ckanext.harvest.queue as queue
-import mock_datajson_source
+from . import mock_datajson_source
 from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from ckanext.datajson.exceptions import ParentNotHarvestedException
-from factories import HarvestJobObj, HarvestSourceObj
+from .factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
 
 try:
@@ -160,7 +164,7 @@ class TestIntegrationDataJSONHarvester28(object):
         
         for dataset in datasets:
             assert dataset.title in titles
-            extras = self.fix_extras(dataset.extras.items())
+            extras = self.fix_extras(list(dataset.extras.items()))
             
             is_parent = extras.get('collection_metadata', 'false').lower() == 'true'
             is_child = extras.get('collection_package_id', None) is not None
@@ -241,7 +245,7 @@ class TestIntegrationDataJSONHarvester28(object):
             v = e[1]
             if k == 'extras_rollup':
                 extras_rollup_dict = json.loads(v)
-                for rk, rv in extras_rollup_dict.items():
+                for rk, rv in list(extras_rollup_dict.items()):
                     new_extras[rk] = rv
             else:
                 new_extras[e[0]] = e[1]
@@ -257,7 +261,7 @@ class TestIntegrationDataJSONHarvester28(object):
         child_counter = 0
         
         for dataset in datasets:
-            extras = self.fix_extras(dataset.extras.items())
+            extras = self.fix_extras(list(dataset.extras.items()))
             is_parent = extras.get('collection_metadata', 'false').lower() == 'true'
             parent_package_id = extras.get('collection_package_id', None)
             is_child = parent_package_id is not None

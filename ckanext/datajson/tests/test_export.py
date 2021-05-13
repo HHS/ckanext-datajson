@@ -1,6 +1,9 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import json
 import zipfile
-from StringIO import StringIO
+from io import StringIO
 import ckan.plugins as p
 
 try:
@@ -75,7 +78,7 @@ class TestExport(FunctionalTestBase):
         zf.close()
         zfile = zipfile.ZipFile(zip_path, 'r')
         for name in zfile.namelist():
-            print 'File Found {}'.format(name)
+            print('File Found {}'.format(name))
             zfile.extract(name)  # should create "draft_data.json"
 
         f = open('draft_data.json', 'r')

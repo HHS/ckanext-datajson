@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 try:
     from collections import OrderedDict # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
 def dataset_to_jsonld(dataset):
-    from plugin import DataJsonPlugin
+    from .plugin import DataJsonPlugin
 	
     ret = OrderedDict([
        ("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
@@ -20,7 +21,7 @@ def dataset_to_jsonld(dataset):
     return ret
         
 def distribution_to_jsonld(distribution):
-    from plugin import DataJsonPlugin
+    from .plugin import DataJsonPlugin
     ret = OrderedDict([
        ("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
        ("@type", "dcat:Distribution"),
@@ -66,7 +67,7 @@ jsonld_metadata_datatypes = {
 }
     
 def apply_jsonld_metadata_mapping(data, newdict):
-    for k, v in data.items():
+    for k, v in list(data.items()):
         # skip null/empty fields
         if v is None or (isinstance(v, str) and v.strip() == ""): continue
         
