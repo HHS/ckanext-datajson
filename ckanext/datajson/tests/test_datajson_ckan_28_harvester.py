@@ -6,7 +6,7 @@ from datetime import datetime
 import json
 import logging
 from urllib.error import URLError
-from pylons import config
+from ckan.plugins.toolkit import config
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import ckanext.harvest.queue as queue
