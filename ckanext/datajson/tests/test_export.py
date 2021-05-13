@@ -1,8 +1,6 @@
 import json
 import zipfile
-from nose.tools import assert_in, assert_not_in
 from StringIO import StringIO
-from nose.plugins.skip import SkipTest
 import ckan.plugins as p
 
 try:
@@ -119,8 +117,8 @@ class TestExport(FunctionalTestBase):
         datasets = data_res['dataset']
         titles = [d['title'] for d in datasets]
 
-        assert_not_in(self.dataset2['title'], titles)
-        assert_not_in(self.dataset4['title'], titles)
+        assert self.dataset2['title'] not in titles
+        assert self.dataset4['title'] not in titles
 
-        assert_in(self.dataset1['title'], titles)
-        assert_in(self.dataset3['title'], titles)
+        assert self.dataset1['title'] in titles
+        assert self.dataset3['title'] in titles

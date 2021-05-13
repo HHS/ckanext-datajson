@@ -13,8 +13,6 @@ from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from ckanext.datajson.exceptions import ParentNotHarvestedException
 from factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
-from nose.tools import (assert_equal, assert_false, assert_in, assert_is_none,
-                        assert_raises, assert_true)
 
 try:
     from ckan.tests.helpers import reset_db, call_action
@@ -24,8 +22,6 @@ except ImportError:
     from ckan.new_tests.factories import Organization, Group, Sysadmin
 
 log = logging.getLogger(__name__)
-
-from nose.plugins.skip import SkipTest
 
 class TestIntegrationDataJSONHarvester28(object):
     """Integration tests using a complete CKAN 2.8+ harvest stack. Unlike unit tests,
@@ -139,7 +135,7 @@ class TestIntegrationDataJSONHarvester28(object):
 
         # We always expect the parent to be the first on the list
         expected_obj_ids = ['OPM-ERround-0001', 'OPM-ERround-0001-AWOL', 'OPM-ERround-0001-Retire']
-        assert_equal(expected_obj_ids, identifiers)
+        assert expected_obj_ids == identifiers
     
     def test_harvesting_parent_child_collections(self):
         """ Test that parent are beeing harvested first.
@@ -149,12 +145,12 @@ class TestIntegrationDataJSONHarvester28(object):
         url = 'http://127.0.0.1:%s/collection-1-parent-2-children.data.json' % self.mock_port
         obj_ids = self.run_gather(url=url)
 
-        assert_equal(len(obj_ids), 3)
+        assert len(obj_ids) == 3
 
         self.run_fetch()
         datasets = self.run_import()
 
-        assert_equal(len(datasets), 3)
+        assert len(datasets) == 3
         titles = ['Linking Employee Relations and Retirement',
                   'Addressing AWOL',
                   'Employee Relations Roundtables']
@@ -172,26 +168,26 @@ class TestIntegrationDataJSONHarvester28(object):
             log.info('Harvested dataset {} {} {}'.format(dataset.title, is_parent, is_child))
 
             if dataset.title == 'Employee Relations Roundtables':
-                assert_equal(is_parent, True)
-                assert_equal(is_child, False)
+                assert is_parent == True
+                assert is_child == False
                 parent_counter += 1
             else:
-                assert_equal(is_child, True)
-                assert_equal(is_parent, False)
+                assert is_child == True
+                assert is_parent == False
                 child_counter += 1
 
-        assert_equal(child_counter, 2)
-        assert_equal(parent_counter, 1)
+        assert child_counter == 2
+        assert parent_counter == 1
     
     def get_datasets_from_2_collection(self):
         url = 'http://127.0.0.1:%s/collection-2-parent-4-children.data.json' % self.mock_port
         obj_ids = self.run_gather(url=url)
 
-        assert_equal(len(obj_ids), 6)
+        assert len(obj_ids) == 6
 
         self.run_fetch()
         datasets = self.run_import()
-        assert_equal(len(datasets), 6)
+        assert len(datasets) == 6
         return datasets
 
     @patch('ckanext.harvest.logic.action.update.harvest_source_show')
@@ -226,8 +222,8 @@ class TestIntegrationDataJSONHarvester28(object):
         jobs = harvest_model.HarvestJob.filter(source=self.source).all()
         source_config = json.loads(self.source.config or '{}')
 
-        assert_equal(len(jobs), 1)
-        assert_equal(jobs[0].status, 'Finished')
+        assert len(jobs) == 1
+        assert jobs[0].status == 'Finished'
 
         return datasets
 
@@ -235,7 +231,7 @@ class TestIntegrationDataJSONHarvester28(object):
         """ test we harvest the right amount of datasets """
 
         datasets = self.get_datasets_from_2_collection()
-        assert_equal(len(datasets), 6)
+        assert len(datasets) == 6
     
     def fix_extras(self, extras):
         """ fix extras rolled up at geodatagov """
@@ -271,8 +267,8 @@ class TestIntegrationDataJSONHarvester28(object):
             elif is_child:
                 child_counter += 1
 
-        assert_equal(parent_counter, 2)
-        assert_equal(child_counter, 4)
+        assert parent_counter == 2
+        assert child_counter == 4
     
     def test_raise_child_error_and_retry(self):
         """ if a harvest job for a child fails because 
@@ -285,7 +281,7 @@ class TestIntegrationDataJSONHarvester28(object):
         # start harvest process with gather to create harvest objects
         url = 'http://127.0.0.1:%s/collection-1-parent-2-children.data.json' % self.mock_port
         self.run_gather(url=url)
-        assert_equal(len(self.harvest_objects), 3)
+        assert len(self.harvest_objects) == 3
         
         # create a publisher to send this objects to the fetch queue
         publisher = queue.get_fetch_publisher()
@@ -293,9 +289,9 @@ class TestIntegrationDataJSONHarvester28(object):
         for ho in self.harvest_objects:
             ho = harvest_model.HarvestObject.get(ho.id)  # refresh
             ho_data = json.loads(ho.content)
-            assert_equal(ho.state, 'WAITING')
+            assert ho.state == 'WAITING'
             log.info('HO: {}\n\tCurrent: {}'.format(ho_data['identifier'], ho.current))
-            assert_equal(ho.retry_times, 0)
+            assert ho.retry_times == 0
             publisher.send({'harvest_object_id': ho.id})
             log.info('Harvest object sent to the fetch queue {} as {}'.format(ho_data['identifier'], ho.id))
 
@@ -315,17 +311,17 @@ class TestIntegrationDataJSONHarvester28(object):
         # first a child and assert to get an error
         r2 = json.dumps({"harvest_object_id": self.harvest_objects[1].id})
         r0 = FakeMethod(r2)
-        with assert_raises(ParentNotHarvestedException):
+        with pytest.raises(ParentNotHarvestedException):
             queue.fetch_callback(consumer_fetch, r0, None, r2)
-        assert_equal(self.harvest_objects[1].retry_times, 1)
-        assert_equal(self.harvest_objects[1].state, "ERROR")
+        assert self.harvest_objects[1].retry_times == 1
+        assert self.harvest_objects[1].state == "ERROR"
 
         # run the parent later, like in a different queue
         r2 = json.dumps({"harvest_object_id": self.harvest_objects[0].id})
         r0 = FakeMethod(r2)
         queue.fetch_callback(consumer_fetch, r0, None, r2)
-        assert_equal(self.harvest_objects[0].retry_times, 1)
-        assert_equal(self.harvest_objects[0].state, "COMPLETE")
+        assert self.harvest_objects[0].retry_times == 1
+        assert self.harvest_objects[0].state == "COMPLETE"
         
         # Check status on harvest objects
         # We expect one child with error, parent ok and second child still waiting
@@ -335,12 +331,12 @@ class TestIntegrationDataJSONHarvester28(object):
             idf = ho_data['identifier']
             log.info('\nHO2: {}\n\tState: {}\n\tCurrent: {}\n\tGathered {}'.format(idf, ho.state, ho.current, ho.gathered))
             if idf == 'OPM-ERround-0001':
-                assert_equal(ho.state, 'COMPLETE')
+                assert ho.state == 'COMPLETE'
             elif idf == 'OPM-ERround-0001-AWOL':
-                assert_equal(ho.state, 'ERROR')
+                assert ho.state == 'ERROR'
                 ho_awol_id = ho.id
             elif idf == 'OPM-ERround-0001-Retire':
-                assert_equal(ho.state, 'WAITING')
+                assert ho.state == 'WAITING'
                 ho_retire_id = ho.id
             else:
                 raise Exception('Unexpected identifier: "{}"'.format(idf))
@@ -374,10 +370,10 @@ class TestIntegrationDataJSONHarvester28(object):
         # Now, we expect the waiting child and the errored one to be in the fetch queue
         
         log.info('Searching wainting object "Retire ID"')
-        assert_in(ho_retire_id, ho_ids)
+        assert ho_retire_id in ho_ids
         
         log.info('Searching errored object "Awol ID"')
-        assert_in(ho_awol_id, ho_ids)
+        assert ho_awol_id in ho_ids
 
     @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
     @patch('ckan.plugins.toolkit.get_action')
@@ -412,7 +408,7 @@ class TestIntegrationDataJSONHarvester28(object):
         harvest_object.source = harvest_source
         
         harvester = DataJsonHarvester()
-        with assert_raises(ParentNotHarvestedException):
+        with pytest.raises(ParentNotHarvestedException):
             harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
         
         assert mock_get_action.called
@@ -446,7 +442,7 @@ class TestIntegrationDataJSONHarvester28(object):
         harvester = DataJsonHarvester()
         dataset = harvester.is_part_of_to_package_id('identifier', harvest_object)
         assert mock_get_action.called
-        assert_equal(dataset['name'], 'dataset-1')
+        assert dataset['name'] == 'dataset-1'
     
     @patch('ckanext.datajson.harvester_datajson.DataJsonHarvester.get_harvest_source_id')
     @patch('ckan.plugins.toolkit.get_action')
@@ -483,7 +479,7 @@ class TestIntegrationDataJSONHarvester28(object):
         harvester = DataJsonHarvester()
         dataset = harvester.is_part_of_to_package_id('custom-identifier', harvest_object)
         assert mock_get_action.called
-        assert_equal(dataset['name'], 'dataset-2')
+        assert dataset['name'] == 'dataset-2'
     
     @patch('ckan.plugins.toolkit.get_action')
     def test_is_part_of_to_package_id_fail_no_results(self, mock_get_action):
@@ -498,7 +494,7 @@ class TestIntegrationDataJSONHarvester28(object):
         mock_get_action.side_effect = get_action
         
         harvester = DataJsonHarvester()
-        with assert_raises(ParentNotHarvestedException):
+        with pytest.raises(ParentNotHarvestedException):
             harvester.is_part_of_to_package_id('identifier', None)
     
     def test_datajson_is_part_of_package_id(self):
@@ -513,13 +509,13 @@ class TestIntegrationDataJSONHarvester28(object):
             # get the dataset with this identifier only if is a parent in a collection
             if content['identifier'] == 'OPM-ERround-0001':
                 dataset = self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
-                assert_equal(dataset['title'], 'Employee Relations Roundtables')
+                assert dataset['title'] == 'Employee Relations Roundtables'
 
             if content['identifier'] in ['OPM-ERround-0001-AWOL', 'OPM-ERround-0001-Retire']:
-                with assert_raises(ParentNotHarvestedException):
+                with pytest.raises(ParentNotHarvestedException):
                     self.harvester.is_part_of_to_package_id(content['identifier'], harvest_object)
             
-        with assert_raises(ParentNotHarvestedException):
+        with pytest.raises(ParentNotHarvestedException):
             self.harvester.is_part_of_to_package_id('bad identifier', harvest_object)
 
     def test_datajson_non_federal(self):
@@ -537,4 +533,4 @@ class TestIntegrationDataJSONHarvester28(object):
             'default_groups': 'local',
             'private_datasets': 'False'
             }
-        assert_equal(source_config, expected_config)
+        assert source_config == expected_config

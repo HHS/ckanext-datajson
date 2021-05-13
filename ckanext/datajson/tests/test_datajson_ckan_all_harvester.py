@@ -8,7 +8,6 @@ from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from factories import HarvestJobObj, HarvestSourceObj
-from nose.tools import assert_equal, assert_in, assert_raises
 
 try:
     from ckan.tests.helpers import reset_db
@@ -120,39 +119,39 @@ class TestDataJSONHarvester(object):
         url = 'http://127.0.0.1:%s/arm' % self.mock_port
         datasets = self.run_source(url=url)
         dataset = datasets[0]
-        # assert_equal(first element on list
+        # assert first element on list
         expected_title = "NCEP GFS: vertical profiles of met quantities at standard pressures, at Barrow"
-        assert_equal(dataset.title, expected_title)
+        assert dataset.title == expected_title
         tags = [tag.name for tag in dataset.get_tags()]
-        assert_in(munge_title_to_name("ORNL"), tags)
-        assert_equal(len(dataset.resources), 1)
+        assert munge_title_to_name("ORNL") in tags
+        assert len(dataset.resources) == 1
 
     def test_datason_usda(self):
         url = 'http://127.0.0.1:%s/usda' % self.mock_port
         datasets = self.run_source(url=url)
         dataset = datasets[0]
         expected_title = "Department of Agriculture Congressional Logs for Fiscal Year 2014"
-        assert_equal(dataset.title, expected_title)
+        assert dataset.title == expected_title
         tags = [tag.name for tag in dataset.get_tags()]
-        assert_equal(len(dataset.resources), 1)
-        assert_in(munge_title_to_name("Congressional Logs"), tags)
+        assert len(dataset.resources) == 1
+        assert munge_title_to_name("Congressional Logs") in tags
 
     def test_source_returning_http_error(self):
         url = 'http://127.0.0.1:%s/404' % self.mock_port
         self.run_source(url)
 
-        assert_raises(HTTPError)
-        assert_equal(self.job.gather_errors[0].message, "HTTP Error getting json source: HTTP Error 404: Not Found.")
-        assert_equal(self.job.gather_errors[1].message, "Error loading json content: need more than 0 values to unpack.")
+        pytest.raises(URLError)
+        assert self.job.gather_errors[0].message == "HTTP Error getting json source: HTTP Error 404: Not Found."
+        assert self.job.gather_errors[1].message == "Error loading json content: need more than 0 values to unpack."
 
     def test_source_returning_url_error(self):
         # URL failing SSL
         url = 'https://127.0.0.1:%s' % self.mock_port
         self.run_source(url)
 
-        assert_raises(URLError)
-        assert_in("URL Error getting json source: <urlopen error", self.job.gather_errors[0].message)
-        assert_equal(self.job.gather_errors[1].message, "Error loading json content: need more than 0 values to unpack.")
+        pytest.raises(URLError)
+        assert "URL Error getting json source: <urlopen error" in self.job.gather_errors[0].message
+        assert self.job.gather_errors[1].message == "Error loading json content: need more than 0 values to unpack."
 
     def get_datasets_from_2_collection(self):
         url = 'http://127.0.0.1:%s/collection-2-parent-4-children.data.json' % self.mock_port
@@ -188,42 +187,42 @@ class TestDataJSONHarvester(object):
             if dataset.title == 'Addressing AWOL':
                 parent = model.Package.get(parent_package_id)
                 # HEREX parent is None
-                assert_equal(parent.title, 'Employee Relations Roundtables')
+                assert parent.title == 'Employee Relations Roundtables'
             elif dataset.title == 'Addressing AWOL 2':
                 parent = model.Package.get(parent_package_id)
-                assert_equal(parent.title, 'Employee Relations Roundtables 2')
+                assert parent.title == 'Employee Relations Roundtables 2'
 
     def test_datajson_reserverd_word_as_title(self):
         url = 'http://127.0.0.1:%s/error-reserved-title' % self.mock_port
         self.run_source(url=url)
         errors = self.errors
         expected_error_stage = "Import"
-        assert_equal(errors[0].stage, expected_error_stage)
+        assert errors[0].stage == expected_error_stage
         expected_error_message = "title: Search. That name cannot be used."
-        assert_equal(errors[0].message, expected_error_message)
+        assert errors[0].message == expected_error_message
 
     def test_datajson_large_spatial(self):
         url = 'http://127.0.0.1:%s/error-large-spatial' % self.mock_port
         self.run_source(url=url)
         errors = self.errors
         expected_error_stage = "Import"
-        assert_equal(errors[0].stage, expected_error_stage)
+        assert errors[0].stage == expected_error_stage
         expected_error_message = "spatial: Maximum allowed size is 32766. Actual size is 309643."
-        assert_equal(errors[0].message, expected_error_message)
+        assert errors[0].message == expected_error_message
 
     def test_datajson_null_spatial(self):
         url = 'http://127.0.0.1:%s/null-spatial' % self.mock_port
         datasets = self.run_source(url=url)
         dataset = datasets[0]
         expected_title = "Sample Title NUll Spatial"
-        assert_equal(dataset.title, expected_title)
+        assert dataset.title == expected_title
 
     def test_datason_404(self):
         url = 'http://127.0.0.1:%s/404' % self.mock_port
         self.run_source(url=url)
-        assert_raises(HTTPError)
+        pytest.raises(URLError)
 
     def test_datason_500(self):
         url = 'http://127.0.0.1:%s/500' % self.mock_port
         self.run_source(url=url)
-        assert_raises(HTTPError)
+        pytest.raises(URLError)
