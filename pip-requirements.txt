@@ -1,4 +1,0 @@
-pyyaml
-lepl
-jsonschema==2.4.0
-rfc3987

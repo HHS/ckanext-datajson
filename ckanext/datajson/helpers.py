@@ -199,7 +199,8 @@ class PackageExtraCache(object):
         pass
 
     def store(self, package):
-        import sys, os
+        import sys
+        import os
 
         try:
             self.pid = package.get('id')

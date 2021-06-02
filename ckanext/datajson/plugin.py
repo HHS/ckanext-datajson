@@ -129,16 +129,15 @@ class DataJsonController(BaseController):
             return "Invalid organization id"
 
         # If user is not editor or admin of the organization then don't allow unredacted download
-        try: 
-            auth = p.toolkit.check_access(
-                        'package_create',
-                        {'model': model, 'user': c.user},
-                        {'owner_org': org_id}
-                        )
+        try:
+            auth = p.toolkit.check_access('package_create',
+                                          {'model': model, 'user': c.user},
+                                          {'owner_org': org_id}
+                                          )
         except p.toolkit.NotAuthorized:
             logger.error('NotAuthorized to generate JSON for {} to {} ({})'.format(export_type, org_id, c.user))
             auth = False
-        
+
         if not auth:
             return "Not Authorized"
 
@@ -325,7 +324,7 @@ class DataJsonController(BaseController):
         """
         error = best_match(draft4validator.iter_errors(instance))
         if error:
-            logger.warn("===================================================\r\n"+
+            logger.warn("===================================================\r\n" +
                         "Validation failed, best guess of error:\r\n %s\r\nFor this dataset:\r\n", error)
             return False
         return True
@@ -371,7 +370,7 @@ class DataJsonController(BaseController):
         # Write the error log
         if error:
             # logger.debug('writing errorlog.txt')
-            zf.writestr('errorlog.txt', error.encode('utf8').replace("\n","\r\n"))
+            zf.writestr('errorlog.txt', error.encode('utf8').replace("\n", "\r\n"))
 
         zf.close()
         o.seek(0)
@@ -390,7 +389,9 @@ class DataJsonController(BaseController):
             c.source_url = request.POST["url"]
             c.errors = []
 
-            import urllib.request, urllib.parse, urllib.error
+            import urllib.request
+            import urllib.parse
+            import urllib.error
             import json
             from .datajsonvalidator import do_validation
 
