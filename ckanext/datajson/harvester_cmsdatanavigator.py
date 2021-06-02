@@ -68,8 +68,8 @@ def parsedate(msdate):
     try:
         if not m: raise Exception("Invalid format.")
         isodate = datetime.datetime.fromtimestamp(old_div(int(m.group(1)),1000)).isoformat().replace("T", " ")
-    except e:
-        print("Invalid date in CMS Data Navigator: %s (%s)" % (msdate, str(e)))
+    except:
+        print("Invalid date in CMS Data Navigator: %s" % (msdate))
         return None
     # We're ignoring the time zone offset because our HHS metadata format does not
     # support it, until we check on how Drupal indexing will handle it.
