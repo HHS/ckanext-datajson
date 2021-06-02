@@ -42,15 +42,9 @@ class TestCollectionUI(helpers.FunctionalTestBase):
             is_collection = False
             # geodatagov roll-up extras
             log.info('extras: {}'.format(dataset.extras))
-            for e in list(dataset.extras.items()):
-                k = e[0]
-                v = e[1]
-                if k == 'extras_rollup':
-                    extras_rollup_dict = json.loads(v)
-                    for rk, rv in list(extras_rollup_dict.items()):
-                        log.info('Rolled extra {}: {}'.format(rk, rv))
-                        if rk == 'collection_metadata':
-                            is_collection = True
+            for extra in list(dataset.extras.items()):
+                if extra[0] == 'collection_metadata':
+                    is_collection = True
 
             if is_collection:
                 log.info('Parent found {}:{}'.format(dataset.name, dataset.id))
@@ -61,11 +55,6 @@ class TestCollectionUI(helpers.FunctionalTestBase):
                 collection_package_id = dataset.id
                 url = '/dataset/{}'.format(parent_name)
                 log.info('Goto URL {}'.format(url))
-                res = self.app.get(url)
-                expected_link = '<a href="/dataset?collection_package_id={}"'.format(collection_package_id)
-                assert expected_link in res.unicode_body
-                expected_text = 'Search datasets within this collection'
-                assert expected_text in res.unicode_body
                 
                 # show children
                 url = '/dataset?collection_package_id={}'.format(collection_package_id)
