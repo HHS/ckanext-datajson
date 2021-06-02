@@ -6,16 +6,28 @@ import zipfile
 from io import StringIO
 import ckan.plugins as p
 
-from ckan.tests.helpers import reset_db, FunctionalTestBase
+import ckanext.harvest.model as harvest_model
+
+from ckan.tests.helpers import FunctionalTestBase
 from ckan.tests import factories
 from ckan.common import config
 
+try:
+    from ckan.tests.helpers import reset_db, call_action
+except ImportError:
+    from ckan.new_tests.helpers import reset_db, call_action
 
 class TestExport(FunctionalTestBase):
 
     @classmethod
     def setup_class(cls):
         super(TestExport, cls).setup_class()
+
+    @classmethod
+    def setup(cls):
+        # Start data json sources server we can test harvesting against it
+        reset_db()
+        harvest_model.setup()
 
     def create_datasets(self):
 

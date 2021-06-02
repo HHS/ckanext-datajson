@@ -9,11 +9,11 @@ from nose.plugins.skip import SkipTest
 import ckan.plugins as p
 
 try:
-    from ckan.tests.helpers import reset_db, FunctionalTestBase
+    from ckan.tests.helpers import FunctionalTestBase
     from ckan.tests import factories
     from ckan.common import config
 except ImportError:  # CKAN 2.3
-    from ckan.new_tests.helpers import reset_db, FunctionalTestBase
+    from ckan.new_tests.helpers import FunctionalTestBase
     from ckan.new_tests import factories
     from pylons import config
 

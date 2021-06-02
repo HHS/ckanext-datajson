@@ -25,6 +25,10 @@ function ckan_wrapper () {
   fi
 }
 
-ckan_wrapper --plugin=ckan db init
+# Database is listening, but still unavailable. Just keep trying...
+while ! ckan_wrapper --plugin=ckan db init; do 
+  echo Retrying in 5 seconds...
+  sleep 5
+done
 
-pytest --ckan-ini=test.ini --cov=ckanext.datajson --disable-warnings ckanext/datajson/tests
+pytest --ckan-ini=test.ini --cov=ckanext.datajson --disable-warnings ckanext/datajson/tests/

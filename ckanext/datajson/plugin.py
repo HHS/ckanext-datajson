@@ -338,7 +338,7 @@ class DataJsonController(BaseController):
         """
         import zipfile
 
-        o = io.StringIO()
+        o = io.BytesIO()
         zf = zipfile.ZipFile(o, mode='w')
 
         data_file_name = 'data.json'
@@ -347,7 +347,10 @@ class DataJsonController(BaseController):
 
         # Write the data file
         if data:
-            zf.writestr(data_file_name, json.dumps(data, ensure_ascii=False).encode('utf8'))
+            if sys.version_info >= (3, 0):
+                zf.writestr(data_file_name, json.dumps(data))
+            else:
+                zf.writestr(data_file_name, json.dumps(data))
 
         # Write empty.json if nothing to return
         else:

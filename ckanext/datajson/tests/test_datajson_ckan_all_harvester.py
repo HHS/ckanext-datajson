@@ -4,6 +4,9 @@ standard_library.install_aliases()
 from builtins import object
 import json
 import logging
+
+import pytest
+
 from urllib.error import HTTPError, URLError
 
 import ckanext.harvest.model as harvest_model

@@ -12,9 +12,10 @@ services:
       CKAN_DATASTORE_WRITE_URL: postgresql://datastore_write:pass@db/datastore_test
       CKAN_DATASTORE_READ_URL: postgresql://datastore_read:pass@db/datastore_test
       CKAN_SOLR_URL: http://solr:8983/solr/ckan
-      CKAN_REDIS_URL: redis://redis:6379/
+      CKAN_REDIS_URL: redis://redis:6379/1
       CKAN_DATAPUSHER_URL: http://localhost:8080/  # datapusher is not really enabled
-      CKAN__PLUGINS: datajson
+      CKAN__PLUGINS: datajson harvest datajson_harvest
+      PYTHONDONTWRITEBYTECODE: 1
     working_dir: /app
     ports:
       - "5000:5000"
@@ -35,6 +36,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "5432:5432"
   redis:
     image: redis
   solr:

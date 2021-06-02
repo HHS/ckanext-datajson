@@ -5,6 +5,9 @@ from builtins import object
 from datetime import datetime
 import json
 import logging
+
+import pytest
+
 from urllib.error import URLError
 from ckan.plugins.toolkit import config
 import ckan.plugins as p
@@ -274,6 +277,7 @@ class TestIntegrationDataJSONHarvester28(object):
         assert parent_counter == 2
         assert child_counter == 4
     
+    # TODO: Fix test with connection to redis
     def test_raise_child_error_and_retry(self):
         """ if a harvest job for a child fails because 
             parent still not exists we need to ensure
