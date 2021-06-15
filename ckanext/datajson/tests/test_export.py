@@ -68,7 +68,9 @@ class TestExport(FunctionalTestBase):
         """ test /org-id/draft.json """
         
         # enable links (done in the INI file)
-        config['ckanext.datajson.inventory_links_enabled'] = "True"
+        # added this into test.ini
+        # why this is not working
+        # config['ckanext.datajson.inventory_links_enabled'] = "True"
         
         # create datasets
         self.create_datasets()
