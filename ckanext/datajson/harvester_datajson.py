@@ -41,9 +41,9 @@ class DataJsonHarvester(DatasetHarvesterBase):
             # try different encode
             try:
                 datasets = json.loads(data, 'cp1252')
-            except:
+            except BaseException:
                 datasets = json.loads(data, 'iso-8859-1')
-        except:
+        except BaseException:
             # remove BOM
             datasets = json.loads(lstrip_bom(data))
 
@@ -64,7 +64,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
             datasets = catalog_values.pop("dataset", [])
 
         return (datasets, catalog_values)
-        
+
     def set_dataset_info(self, pkg, dataset, dataset_defaults, schema_version):
         parse_datajson_entry(dataset, pkg, dataset_defaults, schema_version)
 

@@ -79,7 +79,7 @@ def parsedate(msdate):
         if not m:
             raise Exception("Invalid format.")
         isodate = datetime.datetime.fromtimestamp(old_div(int(m.group(1)), 1000)).isoformat().replace("T", " ")
-    except:
+    except BaseException:
         print("Invalid date in CMS Data Navigator: %s" % (msdate))
         return None
     # We're ignoring the time zone offset because our HHS metadata format does not

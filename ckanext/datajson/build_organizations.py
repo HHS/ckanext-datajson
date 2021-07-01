@@ -58,7 +58,7 @@ if __name__=="__main__":
             main(sys.argv[1])
     else:
         main()
-        
+
 def enterprise_main(dest=None):
     """
     Build out the JSON file for each organization

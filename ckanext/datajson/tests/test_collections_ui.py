@@ -31,7 +31,7 @@ class TestCollectionUI(helpers.FunctionalTestBase):
         """ check if the user interface show collection as we expect """
 
         self.app = self._get_test_app()
-        
+
         # harvest data
         datasets = self.get_datasets_from_2_collection()
         parents_found = 0
@@ -49,13 +49,13 @@ class TestCollectionUI(helpers.FunctionalTestBase):
             if is_collection:
                 log.info('Parent found {}:{}'.format(dataset.name, dataset.id))
                 parents_found += 1
-        
+
                 # open parent dataset ui
                 parent_name = dataset.name
                 collection_package_id = dataset.id
                 url = '/dataset/{}'.format(parent_name)
                 log.info('Goto URL {}'.format(url))
-                
+
                 # show children
                 url = '/dataset?collection_package_id={}'.format(collection_package_id)
                 log.info('Goto URL {}'.format(url))
@@ -110,28 +110,28 @@ class TestCollectionUI(helpers.FunctionalTestBase):
     def run_import(self, objects=None):
         # import stage
         datasets = []
-        
+
         # allow run just some objects
         if objects is None:
             # default is all objects in the right order
             objects = self.harvest_objects
         else:
             log.info('Import custom list {}'.format(objects))
-        
+
         for harvest_object in objects:
             log.info('IMPORTING %s' % harvest_object.id)
             result = self.harvester.import_stage(harvest_object)
-            
+
             log.info('ho errors 2=%s', harvest_object.errors)
             log.info('result 2=%s', result)
-            
+
             if not result:
                 log.error('Dataset not imported: {}. Errors: {}. Content: {}'.format(harvest_object.package_id, harvest_object.errors, harvest_object.content))
 
             if len(harvest_object.errors) > 0:
                 self.errors = harvest_object.errors
                 harvest_object.state = "ERROR"
-            
+
             harvest_object.state = "COMPLETE"
             harvest_object.save()
 
