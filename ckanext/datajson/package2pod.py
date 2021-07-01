@@ -58,7 +58,8 @@ class Package2Pod(object):
 
     @staticmethod
     def convert_package(package, json_export_map, redaction_enabled=False):
-        import sys, os
+        import os
+        import sys
 
         try:
             dataset = Package2Pod.export_map_fields(package, json_export_map, redaction_enabled)
@@ -76,8 +77,9 @@ class Package2Pod(object):
 
     @staticmethod
     def export_map_fields(package, json_export_map, redaction_enabled=False):
+        import os
         import string
-        import sys, os
+        import sys
 
         public_access_level = get_extra(package, 'public_access_level')
         if not public_access_level or public_access_level not in ['non-public', 'restricted public']:
@@ -161,7 +163,8 @@ class Package2Pod(object):
 
     @staticmethod
     def validate(pkg, dataset_dict):
-        import sys, os
+        import os
+        import sys
 
         global currentPackageOrg
 
@@ -321,7 +324,8 @@ class Wrappers(object):
 
     @staticmethod
     def build_contact_point(someValue):
-        import sys, os
+        import os
+        import sys
 
         try:
             contact_point_map = Wrappers.full_field_map.get('contactPoint').get('map')

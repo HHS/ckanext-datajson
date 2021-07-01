@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 try:
-    from collections import OrderedDic  # 2.7
+    from collections import OrderedDict  # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
@@ -8,10 +8,8 @@ except ImportError:
 def dataset_to_jsonld(dataset):
     from .plugin import DataJsonPlugin
 
-    ret = OrderedDict([
-       ("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
-       ("@type", "dcat:Dataset"),
-    ])
+    ret = OrderedDict([("@id", DataJsonPlugin.site_url + "/dataset/" + dataset["identifier"]),
+                       ("@type", "dcat:Dataset"), ])
 
     apply_jsonld_metadata_mapping(dataset, ret)
 
@@ -24,12 +22,11 @@ def dataset_to_jsonld(dataset):
 
 def distribution_to_jsonld(distribution):
     from .plugin import DataJsonPlugin
-    ret = OrderedDict([
-       ("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
-       ("@type", "dcat:Distribution"),
-    ])
+    ret = OrderedDict([("@id", DataJsonPlugin.site_url + "/resource/" + distribution["identifier"]),
+                       ("@type", "dcat:Distribution"), ])
     apply_jsonld_metadata_mapping(distribution, ret)
     return ret
+
 
 jsonld_metadata_mapping = {
     "title": "dcterms:title",
@@ -48,14 +45,14 @@ jsonld_metadata_mapping = {
     "dataDictionary": "dcat:dataDictionary",
     "accessURL": "dcat:accessURL",
     "webService": "pod:webService",
-    "format": "dcterms:format"  # must be a dcterms:MediaTypeOrExtent
+    "format": "dcterms:format",  # must be a dcterms:MediaTypeOrExtent
     "license": "dcterms:license",
-    "spatial": "dcterms:spatial"  # must be a dcterms:Location entity
-    "temporal": "dcterms:temporal"  # must be a dcterms:PeriodOfTime
+    "spatial": "dcterms:spatial",  # must be a dcterms:Location entity
+    "temporal": "dcterms:temporal",  # must be a dcterms:PeriodOfTime
 
     "issued": "dcterms:issued",
-    "accrualPeriodicity": "dcterms:accrualPeriodicity"  # must be a dcterms:Frequency
-    "language": "dcat:language"  # must be an IRI
+    "accrualPeriodicity": "dcterms:accrualPeriodicity",  # must be a dcterms:Frequency
+    "language": "dcat:language",  # must be an IRI
     "dataQuality": "pod:dataQuality",
     "theme": "dcat:theme",
     "references": "dcterms:references",
@@ -85,11 +82,8 @@ def apply_jsonld_metadata_mapping(data, newdict):
             if jsonld_metadata_datatypes[k] == "http://www.w3.org/2001/XMLSchema#dateTime":
                 v = v.replace(" ", "T")
 
-            v = OrderedDict([
-               ("@value", v),
-               ("@type", jsonld_metadata_datatypes[k]),
-            ])
+            v = OrderedDict([("@value", v),
+                             ("@type", jsonld_metadata_datatypes[k]), ])
 
         # add value to collection
         newdict[jsonld_metadata_mapping[k]] = v
-

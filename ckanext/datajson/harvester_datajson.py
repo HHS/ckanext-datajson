@@ -5,7 +5,10 @@ from ckanext.datajson.harvester_base import DatasetHarvesterBase
 from .parse_datajson import parse_datajson_entry
 
 
-import urllib.request, urllib.error, urllib.parse, json
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
 
 
 class DataJsonHarvester(DatasetHarvesterBase):
@@ -53,9 +56,10 @@ class DataJsonHarvester(DatasetHarvesterBase):
         # these items all with the same generic name that is confusing when
         # harvesting a bunch from different sources. It should have an accessURL
         # but Socrata fills the URL of these in under webService.
-        if isinstance(datasets, list) and len(datasets) > 0 and (datasets[0].get("accessURL") == harvest_job.source.url
-            or datasets[0].get("webService") == harvest_job.source.url) and \
-            datasets[0].get("title") == "Project Open Data, /data.json file":
+        if (isinstance(datasets, list) and len(datasets) > 0  # NOQA W503 W504
+                and (datasets[0].get("accessURL") == harvest_job.source.url or  # NOQA W503 W504
+                    datasets[0].get("webService") == harvest_job.source.url)  # NOQA W503 W504
+                and datasets[0].get("title") == "Project Open Data, /data.json file"):  # NOQA W503 W504
             datasets[0]["title"] = "%s Project Open Data data.json File" % harvest_job.source.title
 
         catalog_values = None

@@ -199,8 +199,7 @@ class TestIntegrationDataJSONHarvester28(object):
     def test_new_job_created(self, mock_harvest_source_show):
 
         def ps(context, data):
-            return {
-                    u'id': self.source.id,
+            return {u'id': self.source.id,
                     u'title': self.source.title,
                     u'state': u'active',
                     u'type': u'harvest',
@@ -208,8 +207,7 @@ class TestIntegrationDataJSONHarvester28(object):
                     u'active': False,
                     u'name': u'test_source_0',
                     u'url': self.source.url,
-                    u'extras': []
-                }
+                    u'extras': []}
 
         mock_harvest_source_show.side_effect = ps
 
@@ -225,7 +223,7 @@ class TestIntegrationDataJSONHarvester28(object):
         p.toolkit.get_action('harvest_jobs_run')(context, {'source_id': self.source.id})
 
         jobs = harvest_model.HarvestJob.filter(source=self.source).all()
-        source_config = json.loads(self.source.config or '{}')
+        source_config = json.loads(self.source.config or '{}')  # NOQA F841
 
         assert len(jobs) == 1
         assert jobs[0].status == 'Finished'
@@ -388,16 +386,13 @@ class TestIntegrationDataJSONHarvester28(object):
             Test for 2 parents with the same identifier.
             Just one belongs to the right harvest source """
 
-        results = {
-            'count': 2,
-            'results': [
-            {'id': 'pkg-1',
-             'name': 'dataset-1',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
-            {'id': 'pkg-2',
-             'name': 'dataset-2',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
-            ]}
+        results = {'count': 2,
+                   'results': [{'id': 'pkg-1',
+                                'name': 'dataset-1',
+                                'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
+                               {'id': 'pkg-2',
+                                'name': 'dataset-2',
+                                'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}]}
 
         def get_action(action_name):
             if action_name == 'package_search':
@@ -424,13 +419,11 @@ class TestIntegrationDataJSONHarvester28(object):
     def test_is_part_of_to_package_id_one_result(self, mock_get_action, mock_get_harvest_source_id):
         """ unit test for is_part_of_to_package_id function """
 
-        results = {
-            'count': 1,
-            'results': [
-                {'id': 'pkg-1',
-                 'name': 'dataset-1',
-                 'extras': [{'key': 'identifier', 'value': 'identifier'}]}
-                ]}
+        results = {'count': 1,
+                   'results': [{'id': 'pkg-1',
+                                'name': 'dataset-1',
+                                'extras': [{'key': 'identifier', 'value': 'identifier'}]}]}
+
         def get_action(action_name):
             if action_name == 'package_search':
                 return lambda ctx, data: results
@@ -457,16 +450,13 @@ class TestIntegrationDataJSONHarvester28(object):
             Test for 2 parents with the same identifier.
             Just one belongs to the right harvest source """
 
-        results = {
-            'count': 2,
-            'results': [
-            {'id': 'pkg-1',
-             'name': 'dataset-1',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
-            {'id': 'pkg-2',
-             'name': 'dataset-2',
-             'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}
-            ]}
+        results = {'count': 2,
+                   'results': [{'id': 'pkg-1',
+                                'name': 'dataset-1',
+                                'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
+                               {'id': 'pkg-2',
+                                'name': 'dataset-2',
+                                'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]}]}
 
         def get_action(action_name):
             if action_name == 'package_search':
@@ -532,11 +522,9 @@ class TestIntegrationDataJSONHarvester28(object):
 
         source_config = self.harvester.load_config(self.source)
         # include default values (filers and default)
-        expected_config = {
-            'defaults': {},
-            'filters': {},
-            'validator_schema': 'non-federal',
-            'default_groups': 'local',
-            'private_datasets': 'False'
-            }
+        expected_config = {'defaults': {},
+                           'filters': {},
+                           'validator_schema': 'non-federal',
+                           'default_groups': 'local',
+                           'private_datasets': 'False'}
         assert source_config == expected_config

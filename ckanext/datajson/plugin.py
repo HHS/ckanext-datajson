@@ -330,8 +330,8 @@ if six.PY2:
             """
             error = best_match(draft4validator.iter_errors(instance))
             if error:
-                logger.warn("===================================================\r\n" +
-                            "Validation failed, best guess of error:\r\n %s\r\nFor this dataset:\r\n", error)
+                logger.warn(("===================================================\r\n"
+                            "Validation failed, best guess of error:\r\n %s\r\nFor this dataset:\r\n"), error)
                 return False
             return True
 

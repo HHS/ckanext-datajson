@@ -1,8 +1,12 @@
 from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
+import os
 import simplejson as json
-import urllib.request, urllib.error, urllib.parse, os, sys
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 
 # Change these variables based on environment
 big_datajson_source = 'http://localhost/data.json'
@@ -39,18 +43,19 @@ def main(dest=None):
         if org in datasets_grouped_by_org:
             datasets_grouped_by_org[org].append(dataset)
         else:
-            datasets_grouped_by_org[org]=[dataset]
+            datasets_grouped_by_org[org] = [dataset]
 
     # write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir, org_name + '.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
-if __name__=="__main__":
-    if len(sys.argv)>2:
+
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
         print("build_organizations.py <optional:/path/to/output/folder>")
 
-    if len(sys.argv)==2:
+    if len(sys.argv) == 2:
         if not os.path.exists(sys.argv[1]):
             print("Path does not exist: {0}".format(sys.argv[1]))
         elif not os.path.isdir(sys.argv[1]):
@@ -88,18 +93,19 @@ def enterprise_main(dest=None):
         if org in datasets_grouped_by_org:
             datasets_grouped_by_org[org].append(dataset)
         else:
-            datasets_grouped_by_org[org]=[dataset]
+            datasets_grouped_by_org[org] = [dataset]
 
     # write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir, org_name + '_enterprise.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
-if __name__=="__main__":
-    if len(sys.argv)>2:
+
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
         print("build_organizations.py <optional:/path/to/output/folder>")
 
-    if len(sys.argv)==2:
+    if len(sys.argv) == 2:
         if not os.path.exists(sys.argv[1]):
             print("Path does not exist: {0}".format(sys.argv[1]))
         elif not os.path.isdir(sys.argv[1]):

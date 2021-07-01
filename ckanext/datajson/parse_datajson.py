@@ -9,8 +9,8 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
     # 5.resources
 
     # 1. package["tags"]
-    package["tags"] = [ { "name": munge_title_to_name(t) } for t in
-        package.get("tags", "") if t.strip() != ""]
+    package["tags"] = [{"name": munge_title_to_name(t)} for t in
+                       package.get("tags", "") if t.strip() != ""]
 
     # 2. package["license"]
     licenses = {
@@ -30,11 +30,11 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
         'Other (Public Domain)': 'other-pd',
         'UK Open Government Licence (OGL)': 'uk-ogl',
 
-        # add more to complete the list 
+        # add more to complete the list
         'U.S. Public Domain Works': 'us-pd',
         'www.usa.gov/publicdomain/label/1.0': 'us-pd',
 
-        # url (without protocol and trailing slash ) can also be used as key 
+        # url (without protocol and trailing slash ) can also be used as key
         'creativecommons.org/licenses/by/4.0': 'cc-by',
         'creativecommons.org/licenses/by-sa/4.0': 'cc-by-sa',
         'creativecommons.org/publicdomain/zero/1.0': 'cc-zero',
@@ -142,7 +142,7 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
 def extra(package, key, value):
     if not value:
         return
-    package.setdefault("extras", []).append({ "key": key, "value": value })
+    package.setdefault("extras", []).append({"key": key, "value": value})
 
 
 def find_extra(pkg, key, default):
@@ -181,10 +181,10 @@ def normalize_format(format, raise_on_unknown=False):
         if m.group(1) == "application/x-msaccess":
             return "Access"
         if raise_on_unknown:
-            raise ValueError(    # caught & ignored by caller
+            raise ValueError()    # caught & ignored by caller
         return "Other"
     if format == "text":
         return "Text"
     if raise_on_unknown and "?" in format:
-        raise ValueError(    # weird value we should try to filter out; exception is caught & ignored by caller
-    return format.upper(    # hope it's one of our formats by converting to upprecase
+        raise ValueError()    # weird value we should try to filter out; exception is caught & ignored by caller
+    return format.upper()    # hope it's one of our formats by converting to upprecase

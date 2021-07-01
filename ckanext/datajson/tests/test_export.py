@@ -31,10 +31,8 @@ class TestExport(FunctionalTestBase):
 
         self.user = factories.Sysadmin()
         self.user_name = self.user['name'].encode('ascii')
-        self.organization = factories.Organization(
-            name='myorg',
-            users=[{'name': self.user_name, 'capacity': 'Admin'}]
-            )
+        self.organization = factories.Organization(name='myorg',
+                                                   users=[{'name': self.user_name, 'capacity': 'Admin'}])
 
         dataset = {
             'public_access_level': 'public',
