@@ -75,7 +75,7 @@ class MockDataJSONHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header('Content-Type', content_type)
         self.end_headers()
-        self.wfile.write(content)
+        self.wfile.write(content.encode('utf-8'))
         self.wfile.close()
 
 
