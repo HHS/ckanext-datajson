@@ -4,7 +4,7 @@ standard_library.install_aliases()
 import simplejson as json
 import urllib.request, urllib.error, urllib.parse, os, sys
 
-#Change these variables based on environment
+# Change these variables based on environment
 big_datajson_source = 'http://localhost/data.json'
 enterprise_datajson_source = 'http://localhost/enterprisedata.json'
 base_path = os.path.dirname(os.path.realpath(__file__))
@@ -17,21 +17,21 @@ def main(dest=None):
     """
     output_dir = dest if dest else default_dest
 
-    #Make sure the destination folder exists
+    # Make sure the destination folder exists
     if not dest and not os.path.exists(default_dest):
         os.makedirs(default_dest)
 
-    #Get the contents of the big data.json file
+    # Get the contents of the big data.json file
     response = None
     try:
         response = urllib.request.urlopen(big_datajson_source)
     except urllib.error.URLError:
-        #Fall back on default
+        # Fall back on default
         response = urllib.request.urlopen('http://localhost:5000/data.json')
 
     datasets = json.load(response)
 
-    #group datasets by organization
+    # group datasets by organization
     datasets_grouped_by_org = {}
     for dataset in datasets:
         org = dataset['organization']
@@ -40,7 +40,7 @@ def main(dest=None):
         else:
             datasets_grouped_by_org[org]=[dataset]
 
-    #write the organization.json files
+    # write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir, org_name + '.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
@@ -65,21 +65,21 @@ def enterprise_main(dest=None):
     """
     output_dir = dest if dest else default_dest
 
-    #Make sure the destination folder exists
+    # Make sure the destination folder exists
     if not dest and not os.path.exists(default_dest):
         os.makedirs(default_dest)
 
-    #Get the contents of the big data.json file
+    # Get the contents of the big data.json file
     response = None
     try:
         response = urllib.request.urlopen(enterprise_datajson_source)
     except urllib.error.URLError:
-        #Fall back on default
+        # Fall back on default
         response = urllib.request.urlopen('http://localhost:5000/enterprisedata.json')
 
     datasets = json.load(response)
 
-    #group datasets by organization
+    # group datasets by organization
     datasets_grouped_by_org = {}
     for dataset in datasets:
         org = dataset['organization']
@@ -88,7 +88,7 @@ def enterprise_main(dest=None):
         else:
             datasets_grouped_by_org[org]=[dataset]
 
-    #write the organization.json files
+    # write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
         with open(os.path.join(output_dir, org_name + '_enterprise.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)

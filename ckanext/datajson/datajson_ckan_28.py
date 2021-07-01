@@ -43,8 +43,8 @@ class DatasetHarvesterBase(HarvesterBase):
     _user_name = None
 
     # SUBCLASSES MUST IMPLEMENT
-    #HARVESTER_VERSION = "1.0"
-    #def info(self):
+    # HARVESTER_VERSION = "1.0"
+    # def info(self):
     #    return {
     #        'name': 'harvester_base',
     #        'title': 'Base Harvester',
