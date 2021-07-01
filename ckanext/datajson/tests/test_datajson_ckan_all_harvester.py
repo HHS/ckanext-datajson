@@ -5,6 +5,7 @@ from builtins import object
 from datetime import datetime
 import json
 import logging
+import six
 
 import pytest
 
@@ -48,7 +49,7 @@ class TestDataJSONHarvester(object):
         cls.org = Organization()
 
     def run_gather(self, url, config_str='{}'):
-        self.source = HarvestSourceObj(url=url,owner_org=self.org['id'], config=config_str)
+        self.source = HarvestSourceObj(url=url, owner_org=self.org['id'], config=config_str)
         self.job = HarvestJobObj(source=self.source)
 
         self.harvester = DataJsonHarvester()
@@ -216,7 +217,13 @@ class TestDataJSONHarvester(object):
 
         pytest.raises(URLError)
         assert self.job.gather_errors[0].message == "HTTP Error getting json source: HTTP Error 404: Not Found."
-        assert self.job.gather_errors[1].message == "Error loading json content: not enough values to unpack (expected 2, got 0)."
+        if six.PY2:
+            assert self.job.gather_errors[1].message == ("Error loading json content: need more "
+                                                         "than 0 values to unpack.")
+        else:
+            assert self.job.gather_errors[1].message == ("Error loading json content:"
+                                                         " not enough values to unpack"
+                                                         " (expected 2, got 0).")
 
     def test_source_returning_url_error(self):
         # URL failing SSL
@@ -225,7 +232,13 @@ class TestDataJSONHarvester(object):
 
         pytest.raises(URLError)
         assert "URL Error getting json source: <urlopen error" in self.job.gather_errors[0].message
-        assert self.job.gather_errors[1].message == "Error loading json content: not enough values to unpack (expected 2, got 0)."
+        if six.PY2:
+            assert self.job.gather_errors[1].message == ("Error loading json content: need more "
+                                                         "than 0 values to unpack.")
+        else:
+            assert self.job.gather_errors[1].message == ("Error loading json content:"
+                                                         " not enough values to unpack"
+                                                         " (expected 2, got 0).")
 
     def get_datasets_from_2_collection(self):
         url = 'http://127.0.0.1:%s/collection-2-parent-4-children.data.json' % self.mock_port
@@ -237,7 +250,7 @@ class TestDataJSONHarvester(object):
         datasets = self.run_import()
         assert len(datasets) == 6
         return datasets
-    
+
     @patch('ckanext.harvest.logic.action.update.harvest_source_show')
     def test_new_job_created(self, mock_harvest_source_show):
 
