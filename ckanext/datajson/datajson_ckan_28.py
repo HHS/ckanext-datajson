@@ -115,7 +115,8 @@ class DatasetHarvesterBase(HarvesterBase):
             self._save_gather_error("Error loading json content: %s." % (e), harvest_job)
             return []
 
-        if len(source_datasets) == 0: return []
+        if len(source_datasets) == 0:
+            return []
 
         DATAJSON_SCHEMA = {
             "https://project-open-data.cio.gov/v1.1/schema": '1.1',
@@ -277,8 +278,10 @@ class DatasetHarvesterBase(HarvesterBase):
 
         # Remove packages no longer in the remote catalog.
         for upstreamid, pkg in list(existing_datasets.items()):
-            if upstreamid in seen_datasets: continue # was just updated
-            if pkg.get("state") == "deleted": continue # already deleted
+            if upstreamid in seen_datasets:
+                continue # was just updated
+            if pkg.get("state") == "deleted":
+                continue # already deleted
             pkg["state"] = "deleted"
             log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
             get_action('package_update')(self.context(), pkg)
@@ -681,7 +684,8 @@ class DatasetHarvesterBase(HarvesterBase):
             del unmapped[100:]
             for key in unmapped:
                 value = dataset_processed.get(key, "")
-                if value is not None: extras.append({"key": key, "value": value})
+                if value is not None:
+                    extras.append({"key": key, "value": value})
 
         # if theme is geospatial/Geospatial, we tag it in metadata_type.
         themes = self.find_extra(pkg, "theme")

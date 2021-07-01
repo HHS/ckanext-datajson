@@ -413,7 +413,8 @@ def do_validation(doc, errors_array, seen_identifiers):
 
 def add_error(errs, severity, heading, description, context=None):
     s = errs.setdefault((severity, heading), {}).setdefault(description, set())
-    if context: s.add(context)
+    if context:
+        s.add(context)
 
 
 def nice_type_name(data_type):
@@ -468,10 +469,12 @@ def is_redacted(field):
 
 def check_url_field(required, obj, field_name, dataset_name, errs, allow_redacted=False):
     # checks that a required or optional field, if specified, looks like a URL
-    if not required and (field_name not in obj or obj[field_name] is None): return True  # not required, so OK
-    if not check_required_field(obj, field_name, (str, str), dataset_name,
-                                errs): return False  # just checking data type
-    if allow_redacted and is_redacted(obj[field_name]): return True
+    if not required and (field_name not in obj or obj[field_name] is None):
+        return True  # not required, so OK
+    if not check_required_field(obj, field_name, (str, str), dataset_name, errs):
+        return False  # just checking data type
+    if allow_redacted and is_redacted(obj[field_name]):
+        return True
     if not rfc3987_url.match(obj[field_name]):
         add_error(errs, 5, "Invalid Required Field Value",
                   "The '%s' field has an invalid rfc3987 URL: \"%s\"." % (field_name, obj[field_name]), dataset_name)

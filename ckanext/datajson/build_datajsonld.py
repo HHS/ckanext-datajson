@@ -69,10 +69,12 @@ jsonld_metadata_datatypes = {
 def apply_jsonld_metadata_mapping(data, newdict):
     for k, v in list(data.items()):
         # skip null/empty fields
-        if v is None or (isinstance(v, str) and v.strip() == ""): continue
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+            continue
 
         # skip fields with no mapping to RDF
-        if k not in jsonld_metadata_mapping: continue
+        if k not in jsonld_metadata_mapping:
+            continue
 
         # specially handle literal fields with datatypes
         if k in jsonld_metadata_datatypes:
