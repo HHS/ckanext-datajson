@@ -542,10 +542,10 @@ class DatasetHarvesterBase(HarvesterBase):
 
         SKIP = ["accessURL", "webService", "format", "distribution"] # will go into pkg["resources"]
         # also skip the processed_how key, it was added to indicate how we processed the dataset.
-        SKIP.append("processed_how");
+        SKIP.append("processed_how")
 
         SKIP_V1_1 = ["@type", "isPartOf", "distribution"]
-        SKIP_V1_1.append("processed_how");
+        SKIP_V1_1.append("processed_how")
 
         if lowercase_conversion:
 
