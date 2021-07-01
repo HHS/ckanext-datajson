@@ -42,7 +42,7 @@ def main(dest=None):
 
     #write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
-        with open(os.path.join(output_dir,org_name + '.json'), 'w') as outfile:
+        with open(os.path.join(output_dir, org_name + '.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
 if __name__=="__main__":
@@ -90,7 +90,7 @@ def enterprise_main(dest=None):
 
     #write the organization.json files
     for org_name, org_datasets in datasets_grouped_by_org.items():
-        with open(os.path.join(output_dir,org_name + '_enterprise.json'), 'w') as outfile:
+        with open(os.path.join(output_dir, org_name + '_enterprise.json'), 'w') as outfile:
             json.dump(org_datasets, outfile)
 
 if __name__=="__main__":

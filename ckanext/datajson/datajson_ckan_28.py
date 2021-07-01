@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 SIZE_CHECK_KEYS = ['spatial']
 MAX_SIZE = 32766
 VALIDATION_SCHEMA = [('', 'Project Open Data (Federal)'),
-                     ('non-federal', 'Project Open Data (Non-Federal)'),]
+                     ('non-federal', 'Project Open Data (Non-Federal)'), ]
 
 def validate_schema(schema):
     if schema not in [s[0] for s in VALIDATION_SCHEMA]:
@@ -495,7 +495,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "theme": "extras__theme",
             "dataDictionary": "extras__dataDictionary", # !data_dict
             "dataQuality": "extras__dataQuality",
-            "accrualPeriodicity":"extras__accrualPeriodicity",
+            "accrualPeriodicity": "extras__accrualPeriodicity",
             "landingPage": "extras__landingPage",
             "language": "extras__language",
             "primaryITInvestmentUII": "extras__primaryITInvestmentUII", # !PrimaryITInvestmentUII
@@ -515,7 +515,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "keyword": "tags",
             "modified": "extras__modified", # ! revision_timestamp
             "publisher": "extras__publisher", # !owner_org
-            "contactPoint": {"fn":"maintainer", "hasEmail":"maintainer_email"},
+            "contactPoint": {"fn": "maintainer", "hasEmail": "maintainer_email"},
             "identifier": "extras__identifier", # !id
             "accessLevel": "extras__accessLevel",
 
@@ -529,7 +529,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "theme": "extras__theme",
             "dataDictionary": "extras__dataDictionary", # !data_dict
             "dataQuality": "extras__dataQuality",
-            "accrualPeriodicity":"extras__accrualPeriodicity",
+            "accrualPeriodicity": "extras__accrualPeriodicity",
             "landingPage": "extras__landingPage",
             "language": "extras__language",
             "primaryITInvestmentUII": "extras__primaryITInvestmentUII", # !PrimaryITInvestmentUII
@@ -550,13 +550,13 @@ class DatasetHarvesterBase(HarvesterBase):
         if lowercase_conversion:
 
             mapping_processed = {}
-            for k,v in list(MAPPING.items()):
+            for k, v in list(MAPPING.items()):
                 mapping_processed[k.lower()] = v
 
             skip_processed = [k.lower() for k in SKIP]
 
             dataset_processed = {'processed_how': ['lowercase']}
-            for k,v in list(dataset.items()):
+            for k, v in list(dataset.items()):
               if k.lower() in list(mapping_processed.keys()):
                 dataset_processed[k.lower()] = v
               else:
@@ -566,7 +566,7 @@ class DatasetHarvesterBase(HarvesterBase):
               dataset_processed['distribution'] = []
               for d in dataset['distribution']:
                 d_lower = {}
-                for k,v in list(d.items()):
+                for k, v in list(d.items()):
                   if k.lower() in list(mapping_processed.keys()):
                     d_lower[k.lower()] = v
                   else:
@@ -690,17 +690,17 @@ class DatasetHarvesterBase(HarvesterBase):
         # if theme is geospatial/Geospatial, we tag it in metadata_type.
         themes = self.find_extra(pkg, "theme")
         if themes and ('geospatial' in [x.lower() for x in themes]):
-            extras.append({'key':'metadata_type', 'value':'geospatial'})
+            extras.append({'key': 'metadata_type', 'value': 'geospatial'})
 
         if is_collection:
-            extras.append({'key':'collection_metadata', 'value':'true'})
+            extras.append({'key': 'collection_metadata', 'value': 'true'})
         elif parent_pkg_id:
             extras.append(
-                {'key':'collection_package_id', 'value':parent_pkg_id}
+                {'key': 'collection_package_id', 'value': parent_pkg_id}
             )
 
         for k, v in catalog_extras.items():
-            extras.append({'key':k, 'value':v})
+            extras.append({'key': k, 'value': v})
 
         # Set specific information about the dataset.
         self.set_dataset_info(pkg, dataset_processed, dataset_defaults, schema_version)

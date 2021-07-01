@@ -218,7 +218,7 @@ class TestIntegrationDataJSONHarvester28(object):
 
         datasets = self.get_datasets_from_2_collection()
 
-        context = {'model': model, 'user': self.user['name'], 'session':model.Session}
+        context = {'model': model, 'user': self.user['name'], 'session': model.Session}
 
         # fake job status before final RUN command.
         self.job.status = u'Running'
@@ -392,7 +392,7 @@ class TestIntegrationDataJSONHarvester28(object):
 
         results = {
             'count': 2,
-            'results':[
+            'results': [
             {'id': 'pkg-1',
              'name': 'dataset-1',
              'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
@@ -461,7 +461,7 @@ class TestIntegrationDataJSONHarvester28(object):
 
         results = {
             'count': 2,
-            'results':[
+            'results': [
             {'id': 'pkg-1',
              'name': 'dataset-1',
              'extras': [{'key': 'identifier', 'value': 'custom-identifier'}]},
