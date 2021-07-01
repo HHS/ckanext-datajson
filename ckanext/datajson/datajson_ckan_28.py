@@ -68,7 +68,8 @@ class DatasetHarvesterBase(HarvesterBase):
 
         ret = {
             "filters": {},  # map data.json field name to list of values one of which must be present
-            "defaults": {},  # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
+            "defaults": {},  # map field name to value to supply as default if none exists,
+                             # handled by the actual importer module, so the field names may be arbitrary
         }
 
         if harvest_source.config is None or harvest_source.config == '':
@@ -236,7 +237,10 @@ class DatasetHarvesterBase(HarvesterBase):
                 if pkg.get("state") == "active" \
                         and dataset['identifier'] not in existing_parents_demoted \
                         and dataset['identifier'] not in existing_datasets_promoted \
-                        and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset, source, catalog_extras, schema_version):
+                        and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset,
+                                                                                                   source,
+                                                                                                   catalog_extras,
+                                                                                                   schema_version):
                     log.info('SKIP: {}'.format(dataset['identifier']))
                     continue
             else:
@@ -267,7 +271,8 @@ class DatasetHarvesterBase(HarvesterBase):
                 guid=pkg_id,
                 job=harvest_job,
                 extras=extras,
-                content=json.dumps(dataset, sort_keys=True))  # use sort_keys to preserve field order so hashes of this string are constant from run to run
+                content=json.dumps(dataset, sort_keys=True))    # use sort_keys to preserve field order so
+            #                                                     hashes of this string are constant from run to run
             obj.save()
 
             # we are sorting parent datasets in the list first and then children so that the parents are
@@ -284,7 +289,9 @@ class DatasetHarvesterBase(HarvesterBase):
             if pkg.get("state") == "deleted":
                 continue  # already deleted
             pkg["state"] = "deleted"
-            log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
+            log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"],
+                                                                                 pkg["id"],
+                                                                                 harvest_job.source.url))
             get_action('package_update')(self.context(), pkg)
             obj = HarvestObject(guid=pkg_id,
                                 package_id=pkg["id"],
@@ -358,7 +365,7 @@ class DatasetHarvesterBase(HarvesterBase):
     def get_harvest_source_id(self, package_id):
         harvest_object = model.Session.query(HarvestObject) \
             .filter(HarvestObject.package_id == package_id) \
-            .filter(HarvestObject.current is True).first()
+            .filter(HarvestObject.current == True).first()  # NOQA If this is 'is' it doesn't work
 
         return harvest_object.source.id if harvest_object else None
 
@@ -740,7 +747,10 @@ class DatasetHarvesterBase(HarvesterBase):
                 pkg = get_action('package_create')(self.context(), pkg)
                 log.warn('created package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
             except Exception as e:
-                log.error('Failed to create package %s from %s\n\t%s\n\t%s' % (pkg["name"], harvest_object.source.url, str(pkg), str(e)))
+                log.error('Failed to create package %s from %s\n\t%s\n\t%s' % (pkg["name"],
+                                                                               harvest_object.source.url,
+                                                                               str(pkg),
+                                                                               str(e)))
                 raise
 
         # Flag the other HarvestObjects linking to this package as not current anymore
@@ -768,7 +778,9 @@ class DatasetHarvesterBase(HarvesterBase):
     def make_upstream_content_hash(self, datasetdict, harvest_source,
                                    catalog_extras, schema_version='1.0'):
         if schema_version == '1.0':
-            return hashlib.sha1(json.dumps(datasetdict, sort_keys=True) + "|" + harvest_source.config + "|" + self.HARVESTER_VERSION).hexdigest()
+            return hashlib.sha1(json.dumps(datasetdict, sort_keys=True) +  # NOQA W504
+                                "|" + harvest_source.config + "|" +  # NOQA W504
+                                self.HARVESTER_VERSION).hexdigest()
         else:
             return hashlib.sha1(json.dumps(datasetdict, sort_keys=True) + "|" + json.dumps(catalog_extras,
                                 sort_keys=True)).hexdigest()
@@ -807,7 +819,8 @@ class DatasetHarvesterBase(HarvesterBase):
             # (choosing new random text) by just reusing the existing package's
             # name.
             pkg_obj = Session.query(Package).filter(Package.id == exclude_existing_package).first()
-            if pkg_obj:  # the package may not exist yet because we may be passed the desired package GUID before a new package is instantiated
+            if pkg_obj:     # the package may not exist yet because we may be passed the desired
+                #             package GUID before a new package is instantiated
                 return pkg_obj.name
 
         # Append some random text to the URL. Hope that with five character

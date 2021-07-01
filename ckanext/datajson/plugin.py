@@ -249,7 +249,8 @@ if six.PY2:
                                 # ]))
 
                                 continue
-                                # if 'redacted' == export_type and re.match(r'[Nn]on-public', extras.get('public_access_level')):
+                                # if ('redacted' == export_type and
+                                #         re.match(r'[Nn]on-public', extras.get('public_access_level'))):
                                 #     continue
                         # draft = all draft-only datasets
                         elif 'draft' == export_type:

@@ -137,7 +137,9 @@ class TestCollectionUI(helpers.FunctionalTestBase):
             log.info('result 2=%s', result)
 
             if not result:
-                log.error('Dataset not imported: {}. Errors: {}. Content: {}'.format(harvest_object.package_id, harvest_object.errors, harvest_object.content))
+                log.error('Dataset not imported: {}. Errors: {}. Content: {}'.format(harvest_object.package_id,
+                                                                                     harvest_object.errors,
+                                                                                     harvest_object.content))
 
             if len(harvest_object.errors) > 0:
                 self.errors = harvest_object.errors

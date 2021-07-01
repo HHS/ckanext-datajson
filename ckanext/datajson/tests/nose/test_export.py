@@ -111,7 +111,7 @@ class TestExport(FunctionalTestBase):
                     "language": ["en-US"]
                     }
                 ]
-        } """
+        } """  # NOQA
 
         data_res = json.loads(raw)
         datasets = data_res['dataset']

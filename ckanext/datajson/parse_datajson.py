@@ -115,7 +115,8 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
         accessurl_value = d.get(acccessurl_key).strip() if d.get(acccessurl_key) else ''
         webservice_value = d.get(webservice_key).strip() if d.get(webservice_key) else ''
 
-        which_value = (accessurl_value or webservice_value) if schema_version == '1.0' else (downloadurl_value or accessurl_value)
+        which_value = ((accessurl_value or webservice_value) if schema_version == '1.0'
+                       else (downloadurl_value or accessurl_value))
 
         if which_value:
             r = {}
