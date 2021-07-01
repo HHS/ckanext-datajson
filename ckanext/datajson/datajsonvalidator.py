@@ -87,7 +87,6 @@ import lepl.apps.rfc3696
 email_validator = lepl.apps.rfc3696.Email()
 
 # load the OMB bureau codes on first load of this module
-import urllib.request, urllib.parse, urllib.error
 import csv
 import os
 

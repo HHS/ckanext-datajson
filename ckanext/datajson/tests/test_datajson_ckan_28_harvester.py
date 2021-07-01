@@ -8,25 +8,22 @@ import logging
 
 import pytest
 
-from urllib.error import URLError
-from ckan.plugins.toolkit import config
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import ckanext.harvest.queue as queue
 from . import mock_datajson_source
 from ckan import model
-from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from ckanext.datajson.exceptions import ParentNotHarvestedException
 from .factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
 
 try:
-    from ckan.tests.helpers import reset_db, call_action
-    from ckan.tests.factories import Organization, Group, Sysadmin
+    from ckan.tests.helpers import reset_db
+    from ckan.tests.factories import Organization, Sysadmin
 except ImportError:
-    from ckan.new_tests.helpers import reset_db, call_action
-    from ckan.new_tests.factories import Organization, Group, Sysadmin
+    from ckan.new_tests.helpers import reset_db
+    from ckan.new_tests.factories import Organization, Sysadmin
 
 log = logging.getLogger(__name__)
 

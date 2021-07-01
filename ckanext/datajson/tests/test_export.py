@@ -3,19 +3,16 @@ from future import standard_library
 standard_library.install_aliases()
 import json
 import zipfile
-from io import StringIO
-import ckan.plugins as p
 
 import ckanext.harvest.model as harvest_model
 
 from ckan.tests.helpers import FunctionalTestBase
 from ckan.tests import factories
-from ckan.common import config
 
 try:
-    from ckan.tests.helpers import reset_db, call_action
+    from ckan.tests.helpers import reset_db
 except ImportError:
-    from ckan.new_tests.helpers import reset_db, call_action
+    from ckan.new_tests.helpers import reset_db
 
 class TestExport(FunctionalTestBase):
 

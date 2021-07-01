@@ -5,31 +5,26 @@ from builtins import object
 from datetime import datetime
 import json
 import logging
-from urllib.error import URLError
-from pylons import config
 import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 import ckanext.harvest.queue as queue
 from . import mock_datajson_source
 from ckan import model
-from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from ckanext.datajson.exceptions import ParentNotHarvestedException
 from .factories import HarvestJobObj, HarvestSourceObj
 from mock import Mock, patch
-from nose.tools import (assert_equal, assert_false, assert_in, assert_is_none,
-                        assert_raises, assert_true)
+from nose.tools import (assert_equal, assert_in, assert_raises)
 
 try:
-    from ckan.tests.helpers import reset_db, call_action
-    from ckan.tests.factories import Organization, Group, Sysadmin
+    from ckan.tests.helpers import reset_db
+    from ckan.tests.factories import Organization, Sysadmin
 except ImportError:
-    from ckan.new_tests.helpers import reset_db, call_action
-    from ckan.new_tests.factories import Organization, Group, Sysadmin
+    from ckan.new_tests.helpers import reset_db
+    from ckan.new_tests.factories import Organization, Sysadmin
 
 log = logging.getLogger(__name__)
 
-from nose.plugins.skip import SkipTest
 
 class TestIntegrationDataJSONHarvester28(object):
     """Integration tests using a complete CKAN 2.8+ harvest stack. Unlike unit tests,

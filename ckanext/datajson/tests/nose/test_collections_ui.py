@@ -3,12 +3,10 @@ import json
 import logging
 from . import mock_datajson_source
 from ckan import model
-import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
-from nose.tools import assert_equal, assert_not_in, assert_in
+from nose.tools import assert_equal, assert_in
 from .factories import HarvestJobObj, HarvestSourceObj
-from nose.plugins.skip import SkipTest
 try:
     from ckan.tests import helpers, factories
 except ImportError:

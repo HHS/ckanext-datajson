@@ -4,19 +4,17 @@ from builtins import zip
 from builtins import str
 from ckan import model
 from ckan import plugins as p
-from ckan.model import Session, Package, PackageExtra
-from ckan.logic import ValidationError, NotFound, get_action
+from ckan.model import Session, Package
+from ckan.logic import NotFound, get_action
 from ckan.logic.validators import name_validator
 from ckan.lib.munge import munge_title_to_name
-from ckan.lib.search.index import PackageSearchIndex
 from ckan.lib.navl.dictization_functions import Invalid, DataError
 from ckan.lib.navl.validators import ignore_empty
 
-from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
-                                    HarvestObjectError, HarvestObjectExtra, HarvestSource
+from ckanext.harvest.model import HarvestObject, HarvestObjectError, HarvestObjectExtra
 from ckanext.harvest.harvesters.base import HarvesterBase
 from ckanext.datajson.exceptions import ParentNotHarvestedException
-import uuid, datetime, hashlib, urllib.request, urllib.error, urllib.parse, json, yaml, json, os
+import uuid, hashlib, json, yaml, json, os
 
 from jsonschema.validators import Draft4Validator
 from jsonschema import FormatChecker

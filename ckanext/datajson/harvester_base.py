@@ -1,5 +1,3 @@
-from ckan import plugins as p
-
 from ckanext.datajson.datajson_ckan_28 import DatasetHarvesterBase
 
 VALIDATION_SCHEMA = [('', 'Project Open Data (Federal)'),

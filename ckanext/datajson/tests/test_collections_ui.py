@@ -1,9 +1,7 @@
 from __future__ import absolute_import
-import json
 import logging
 from . import mock_datajson_source
 from ckan import model
-import ckan.plugins as p
 import ckanext.harvest.model as harvest_model
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
 from .factories import HarvestJobObj, HarvestSourceObj

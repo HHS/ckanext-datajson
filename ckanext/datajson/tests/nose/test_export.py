@@ -4,9 +4,6 @@ standard_library.install_aliases()
 import json
 import zipfile
 from nose.tools import assert_in, assert_not_in
-from io import StringIO
-from nose.plugins.skip import SkipTest
-import ckan.plugins as p
 
 try:
     from ckan.tests.helpers import FunctionalTestBase

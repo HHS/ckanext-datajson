@@ -27,10 +27,10 @@ from .package2pod import Package2Pod
 logger = logging.getLogger(__name__)
 draft4validator = get_validator()
 
-try:
-    from collections import OrderedDict  # 2.7
-except ImportError:
-    from sqlalchemy.util import OrderedDict
+# try:
+#     from collections import OrderedDict  # 2.7
+# except ImportError:
+#     from sqlalchemy.util import OrderedDict
 
 
 class DataJsonPlugin(p.SingletonPlugin):
