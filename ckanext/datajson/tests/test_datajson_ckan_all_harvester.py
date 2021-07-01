@@ -216,7 +216,7 @@ class TestDataJSONHarvester(object):
 
         pytest.raises(URLError)
         assert self.job.gather_errors[0].message == "HTTP Error getting json source: HTTP Error 404: Not Found."
-        assert self.job.gather_errors[1].message == "Error loading json content: need more than 0 values to unpack."
+        assert self.job.gather_errors[1].message == "Error loading json content: not enough values to unpack (expected 2, got 0)."
 
     def test_source_returning_url_error(self):
         # URL failing SSL
@@ -225,7 +225,7 @@ class TestDataJSONHarvester(object):
 
         pytest.raises(URLError)
         assert "URL Error getting json source: <urlopen error" in self.job.gather_errors[0].message
-        assert self.job.gather_errors[1].message == "Error loading json content: need more than 0 values to unpack."
+        assert self.job.gather_errors[1].message == "Error loading json content: not enough values to unpack (expected 2, got 0)."
 
     def get_datasets_from_2_collection(self):
         url = 'http://127.0.0.1:%s/collection-2-parent-4-children.data.json' % self.mock_port

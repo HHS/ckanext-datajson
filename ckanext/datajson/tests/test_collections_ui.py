@@ -17,13 +17,17 @@ class TestCollectionUI(helpers.FunctionalTestBase):
 
     @classmethod
     def setup_class(cls):
-        helpers.reset_db()
         super(TestCollectionUI, cls).setup_class()
-        harvest_model.setup()
         cls.user = factories.Sysadmin()
         cls.extra_environ = {'REMOTE_USER': cls.user['name'].encode('ascii')}
         cls.mock_port = 8953
         mock_datajson_source.serve(cls.mock_port)
+
+    @classmethod
+    def setup(cls):
+        # Start data json sources server we can test harvesting against it
+        helpers.reset_db()
+        harvest_model.setup()
 
     def test_collection_ui(self):
         """ check if the user interface show collection as we expect """
@@ -58,7 +62,7 @@ class TestCollectionUI(helpers.FunctionalTestBase):
                 url = '/dataset?collection_package_id={}'.format(collection_package_id)
                 log.info('Goto URL {}'.format(url))
                 res_redirect = self.app.get(url)
-                assert '2 datasets found' in res_redirect.unicode_body
+                assert '2 datasets found' in res_redirect.body
 
         assert parents_found == 2
 
