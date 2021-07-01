@@ -2,6 +2,7 @@ from ckan.lib.munge import munge_title_to_name
 
 import re
 
+
 def parse_datajson_entry(datajson, package, defaults, schema_version):
     # four fields need extra handling, which are
     # 1.tag, 2.license, 3.maintainer_email, 4.publisher_hierarchy,
@@ -137,10 +138,12 @@ def parse_datajson_entry(datajson, package, defaults, schema_version):
 
             package["resources"].append(r)
 
+
 def extra(package, key, value):
     if not value:
         return
     package.setdefault("extras", []).append({ "key": key, "value": value })
+
 
 def find_extra(pkg, key, default):
     for extra in pkg["extras"]:
@@ -152,6 +155,7 @@ def find_extra(pkg, key, default):
 
     return ret
 
+
 def set_extra(pkg, key, value):
     for extra in pkg["extras"]:
         if extra["key"] == key:
@@ -159,6 +163,7 @@ def set_extra(pkg, key, value):
             break
     else:
         pkg["extras"].append({"key": key, "value": value})
+
 
 def normalize_format(format, raise_on_unknown=False):
     if format is None:

@@ -12,6 +12,7 @@ import pkg_resources
 
 log = logging.getLogger("harvester")
 
+
 class MockDataJSONHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         log.info('GET mock at: {}'.format(self.path))

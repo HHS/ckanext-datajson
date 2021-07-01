@@ -4,6 +4,7 @@ try:
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
+
 def dataset_to_jsonld(dataset):
     from .plugin import DataJsonPlugin
 
@@ -19,6 +20,7 @@ def dataset_to_jsonld(dataset):
         ret.setdefault("dcat:distribution", []).append(dd)
 
     return ret
+
 
 def distribution_to_jsonld(distribution):
     from .plugin import DataJsonPlugin
@@ -65,6 +67,7 @@ jsonld_metadata_datatypes = {
     "modified": "http://www.w3.org/2001/XMLSchema#dateTime",
     "issued": "http://www.w3.org/2001/XMLSchema#dateTime",
 }
+
 
 def apply_jsonld_metadata_mapping(data, newdict):
     for k, v in list(data.items()):

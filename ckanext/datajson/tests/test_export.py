@@ -14,6 +14,7 @@ try:
 except ImportError:
     from ckan.new_tests.helpers import reset_db
 
+
 class TestExport(FunctionalTestBase):
 
     @classmethod

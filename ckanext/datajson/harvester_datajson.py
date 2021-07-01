@@ -7,6 +7,7 @@ from .parse_datajson import parse_datajson_entry
 
 import urllib.request, urllib.error, urllib.parse, json
 
+
 class DataJsonHarvester(DatasetHarvesterBase):
     '''
     A Harvester for /data.json files.
@@ -67,6 +68,7 @@ class DataJsonHarvester(DatasetHarvesterBase):
 
     def set_dataset_info(self, pkg, dataset, dataset_defaults, schema_version):
         parse_datajson_entry(dataset, pkg, dataset_defaults, schema_version)
+
 
 # helper function to remove BOM
 def lstrip_bom(str_):

@@ -31,10 +31,12 @@ MAX_SIZE = 32766
 VALIDATION_SCHEMA = [('', 'Project Open Data (Federal)'),
                      ('non-federal', 'Project Open Data (Non-Federal)'), ]
 
+
 def validate_schema(schema):
     if schema not in [s[0] for s in VALIDATION_SCHEMA]:
         raise Invalid('Unknown validation schema: {0}'.format(schema))
     return schema
+
 
 class DatasetHarvesterBase(HarvesterBase):
     '''

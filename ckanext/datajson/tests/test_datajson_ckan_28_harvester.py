@@ -27,6 +27,7 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+
 class TestIntegrationDataJSONHarvester28(object):
     """Integration tests using a complete CKAN 2.8+ harvest stack. Unlike unit tests,
     these tests are only run on a complete CKAN 2.8 stack."""
