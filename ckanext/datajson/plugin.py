@@ -18,8 +18,7 @@ if six.PY2:
     from ckan.lib.base import BaseController, render, c
 
 from jsonschema.exceptions import best_match
-from ckan.plugins.toolkit import request
-from pylons import response
+from ckan.plugins.toolkit import request, response
 
 from .helpers import get_export_map_json, detect_publisher, get_validator
 from .package2pod import Package2Pod
