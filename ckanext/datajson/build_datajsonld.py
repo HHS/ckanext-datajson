@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 try:
-    from collections import OrderedDict # 2.7
+    from collections import OrderedDic  # 2.7
 except ImportError:
     from sqlalchemy.util import OrderedDict
 
@@ -46,14 +46,14 @@ jsonld_metadata_mapping = {
     "dataDictionary": "dcat:dataDictionary",
     "accessURL": "dcat:accessURL",
     "webService": "pod:webService",
-    "format": "dcterms:format", # must be a dcterms:MediaTypeOrExtent
+    "format": "dcterms:format"  # must be a dcterms:MediaTypeOrExtent
     "license": "dcterms:license",
-    "spatial": "dcterms:spatial", # must be a dcterms:Location entity
-    "temporal": "dcterms:temporal", # must be a dcterms:PeriodOfTime
+    "spatial": "dcterms:spatial"  # must be a dcterms:Location entity
+    "temporal": "dcterms:temporal"  # must be a dcterms:PeriodOfTime
 
     "issued": "dcterms:issued",
-    "accrualPeriodicity": "dcterms:accrualPeriodicity", # must be a dcterms:Frequency
-    "language": "dcat:language", # must be an IRI
+    "accrualPeriodicity": "dcterms:accrualPeriodicity"  # must be a dcterms:Frequency
+    "language": "dcat:language"  # must be an IRI
     "dataQuality": "pod:dataQuality",
     "theme": "dcat:theme",
     "references": "dcterms:references",

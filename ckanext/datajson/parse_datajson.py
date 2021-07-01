@@ -176,10 +176,10 @@ def normalize_format(format, raise_on_unknown=False):
     if m.group(1) == "application/x-msaccess":
       return "Access"
     if raise_on_unknown:
-      raise ValueError() # caught & ignored by caller
+      raise ValueError(  # caught & ignored by caller
     return "Other"
   if format == "text":
     return "Text"
   if raise_on_unknown and "?" in format:
-    raise ValueError() # weird value we should try to filter out; exception is caught & ignored by caller
-  return format.upper() # hope it's one of our formats by converting to upprecase
+    raise ValueError(  # weird value we should try to filter out; exception is caught & ignored by caller
+  return format.upper(  # hope it's one of our formats by converting to upprecase

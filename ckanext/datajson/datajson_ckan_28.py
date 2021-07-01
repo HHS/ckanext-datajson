@@ -61,8 +61,8 @@ class DatasetHarvesterBase(HarvesterBase):
         # Load the harvest source's configuration data.
 
         ret = {
-            "filters": {}, # map data.json field name to list of values one of which must be present
-            "defaults": {}, # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
+            "filters": {}  # map data.json field name to list of values one of which must be present
+            "defaults": {}  # map field name to value to supply as default if none exists, handled by the actual importer module, so the field names may be arbitrary
         }
 
         if harvest_source.config is None or harvest_source.config == '':
@@ -264,7 +264,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 guid=pkg_id,
                 job=harvest_job,
                 extras=extras,
-                content=json.dumps(dataset, sort_keys=True)) # use sort_keys to preserve field order so hashes of this string are constant from run to run
+                content=json.dumps(dataset, sort_keys=True)  # use sort_keys to preserve field order so hashes of this string are constant from run to run
             obj.save()
 
             # we are sorting parent datasets in the list first and then children so that the parents are
@@ -277,9 +277,9 @@ class DatasetHarvesterBase(HarvesterBase):
         # Remove packages no longer in the remote catalog.
         for upstreamid, pkg in list(existing_datasets.items()):
             if upstreamid in seen_datasets:
-                continue # was just updated
+                continu  # was just updated
             if pkg.get("state") == "deleted":
-                continue # already deleted
+                continu  # already deleted
             pkg["state"] = "deleted"
             log.warn('deleting package %s (%s) because it is no longer in %s' % (pkg["name"], pkg["id"], harvest_job.source.url))
             get_action('package_update')(self.context(), pkg)
@@ -327,7 +327,7 @@ class DatasetHarvesterBase(HarvesterBase):
         count = 0
         for error in errors:
             count += 1
-            msg = msg + " ### ERROR #" + str(count) + ": " + self._validate_readable_msg(error) + "; "
+            msg = msg +   ### ERRO  #" + str(count) + ": " + self._validate_readable_msg(error) + "; "
         msg = msg.strip("; ")
         if msg:
             id = "Identifier: " + (dataset.get("identifier") if dataset.get("identifier") else "Unknown")
@@ -413,7 +413,7 @@ class DatasetHarvesterBase(HarvesterBase):
            return True
 
         dataset = json.loads(harvest_object.content)
-        schema_version = '1.0' # default to '1.0'
+        schema_version = '1.0  # default to '1.0'
         is_collection = False
         parent_pkg_id = ''
         catalog_extras = {}
@@ -476,27 +476,27 @@ class DatasetHarvesterBase(HarvesterBase):
             "title": "title",
             "description": "notes",
             "keyword": "tags",
-            "modified": "extras__modified", # ! revision_timestamp
-            "publisher": "extras__publisher", # !owner_org
+            "modified": "extras__modified"  # ! revision_timestamp
+            "publisher": "extras__publisher"  # !owner_org
             "contactPoint": "maintainer",
             "mbox": "maintainer_email",
-            "identifier": "extras__identifier", # !id
+            "identifier": "extras__identifier"  # !id
             "accessLevel": "extras__accessLevel",
 
             "bureauCode": "extras__bureauCode",
             "programCode": "extras__programCode",
             "accessLevelComment": "extras__accessLevelComment",
-            "license": "extras__license", # !license_id
-            "spatial": "extras__spatial", # Geometry not valid GeoJSON, not indexing
+            "license": "extras__license"  # !license_id
+            "spatial": "extras__spatial"  # Geometry not valid GeoJSON, not indexing
             "temporal": "extras__temporal",
 
             "theme": "extras__theme",
-            "dataDictionary": "extras__dataDictionary", # !data_dict
+            "dataDictionary": "extras__dataDictionary"  # !data_dict
             "dataQuality": "extras__dataQuality",
             "accrualPeriodicity": "extras__accrualPeriodicity",
             "landingPage": "extras__landingPage",
             "language": "extras__language",
-            "primaryITInvestmentUII": "extras__primaryITInvestmentUII", # !PrimaryITInvestmentUII
+            "primaryITInvestmentUII": "extras__primaryITInvestmentUII"  # !PrimaryITInvestmentUII
             "references": "extras__references",
             "issued": "extras__issued",
             "systemOfRecords": "extras__systemOfRecords",
@@ -511,26 +511,26 @@ class DatasetHarvesterBase(HarvesterBase):
             "title": "title",
             "description": "notes",
             "keyword": "tags",
-            "modified": "extras__modified", # ! revision_timestamp
-            "publisher": "extras__publisher", # !owner_org
+            "modified": "extras__modified"  # ! revision_timestamp
+            "publisher": "extras__publisher"  # !owner_org
             "contactPoint": {"fn": "maintainer", "hasEmail": "maintainer_email"},
-            "identifier": "extras__identifier", # !id
+            "identifier": "extras__identifier"  # !id
             "accessLevel": "extras__accessLevel",
 
             "bureauCode": "extras__bureauCode",
             "programCode": "extras__programCode",
             "rights": "extras__rights",
-            "license": "extras__license", # !license_id
-            "spatial": "extras__spatial", # Geometry not valid GeoJSON, not indexing
+            "license": "extras__license"  # !license_id
+            "spatial": "extras__spatial"  # Geometry not valid GeoJSON, not indexing
             "temporal": "extras__temporal",
 
             "theme": "extras__theme",
-            "dataDictionary": "extras__dataDictionary", # !data_dict
+            "dataDictionary": "extras__dataDictionary"  # !data_dict
             "dataQuality": "extras__dataQuality",
             "accrualPeriodicity": "extras__accrualPeriodicity",
             "landingPage": "extras__landingPage",
             "language": "extras__language",
-            "primaryITInvestmentUII": "extras__primaryITInvestmentUII", # !PrimaryITInvestmentUII
+            "primaryITInvestmentUII": "extras__primaryITInvestmentUII"  # !PrimaryITInvestmentUII
             "references": "extras__references",
             "issued": "extras__issued",
             "systemOfRecords": "extras__systemOfRecords",
@@ -538,7 +538,7 @@ class DatasetHarvesterBase(HarvesterBase):
             "distribution": None,
         }
 
-        SKIP = ["accessURL", "webService", "format", "distribution"] # will go into pkg["resources"]
+        SKIP = ["accessURL", "webService", "format", "distribution"  # will go into pkg["resources"]
         # also skip the processed_how key, it was added to indicate how we processed the dataset.
         SKIP.append("processed_how")
 
@@ -597,7 +597,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # Assemble basic information about the dataset.
 
         pkg = {
-            "state": "active", # in case was previously deleted
+            "state": "active"  # in case was previously deleted
             "owner_org": owner_org,
             "groups": [{"name": group_name}],
             "resources": [],
@@ -654,7 +654,7 @@ class DatasetHarvesterBase(HarvesterBase):
             # after schema 1.0+, we need to deal with multiple new_keys
             new_keys = []
             values = []
-            if isinstance(new_key, dict): # when schema is not 1.0
+            if isinstance(new_key, dict)  # when schema is not 1.0
                 _new_key_keys = list(new_key.keys())
                 new_keys = list(new_key.values())
                 values = []
@@ -720,7 +720,7 @@ class DatasetHarvesterBase(HarvesterBase):
                     if res["url"] == existing_res["url"]:
                         res["id"] = existing_res["id"]
             pkg['groups'] = existing_pkg['groups']
-            existing_pkg.update(pkg) # preserve other fields that we're not setting, but clobber extras
+            existing_pkg.update(pkg  # preserve other fields that we're not setting, but clobber extras
             pkg = existing_pkg
 
             log.warn('updating package %s (%s) from %s' % (pkg["name"], pkg["id"], harvest_object.source.url))
@@ -791,7 +791,7 @@ class DatasetHarvesterBase(HarvesterBase):
         name = munge_title_to_name(title).replace('_', '-')
         while '--' in name:
             name = name.replace('--', '-')
-        name = name[0:90] # max length is 100
+        name = name[0:90  # max length is 100
 
         # Is this slug already in use (and if we're updating a package, is it in
         # use by a different package?).
@@ -809,7 +809,7 @@ class DatasetHarvesterBase(HarvesterBase):
             # (choosing new random text) by just reusing the existing package's
             # name.
             pkg_obj = Session.query(Package).filter(Package.id == exclude_existing_package).first()
-            if pkg_obj: # the package may not exist yet because we may be passed the desired package GUID before a new package is instantiated
+            if pkg_obj  # the package may not exist yet because we may be passed the desired package GUID before a new package is instantiated
                 return pkg_obj.name
 
         # Append some random text to the URL. Hope that with five character
