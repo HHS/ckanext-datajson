@@ -18,7 +18,7 @@ if six.PY2:
     from ckan.lib.base import BaseController, render, c
 
 from jsonschema.exceptions import best_match
-from ckan.plugins.toolkit import request, response
+from ckan.plugins.toolkit import request
 
 from .helpers import get_export_map_json, detect_publisher, get_validator
 from .package2pod import Package2Pod
@@ -147,21 +147,21 @@ if six.PY2:
                 return "Not Authorized"
 
             # set content type (charset required or pylons throws an error)
-            response.content_type = 'application/json; charset=UTF-8'
+            # response.content_type = 'application/json; charset=UTF-8'
 
             # allow caching of response (e.g. by Apache)
-            del response.headers["Cache-Control"]
-            del response.headers["Pragma"]
+            # del response.headers["Cache-Control"]
+            # del response.headers["Pragma"]
             return self.make_json(export_type, org_id)
 
         def generate_output(self, fmt='json', org_id=None):
             self._errors_json = []
             # set content type (charset required or pylons throws an error)
-            response.content_type = 'application/json; charset=UTF-8'
+            # response.content_type = 'application/json; charset=UTF-8'
 
             # allow caching of response (e.g. by Apache)
-            del response.headers["Cache-Control"]
-            del response.headers["Pragma"]
+            # del response.headers["Cache-Control"]
+            # del response.headers["Pragma"]
 
             # TODO special processing for enterprise
             # output
@@ -384,8 +384,8 @@ if six.PY2:
             binary = o.read()
             o.close()
 
-            response.content_type = 'application/octet-stream'
-            response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
+            # response.content_type = 'application/octet-stream'
+            # response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
 
             return binary
 

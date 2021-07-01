@@ -57,6 +57,7 @@ class TestDataJSONHarvester(object):
 
         if len(obj_ids) == 0:
             # nothing to see
+            log.error("NO objects found")
             return
 
         for obj_id in obj_ids:
