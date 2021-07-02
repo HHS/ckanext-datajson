@@ -77,8 +77,9 @@ def generate(export_type='datajson', org_id=None):
     Response.content_type = 'application/json; charset=UTF-8'
 
     # allow caching of response (e.g. by Apache)
-    del Response.headers["Cache-Control"]
-    del Response.headers["Pragma"]
+    # Commented because it works without it
+    # del Response.headers["Cache-Control"]
+    # del Response.headers["Pragma"]
     result = make_json(export_type, org_id)
 
     logger.error(result)
@@ -92,8 +93,9 @@ def generate_output(fmt='json', org_id=None):
     Response.content_type = 'application/json; charset=UTF-8'
 
     # allow caching of response (e.g. by Apache)
-    del Response.headers["Cache-Control"]
-    del Response.headers["Pragma"]
+    # Commented because it works without it
+    # del Response.headers["Cache-Control"]
+    # del Response.headers["Pragma"]
 
     # TODO special processing for enterprise
     # output
@@ -151,7 +153,6 @@ def make_json(export_type='datajson', owner_org=None):
             # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
         json_export_map = get_export_map_json('export.map.json')
-
 
         if json_export_map:
             for pkg in packages:
@@ -217,7 +218,6 @@ def make_json(export_type='datajson', owner_org=None):
         filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logger.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, str(e))
 
-
     # Get the error log
     eh.flush()
     error = stream.getvalue()
@@ -282,16 +282,13 @@ def write_zip(data, error=None, errors_json=None, zip_name='data'):
     """
     import zipfile
     global _errors_json
-    
 
     o = io.BytesIO()
     zf = zipfile.ZipFile(o, mode='w')
-    
 
     data_file_name = 'data.json'
     if 'draft' == zip_name:
         data_file_name = 'draft_data.json'
-    
 
     # Write the data file
     if data:
