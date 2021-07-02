@@ -10,6 +10,7 @@ import ckan.lib.dictization.model_dictize as model_dictize
 import ckan.model as model
 import ckan.plugins as p
 from ckan.plugins.toolkit import request, render
+from flask.wrappers import Response
 from flask import Blueprint
 from jsonschema.exceptions import best_match
 import os
@@ -26,36 +27,36 @@ draft4validator = get_validator()
 _errors_json = []
 
 
-def generate_json(self):
-    return self.generate_output('json')
+def generate_json():
+    return generate_output('json')
 
 
-def generate_org_json(self, org_id):
-    return self.generate_output('json', org_id=org_id)
+def generate_org_json(org_id):
+    return generate_output('json', org_id=org_id)
 
 
-# def generate_jsonld(self):
-#     return self.generate_output('json-ld')
+# def generate_jsonld():
+#     return generate_output('json-ld')
 
 
-def generate_redacted(self, org_id):
-    return self.generate('redacted', org_id=org_id)
+def generate_redacted(org_id):
+    return generate('redacted', org_id=org_id)
 
 
-def generate_unredacted(self, org_id):
-    return self.generate('unredacted', org_id=org_id)
+def generate_unredacted(org_id):
+    return generate('unredacted', org_id=org_id)
 
 
 def generate_draft(org_id):
     return generate('draft', org_id=org_id)
 
 
-def generate(self, export_type='datajson', org_id=None):
+def generate(export_type='datajson', org_id=None):
     """ generate a JSON response """
     logger.debug('Generating JSON for {} to {} ({})'.format(export_type, org_id, c.user))
 
     if export_type not in ['draft', 'redacted', 'unredacted']:
-        return "Invalid type"
+        return "Invalid type, Assigned type: %s" % (export_type)
     if org_id is None:
         return "Invalid organization id"
 
@@ -73,26 +74,30 @@ def generate(self, export_type='datajson', org_id=None):
         return "Not Authorized"
 
     # set content type (charset required or pylons throws an error)
-    # response.content_type = 'application/json; charset=UTF-8'
+    Response.content_type = 'application/json; charset=UTF-8'
 
     # allow caching of response (e.g. by Apache)
-    # del response.headers["Cache-Control"]
-    # del response.headers["Pragma"]
-    return self.make_json(export_type, org_id)
+    del Response.headers["Cache-Control"]
+    del Response.headers["Pragma"]
+    result = make_json(export_type, org_id)
+
+    logger.error(result)
+    return result
 
 
-def generate_output(self, fmt='json', org_id=None):
-    self._errors_json = []
+def generate_output(fmt='json', org_id=None):
+    global _errors_json
+    _errors_json = []
     # set content type (charset required or pylons throws an error)
-    # response.content_type = 'application/json; charset=UTF-8'
+    Response.content_type = 'application/json; charset=UTF-8'
 
     # allow caching of response (e.g. by Apache)
-    # del response.headers["Cache-Control"]
-    # del response.headers["Pragma"]
+    del Response.headers["Cache-Control"]
+    del Response.headers["Pragma"]
 
     # TODO special processing for enterprise
     # output
-    data = self.make_json(export_type='datajson', owner_org=org_id)
+    data = make_json(export_type='datajson', owner_org=org_id)
 
     # if fmt == 'json-ld':
     #     # Convert this to JSON-LD.
@@ -114,7 +119,7 @@ def generate_output(self, fmt='json', org_id=None):
     return p.toolkit.literal(json.dumps(data, indent=2))
 
 
-def make_json(self, export_type='datajson', owner_org=None):
+def make_json(export_type='datajson', owner_org=None):
     # Error handler for creating error log
     stream = io.StringIO()
     eh = logging.StreamHandler(stream)
@@ -135,9 +140,9 @@ def make_json(self, export_type='datajson', owner_org=None):
                 # we didn't check ownership for this type of export, so never load private datasets here
                 packages = _get_ckan_datasets(org=owner_org)
                 if not packages:
-                    packages = self.get_packages(owner_org=owner_org, with_private=False)
+                    packages = get_packages(owner_org=owner_org, with_private=False)
             else:
-                packages = self.get_packages(owner_org=owner_org, with_private=True)
+                packages = get_packages(owner_org=owner_org, with_private=True)
         else:
             # TODO: load data by pages
             # packages = p.toolkit.get_action("current_package_list_with_resources")(
@@ -146,6 +151,7 @@ def make_json(self, export_type='datajson', owner_org=None):
             # packages = p.toolkit.get_action("current_package_list_with_resources")(None, {})
 
         json_export_map = get_export_map_json('export.map.json')
+
 
         if json_export_map:
             for pkg in packages:
@@ -163,7 +169,7 @@ def make_json(self, export_type='datajson', owner_org=None):
                         # logger.warn("Dataset id=[%s], title=[%s], organization=[%s] omitted (%s)\n",
                         #             pkg.get('id'), pkg.get('title'), publisher,
                         #             'publishing_status: Draft')
-                        # self._errors_json.append(OrderedDict([
+                        # _errors_json.append(OrderedDict([
                         #     ('id', pkg.get('id')),
                         #     ('name', pkg.get('name')),
                         #     ('title', pkg.get('title')),
@@ -193,7 +199,7 @@ def make_json(self, export_type='datajson', owner_org=None):
                     datajson_entry = None
 
                 if datajson_entry and \
-                        (not json_export_map.get('validation_enabled') or self.is_valid(datajson_entry)):
+                        (not json_export_map.get('validation_enabled') or is_valid(datajson_entry)):
                     # logger.debug("writing to json: %s" % (pkg.get('title')))
                     output.append(datajson_entry)
                 else:
@@ -211,6 +217,7 @@ def make_json(self, export_type='datajson', owner_org=None):
         filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logger.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, str(e))
 
+
     # Get the error log
     eh.flush()
     error = stream.getvalue()
@@ -222,12 +229,12 @@ def make_json(self, export_type='datajson', owner_org=None):
     if 'datajson' == export_type:
         return data
 
-    return self.write_zip(data, error, errors_json, zip_name=export_type)
+    return write_zip(data, error, errors_json, zip_name=export_type)
 
 
-def get_packages(self, owner_org, with_private=True):
+def get_packages(owner_org, with_private=True):
     # Build the data.json file.
-    packages = self.get_all_group_packages(group_id=owner_org, with_private=with_private)
+    packages = get_all_group_packages(group_id=owner_org, with_private=with_private)
     # get packages for sub-agencies.
     sub_agency = model.Group.get(owner_org)
     if 'sub-agencies' in sub_agency.extras.col.target \
@@ -235,14 +242,14 @@ def get_packages(self, owner_org, with_private=True):
         sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
         sub_agencies_list = sub_agencies.split(",")
         for sub in sub_agencies_list:
-            sub_packages = self.get_all_group_packages(group_id=sub, with_private=with_private)
+            sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
             for sub_package in sub_packages:
                 packages.append(sub_package)
 
     return packages
 
 
-def get_all_group_packages(self, group_id, with_private=True):
+def get_all_group_packages(group_id, with_private=True):
     """
     Gets all of the group packages, public or private, returning them as a list of CKAN's dictized packages.
     """
@@ -254,7 +261,7 @@ def get_all_group_packages(self, group_id, with_private=True):
     return result
 
 
-def is_valid(self, instance):
+def is_valid(instance):
     """
     Validates a data.json entry against the DCAT_US JSON schema.
     Log a warning message on validation error
@@ -267,20 +274,24 @@ def is_valid(self, instance):
     return True
 
 
-def write_zip(self, data, error=None, errors_json=None, zip_name='data'):
+def write_zip(data, error=None, errors_json=None, zip_name='data'):
     """
     Data: a python object to write to the data.json
     Error: unicode string representing the content of the error log.
     zip_name: the name to use for the zip file
     """
     import zipfile
+    global _errors_json
+    
 
     o = io.BytesIO()
     zf = zipfile.ZipFile(o, mode='w')
+    
 
     data_file_name = 'data.json'
     if 'draft' == zip_name:
         data_file_name = 'draft_data.json'
+    
 
     # Write the data file
     if data:
@@ -294,11 +305,11 @@ def write_zip(self, data, error=None, errors_json=None, zip_name='data'):
         # logger.debug('no data to write')
         zf.writestr('empty.json', '')
 
-    if self._errors_json:
+    if _errors_json:
         if errors_json:
-            errors_json += self._errors_json
+            errors_json += _errors_json
         else:
-            errors_json = self._errors_json
+            errors_json = _errors_json
 
     # Errors in json format
     if errors_json:
@@ -316,13 +327,13 @@ def write_zip(self, data, error=None, errors_json=None, zip_name='data'):
     binary = o.read()
     o.close()
 
-    # response.content_type = 'application/octet-stream'
-    # response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
+    Response.default_mimetype = 'application/octet-stream'
+    Response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
 
     return binary
 
 
-def validator(self):
+def validator():
     # Validates that a URL is a good data.json file.
     if request.method == "POST" and "url" in request.POST and request.POST["url"].strip() != "":
         c.source_url = request.POST["url"]
@@ -388,16 +399,15 @@ def _get_ckan_datasets(org=None, with_private=False):
     return dataset_list
 
 
+datapusher.add_url_rule('/data.json',
+                        view_func=generate_json)
 datapusher.add_url_rule('/organization/<org_id>/data.json',
-                        methods=[u'GET', u'POST'], view_func=generate_json)
-
-datapusher.add_url_rule('/organization/<org_id>/data.json',
-                        methods=[u'GET', u'POST'], view_func=generate_org_json)
+                        view_func=generate_org_json)
 datapusher.add_url_rule('/organization/<org_id>/redacted.json',
-                        methods=[u'GET', u'POST'], view_func=generate_redacted)
+                        view_func=generate_redacted)
 datapusher.add_url_rule('/organization/<org_id>/unredacted.json',
-                        methods=[u'GET', u'POST'], view_func=generate_unredacted)
+                        view_func=generate_unredacted)
 datapusher.add_url_rule('/organization/<org_id>/draft.json',
-                        methods=[u'GET', u'POST'], view_func=generate_draft)
+                        view_func=generate_draft)
 datapusher.add_url_rule("/pod/validate",
-                        methods=[u'GET', u'POST'], view_func=validator)
+                        view_func=validator)
