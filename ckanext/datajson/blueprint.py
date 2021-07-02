@@ -3,6 +3,7 @@ from builtins import str
 import io
 import json
 import logging
+import six
 import sys
 
 from ckan.common import c
@@ -80,10 +81,7 @@ def generate(export_type='datajson', org_id=None):
     # Commented because it works without it
     # del Response.headers["Cache-Control"]
     # del Response.headers["Pragma"]
-    result = make_json(export_type, org_id)
-
-    logger.error(result)
-    return result
+    return make_json(export_type, org_id)
 
 
 def generate_output(fmt='json', org_id=None):
@@ -237,14 +235,25 @@ def get_packages(owner_org, with_private=True):
     packages = get_all_group_packages(group_id=owner_org, with_private=with_private)
     # get packages for sub-agencies.
     sub_agency = model.Group.get(owner_org)
-    if 'sub-agencies' in sub_agency.extras.col.target \
-            and sub_agency.extras.col.target['sub-agencies'].state == 'active':
-        sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
-        sub_agencies_list = sub_agencies.split(",")
-        for sub in sub_agencies_list:
-            sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
-            for sub_package in sub_packages:
-                packages.append(sub_package)
+
+    if six.PY2:
+        if 'sub-agencies' in sub_agency.extras.col.target \
+                and sub_agency.extras.col.target['sub-agencies'].state == 'active':
+            sub_agencies = sub_agency.extras.col.target['sub-agencies']
+            sub_agencies_list = sub_agencies.split(",")
+            for sub in sub_agencies_list:
+                sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
+                for sub_package in sub_packages:
+                    packages.append(sub_package)
+    else:
+        if 'sub-agencies' in sub_agency.extras.col.keys() \
+                and sub_agency.extras.col['sub-agencies'].state == 'active':
+            sub_agencies = sub_agency.extras.col['sub-agencies']
+            sub_agencies_list = sub_agencies.split(",")
+            for sub in sub_agencies_list:
+                sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
+                for sub_package in sub_packages:
+                    packages.append(sub_package)
 
     return packages
 
