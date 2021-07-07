@@ -1,17 +1,13 @@
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import object
 import json
 import logging
-from urllib.error import HTTPError, URLError
+from urllib2 import HTTPError, URLError
 
 import ckanext.harvest.model as harvest_model
-from . import mock_datajson_source
+import mock_datajson_source
 from ckan import model
 from ckan.lib.munge import munge_title_to_name
 from ckanext.datajson.harvester_datajson import DataJsonHarvester
-from .factories import HarvestJobObj, HarvestSourceObj
+from factories import HarvestJobObj, HarvestSourceObj
 from nose.tools import assert_equal, assert_in, assert_raises
 
 try:
@@ -96,9 +92,7 @@ class TestDataJSONHarvester(object):
             log.info('result 2=%s', result)
 
             if not result:
-                log.error('Dataset not imported: {}. Errors: {}. Content: {}'.format(harvest_object.package_id,
-                                                                                     harvest_object.errors,
-                                                                                     harvest_object.content))
+                log.error('Dataset not imported: {}. Errors: {}. Content: {}'.format(harvest_object.package_id, harvest_object.errors, harvest_object.content))
 
             if len(harvest_object.errors) > 0:
                 self.errors = harvest_object.errors
@@ -175,7 +169,7 @@ class TestDataJSONHarvester(object):
             v = e[1]
             if k == 'extras_rollup':
                 extras_rollup_dict = json.loads(v)
-                for rk, rv in list(extras_rollup_dict.items()):
+                for rk, rv in extras_rollup_dict.items():
                     new_extras[rk] = rv
             else:
                 new_extras[e[0]] = e[1]
@@ -188,7 +182,7 @@ class TestDataJSONHarvester(object):
         datasets = self.get_datasets_from_2_collection()
 
         for dataset in datasets:
-            extras = self.fix_extras(list(dataset.extras.items()))
+            extras = self.fix_extras(dataset.extras.items())
             parent_package_id = extras.get('collection_package_id', None)
 
             if dataset.title == 'Addressing AWOL':
