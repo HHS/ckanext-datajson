@@ -22,7 +22,7 @@ jobs:
           name: Start CKAN
           command: |
             make build
-            docker-compose -f $COMPOSE_FILE up -d
+            docker-compose -f $COMPOSE_FILE up
       - run:
           name: install dockerize
           command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
