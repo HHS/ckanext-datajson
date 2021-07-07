@@ -1,5 +1,6 @@
 CKAN_VERSION ?= 2.9
 COMPOSE_FILE ?= docker-compose.yml
+COMPOSE_LEGACY_FILE ?= docker-compose.legacy.yml
 
 build: ## Build the docker containers
 	CKAN_VERSION=$(CKAN_VERSION) docker-compose -f $(COMPOSE_FILE) build
@@ -21,7 +22,12 @@ test-legacy: ## Run legacy nose tests in an existing container
 	docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests/nose"
 
 up: ## Start the containers
+ifeq ($(CKAN_VERSION), 2.9)
 	CKAN_VERSION=$(CKAN_VERSION) docker-compose -f $(COMPOSE_FILE) up
+else
+	CKAN_VERSION=$(CKAN_VERSION) docker-compose -f $(COMPOSE_LEGACY_FILE) up
+endif
+
 
 
 .DEFAULT_GOAL := help
