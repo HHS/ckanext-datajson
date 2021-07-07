@@ -1,4 +1,4 @@
-CKAN_VERSION ?= 2.3
+CKAN_VERSION ?= 2.8
 COMPOSE_FILE ?= docker-compose.yml
 COMPOSE_LEGACY_FILE ?= docker-compose.legacy.yml
 
@@ -8,7 +8,7 @@ build: ## Build the docker containers
 lint: ## Lint the code
 	@# our linting only runs with python3
 	@# TODO use CKAN_VERSION make variable once 2.8 is deprecated
-	CKAN_VERSION=2.9 docker-compose -f docker-compose.yml run --rm app flake8 . --count --show-source --statistics --exclude ckan
+	CKAN_VERSION=2.9 docker-compose -f docker-compose.yml run --rm app flake8 . --count --show-source --statistics --exclude ckan,nose
 
 clean: ## Clean workspace and containers
 	find . -name *.pyc -delete
@@ -19,7 +19,7 @@ test: ## Run tests in a new container
 
 test-legacy: ## Run legacy nose tests in an existing container
 	@# TODO wait for CKAN to be up; use docker-compose run instead
-	docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests/nose"
+	docker-compose -f docker-compose.legacy.yml exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests/nose"
 
 up: ## Start the containers
 ifeq ($(CKAN_VERSION), 2.8)
