@@ -1,3 +1,7 @@
+from builtins import str
+from builtins import map
+from builtins import range
+from builtins import object
 try:
     from collections import OrderedDict  # 2.7
 except ImportError:
@@ -5,7 +9,7 @@ except ImportError:
 
 import logging
 
-from pylons import config
+from ckan.plugins.toolkit import config
 from ckan import plugins as p
 from ckan.lib import helpers as h
 import re
@@ -78,7 +82,7 @@ def get_responsible_party(value):
         out = []
         parties = h.json.loads(value)
         for party in parties:
-            roles = [formatted[role] if role in formatted.keys() else p.toolkit._(role.capitalize()) for role in
+            roles = [formatted[role] if role in list(formatted.keys()) else p.toolkit._(role.capitalize()) for role in
                      party['roles']]
             out.append('{0} ({1})'.format(party['name'], ', '.join(roles)))
         return '; '.join(out)
@@ -93,7 +97,7 @@ def get_common_map_config():
         base map (ie those starting with 'ckanext.spatial.common_map.')
     """
     namespace = 'ckanext.spatial.common_map.'
-    return dict([(k.replace(namespace, ''), v) for k, v in config.iteritems() if k.startswith(namespace)])
+    return dict([(k.replace(namespace, ''), v) for k, v in config.items() if k.startswith(namespace)])
 
 
 def strip_if_string(val):
@@ -101,7 +105,7 @@ def strip_if_string(val):
     :param val: any
     :return: str|None
     """
-    if isinstance(val, (str, unicode)):
+    if isinstance(val, str):
         val = val.strip()
         if '' == val:
             val = None
@@ -152,7 +156,7 @@ def is_redacted(value):
     :param value: str
     :return: bool
     """
-    return isinstance(value, (str, unicode)) and REDACTED_REGEX.match(value)
+    return isinstance(value, str) and REDACTED_REGEX.match(value)
 
 
 def get_validator(schema_type="federal-v1.1"):
@@ -176,7 +180,7 @@ def uglify(key):
     :param key: string
     :return: string
     """
-    if isinstance(key, (str, unicode)):
+    if isinstance(key, str):
         return "".join(key.lower().split()).replace('_', '').replace('-', '')
     return key
 
@@ -188,14 +192,15 @@ def get_extra(package, key, default=None):
     return packageExtraCache.get(package, key, default)
 
 
-class PackageExtraCache:
+class PackageExtraCache(object):
     def __init__(self):
         self.pid = None
         self.extras = {}
         pass
 
     def store(self, package):
-        import sys, os
+        import sys
+        import os
 
         try:
             self.pid = package.get('id')
@@ -205,21 +210,21 @@ class PackageExtraCache:
             for extra in current_extras:
                 if 'extras_rollup' == extra.get('key'):
                     rolledup_extras = json.loads(extra.get('value'))
-                    for k, value in rolledup_extras.iteritems():
+                    for k, value in rolledup_extras.items():
                         if isinstance(value, (list, tuple)):
-                            value = ", ".join(map(unicode, value))
+                            value = ", ".join(map(str, value))
                         new_extras[uglify(k)] = value
                 else:
                     value = extra.get('value')
                     if isinstance(value, (list, tuple)):
-                        value = ", ".join(map(unicode, value))
+                        value = ", ".join(map(str, value))
                     new_extras[uglify(extra['key'])] = value
 
             self.extras = new_extras
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            log.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, unicode(e))
+            log.error("%s : %s : %s : %s", exc_type, filename, exc_tb.tb_lineno, str(e))
             raise e
 
     def get(self, package, key, default=None):

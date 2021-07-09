@@ -1,2 +1,2 @@
 class ParentNotHarvestedException(Exception):
-    pass 
+    pass

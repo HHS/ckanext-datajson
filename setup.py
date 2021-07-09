@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import sys, os
 
 version = '0.1'
 
@@ -8,7 +7,7 @@ setup(
     version=version,
     description="CKAN extension to generate /data.json",
     long_description="""\
-	""",
+    """,
     classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords='',
     author='U.S. Department of Health & Human Services',
@@ -22,11 +21,10 @@ setup(
     install_requires=[
         # -*- Extra requirements: -*-
     ],
-    entry_points= \
-        """
+    entry_points="""
         [ckan.plugins]
     datajson=ckanext.datajson.plugin:DataJsonPlugin
     datajson_harvest=ckanext.datajson.harvester_datajson:DataJsonHarvester
     cmsdatanav_harvest=ckanext.datajson.harvester_cmsdatanavigator:CmsDataNavigatorHarvester
-	""",
+    """,
 )

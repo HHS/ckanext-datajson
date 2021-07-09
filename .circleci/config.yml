@@ -10,17 +10,19 @@ jobs:
             pip install pip==20.3.3
             pip install flake8
             flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-  
+
   test_local_docker:
     working_directory: ~/ckanext-datajson
     machine: true
+    environment:
+      COMPOSE_FILE: docker-compose.legacy.yml
     steps:
       - checkout
       - run:
           name: Start CKAN
           command: |
-            docker-compose build
-            docker-compose up -d
+            make build
+            docker-compose -f $COMPOSE_FILE up -d
       - run:
           name: install dockerize
           command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
@@ -32,100 +34,15 @@ jobs:
       - run:
           name: Test extension
           command: |
-            docker-compose logs db
-            docker-compose logs ckan
-            docker-compose exec ckan /bin/bash -c "nosetests --ckan --with-pylons=src/ckan/test-catalog-next.ini src_extensions/datajson/ckanext/datajson/tests"
-  
-  build_ckan_28:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    steps:
-      - checkout
-      - run:
-          name: install and test
-          command: bin/travis-build-2.8.bash
-    
-  build_ckan_23:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=2.3
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build.bash
-      - run:
-          name: test
-          command: bin/travis-run.sh
-
-  build_gsa_ckan_inventory:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=inventory
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build-inventory.bash
-      - run:
-          name: test
-          command: bin/travis-run-inventory.sh
-
-  build_gsa_ckan_inventory_next:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=inventory-next
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build-inventory.bash
-      - run:
-          name: test
-          command: bin/travis-run-inventory.sh
-  
-  build_gsa_ckan_datagov:
-    working_directory: ~/ckanext-datajson
-    machine:
-      image: circleci/classic:201708-01
-    environment:
-      CKANVERSION=datagov
-    steps:
-      - checkout
-      - run:
-          name: install
-          command: bin/travis-build.bash
-      - run:
-          name: test
-          command: bin/travis-run.sh
+            docker-compose -f $COMPOSE_FILE logs db
+            docker-compose -f $COMPOSE_FILE logs ckan
+            make test-legacy
 
 workflows:
   version: 2
   build_and_test:
     jobs:
       - lint
-      - build_gsa_ckan_inventory_next:
-          requires:
-              - lint
       - test_local_docker:
-          requires:
-            - lint
-      - build_ckan_28:
-          requires:
-            - lint
-      - build_ckan_23:
-          requires:
-            - lint
-      - build_gsa_ckan_inventory:
-          requires:
-            - lint
-      - build_gsa_ckan_datagov:
           requires:
             - lint

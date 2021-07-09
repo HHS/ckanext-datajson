@@ -44,9 +44,6 @@ class TestIntegrationDataJSONHarvester28(object):
         harvest_model.setup()
         cls.user = Sysadmin()
         cls.org = Organization()
-
-        if not p.toolkit.check_ckan_version(min_version='2.8.0'):
-            raise SkipTest('Just for CKAN 2.3')
         
     def run_gather(self, url, config_str='{}'):
 
@@ -199,10 +196,7 @@ class TestIntegrationDataJSONHarvester28(object):
 
     @patch('ckanext.harvest.logic.action.update.harvest_source_show')
     def test_new_job_created(self, mock_harvest_source_show):
-        """ with CKAN 2.3 we divide the harvest job for collection in two steps:
-            (one for parents and a second one for children).
-            After finish tha parent job a new job is created for children
-            """
+
         def ps(context, data):
             return {
                     u'id': self.source.id,
@@ -216,12 +210,9 @@ class TestIntegrationDataJSONHarvester28(object):
                     u'extras': []
                 }
 
-        # just for CKAN 2.3
         mock_harvest_source_show.side_effect = ps
 
         datasets = self.get_datasets_from_2_collection()
-        
-        # in CKAN 2.3 we expect a new job for this source and also a change in the source config 
         
         context = {'model': model, 'user': self.user['name'], 'session':model.Session}
 
@@ -230,7 +221,6 @@ class TestIntegrationDataJSONHarvester28(object):
         self.job.gather_finished = datetime.utcnow()
         self.job.save()
 
-        # mark finished and do the after job tasks (in CKAN 2.3 is to create a new job for children)
         p.toolkit.get_action('harvest_jobs_run')(context, {'source_id': self.source.id})
         
         jobs = harvest_model.HarvestJob.filter(source=self.source).all()
@@ -408,7 +398,6 @@ class TestIntegrationDataJSONHarvester28(object):
             ]}
             
         def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
             if action_name == 'package_search':
                 return lambda ctx, data: results
             elif action_name == 'get_site_user':
@@ -441,7 +430,6 @@ class TestIntegrationDataJSONHarvester28(object):
                  'extras': [{'key': 'identifier', 'value': 'identifier'}]}
                 ]}
         def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
             if action_name == 'package_search':
                 return lambda ctx, data: results
             elif action_name == 'get_site_user':
@@ -479,7 +467,6 @@ class TestIntegrationDataJSONHarvester28(object):
             ]}
             
         def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
             if action_name == 'package_search':
                 return lambda ctx, data: results
             elif action_name == 'get_site_user':
@@ -503,7 +490,6 @@ class TestIntegrationDataJSONHarvester28(object):
         """ unit test for is_part_of_to_package_id function """
 
         def get_action(action_name):
-            # CKAN 2.8 have the "mock_action" decorator but this is not available for CKAN 2.3
             if action_name == 'package_search':
                 return lambda ctx, data: {'count': 0}
             elif action_name == 'get_site_user':
