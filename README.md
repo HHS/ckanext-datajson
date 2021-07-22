@@ -1,6 +1,6 @@
 # ckanext-datajson
 
-![Github Actions](https://github.com/GSA/ckanext-datajson/actions/workflows/test.yml/badge.svg)
+[![Github Actions](https://github.com/GSA/ckanext-datajson/actions/workflows/test.yml/badge.svg)](https://github.com/GSA/ckanext-datajson/actions)
 [![CircleCI](https://circleci.com/gh/GSA/ckanext-datajson.svg?style=svg)](https://circleci.com/gh/GSA/ckanext-datajson)
 
 A CKAN extension containing plugins `datajson`.
