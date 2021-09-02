@@ -10,6 +10,7 @@ from ckan.logic.validators import name_validator
 from ckan.lib.munge import munge_title_to_name
 from ckan.lib.navl.dictization_functions import Invalid, DataError
 from ckan.lib.navl.validators import ignore_empty
+from ckan.lib.search import rebuild
 
 from ckanext.harvest.model import HarvestObject, HarvestObjectError, HarvestObjectExtra
 from ckanext.harvest.harvesters.base import HarvesterBase
@@ -769,9 +770,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # does this by creating the association before the package is saved by
         # overriding the GUID creation on a new package. That's too difficult.
         # So here we end up indexing twice.
-        # !!! DISABLED - causes showing wrong number of datasets, when you try to
-        # !!! list datasets by harvest source /harvest/{source_id}
-        # PackageSearchIndex().index_package(pkg)
+        rebuild(pkg['id'])
 
         return True
 
