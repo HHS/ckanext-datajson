@@ -26,6 +26,7 @@ datapusher = Blueprint('datajson', __name__)
 logger = logging.getLogger(__name__)
 draft4validator = get_validator()
 _errors_json = []
+_zip_name = ''
 
 
 def generate_json():
@@ -81,7 +82,10 @@ def generate(export_type='datajson', org_id=None):
     # Commented because it works without it
     # del Response.headers["Cache-Control"]
     # del Response.headers["Pragma"]
-    return make_json(export_type, org_id)
+    resp = Response(make_json(export_type, org_id), mimetype='application/octet-stream')
+    resp.headers['Content-Disposition'] = 'attachment; filename="%s.zip"' % _zip_name
+
+    return resp
 
 
 def generate_output(fmt='json', org_id=None):
@@ -290,21 +294,22 @@ def write_zip(data, error=None, errors_json=None, zip_name='data'):
     zip_name: the name to use for the zip file
     """
     import zipfile
-    global _errors_json
+    global _errors_json, _zip_name
 
     o = io.BytesIO()
     zf = zipfile.ZipFile(o, mode='w')
 
-    data_file_name = 'data.json'
+    _data_file_name = 'data.json'
+    _zip_name = zip_name
     if 'draft' == zip_name:
-        data_file_name = 'draft_data.json'
+        _data_file_name = 'draft_data.json'
 
     # Write the data file
     if data:
         if sys.version_info >= (3, 0):
-            zf.writestr(data_file_name, json.dumps(data))
+            zf.writestr(_data_file_name, json.dumps(data))
         else:
-            zf.writestr(data_file_name, json.dumps(data))
+            zf.writestr(_data_file_name, json.dumps(data))
 
     # Write empty.json if nothing to return
     else:
@@ -332,9 +337,6 @@ def write_zip(data, error=None, errors_json=None, zip_name='data'):
 
     binary = o.read()
     o.close()
-
-    Response.default_mimetype = 'application/octet-stream'
-    Response.content_disposition = 'attachment; filename="%s.zip"' % zip_name
 
     return binary
 
