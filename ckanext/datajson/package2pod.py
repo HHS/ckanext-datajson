@@ -80,7 +80,6 @@ class Package2Pod(object):
     @staticmethod
     def export_map_fields(package, json_export_map, redaction_enabled=False):
         import os
-        import string
         import sys
 
         public_access_level = helpers.get_extra(package, 'public_access_level')
@@ -140,7 +139,7 @@ class Package2Pod(object):
                             if helpers.is_redacted(found_element):
                                 dataset[key] = found_element
                             elif split:
-                                dataset[key] = [Package2Pod.filter(x) for x in string.split(found_element, split)]
+                                dataset[key] = [Package2Pod.filter(x) for x in found_element.split(split)]
 
                     else:
                         if array_key:
