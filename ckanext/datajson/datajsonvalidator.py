@@ -5,7 +5,6 @@ import csv
 import os
 import re
 import rfc3987 as rfc3987_url
-from validate_email import validate_email
 
 # from the iso8601 package, plus ^ and $ on the edges
 ISO8601_REGEX = re.compile(r"^([0-9]{4})(-([0-9]{1,2})(-([0-9]{1,2})"
@@ -150,10 +149,8 @@ def do_validation(doc, errors_array, seen_identifiers):
                 if check_required_string_field(cp, "hasEmail", 9, dataset_name, errs):
                     if not is_redacted(cp.get('hasEmail')):
                         email = cp["hasEmail"].replace('mailto:', '')
-                        if not validate_email(email_address=email,
-                                              check_blacklist=False,
-                                              check_dns=False,
-                                              check_smtp=False):
+                        email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                        if not re.match(email_regex, email):
                             add_error(errs, 5, "Invalid Required Field Value",
                                       "The email address \"%s\" is not a valid email address." % email,
                                       dataset_name)
