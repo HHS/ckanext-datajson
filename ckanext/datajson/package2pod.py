@@ -390,7 +390,7 @@ class Wrappers(object):
             import ckan.model as model
 
             parent = model.Package.get(parent_dataset_id)
-            parent_uid = parent.extras.col.target['unique_id'].value
+            parent_uid = parent.extras['unique_id']
             if parent_uid:
                 parent_dataset_id = parent_uid
         return parent_dataset_id
