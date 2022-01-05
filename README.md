@@ -158,6 +158,14 @@ specified.
 The option ckanext.datajsonld.id is the @id value used to identify the data
 catalog itself. If not given, it defaults to ckan.site_url.
 
+You can specify which export map file to use to generates the data.json
+
+    ckanext.datajson.export_map_filename = export.map.json
+
+There are three map files available in folder [export_map](https://github.com/GSA/ckanext-datajson/tree/main/ckanext/datajson/export_map)
+to choose from, or you can add you own in the same folder. By default, it looks
+for file `export.map.json`, if not found, it defaults to
+`export.catalog.map.sample.json`.
 
 ### Harvesting
 

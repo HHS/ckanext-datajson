@@ -112,7 +112,7 @@ def strip_if_string(val):
     return val
 
 
-def get_export_map_json(map_filename):
+def get_export_map_json():
     """
     Reading json export map from file
     :param map_filename: str
@@ -120,6 +120,7 @@ def get_export_map_json(map_filename):
     """
     import os
 
+    map_filename = config.get("ckanext.datajson.export_map_filename", "export.map.json")
     map_path = os.path.join(os.path.dirname(__file__), 'export_map', map_filename)
 
     if not os.path.isfile(map_path):
