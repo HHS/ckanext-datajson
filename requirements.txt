@@ -1,5 +1,5 @@
 pyyaml
-lepl
+py3-validate-email
 jsonschema==2.4.0
 rfc3987
 future

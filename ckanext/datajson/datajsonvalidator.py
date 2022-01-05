@@ -1,8 +1,11 @@
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
+import csv
+import os
 import re
 import rfc3987 as rfc3987_url
+from validate_email import validate_email
 
 # from the iso8601 package, plus ^ and $ on the edges
 ISO8601_REGEX = re.compile(r"^([0-9]{4})(-([0-9]{1,2})(-([0-9]{1,2})"
@@ -82,14 +85,7 @@ REDACTED_REGEX = re.compile(
     r'^(\[\[REDACTED).*?(\]\])$'
 )
 
-import lepl.apps.rfc3696
-
-email_validator = lepl.apps.rfc3696.Email()
-
 # load the OMB bureau codes on first load of this module
-import csv
-import os
-
 omb_burueau_codes = set()
 # for row in csv.DictReader(urllib.urlopen("https://resources.data.gov/schemas/dcat-us/v1.1/omb_bureau_codes.csv")):
 #    omb_burueau_codes.add(row["Agency Code"] + ":" + row["Bureau Code"])
@@ -154,7 +150,10 @@ def do_validation(doc, errors_array, seen_identifiers):
                 if check_required_string_field(cp, "hasEmail", 9, dataset_name, errs):
                     if not is_redacted(cp.get('hasEmail')):
                         email = cp["hasEmail"].replace('mailto:', '')
-                        if not email_validator(email):
+                        if not validate_email(email_address=email,
+                                              check_blacklist=False,
+                                              check_dns=False,
+                                              check_smtp=False):
                             add_error(errs, 5, "Invalid Required Field Value",
                                       "The email address \"%s\" is not a valid email address." % email,
                                       dataset_name)
