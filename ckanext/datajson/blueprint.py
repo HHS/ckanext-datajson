@@ -325,12 +325,12 @@ def write_zip(data, error=None, errors_json=None, zip_name='data'):
     # Errors in json format
     if errors_json:
         # logger.debug('writing errors.json')
-        zf.writestr('errors.json', json.dumps(errors_json).encode('utf8'))
+        zf.writestr('errors.json', json.dumps(errors_json))
 
     # Write the error log
     if error:
         # logger.debug('writing errorlog.txt')
-        zf.writestr('errorlog.txt', error.encode('utf8').replace("\n", "\r\n"))
+        zf.writestr('errorlog.txt', error.replace("\n", "\r\n"))
 
     zf.close()
     o.seek(0)
