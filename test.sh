@@ -26,7 +26,7 @@ function ckan_wrapper () {
 }
 
 # Database is listening, but still unavailable. Just keep trying...
-while ! ckan_wrapper --plugin=ckan db init; do 
+while ! ckan db init; do 
   echo Retrying in 5 seconds...
   sleep 5
 done

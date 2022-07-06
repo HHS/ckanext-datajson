@@ -7,6 +7,7 @@ from ckan import plugins as p
 from ckan.model import Session, Package
 from ckan.logic import NotFound, get_action
 from ckan.logic.validators import name_validator
+import ckan.lib.dictization.model_dictize as model_dictize
 from ckan.lib.munge import munge_title_to_name
 from ckan.lib.navl.dictization_functions import Invalid, DataError
 from ckan.lib.navl.validators import ignore_empty
@@ -94,7 +95,7 @@ class DatasetHarvesterBase(HarvesterBase):
         # Setting validate to False is critical for getting the harvester plugin
         # to set extra fields on the package during indexing (see ckanext/harvest/plugin.py
         # line 99, https://github.com/okfn/ckanext-harvest/blob/master/ckanext/harvest/plugin.py#L99).
-        return {"user": self._get_user_name(), "ignore_auth": True}
+        return {"user": self._get_user_name(), "ignore_auth": True, "model": model}
 
     # SUBCLASSES MUST IMPLEMENT
     def load_remote_catalog(self, harvest_job):
@@ -159,18 +160,18 @@ class DatasetHarvesterBase(HarvesterBase):
         # Added: mark all existing parent datasets.
         existing_datasets = {}
         existing_parents = {}
-        for hobj in model.Session.query(HarvestObject).filter_by(source=harvest_job.source, current=True):
-            try:
-                pkg = get_action('package_show')(self.context(), {"id": hobj.package_id})
-            except Exception:
-                # reference is broken
-                continue
-            sid = self.find_extra(pkg, "identifier")
-            is_parent = self.find_extra(pkg, "collection_metadata")
-            if sid:
-                existing_datasets[sid] = pkg
-            if is_parent and pkg.get("state") == "active":
-                existing_parents[sid] = pkg
+        for hobj in model.Session.query(HarvestObject.package_id, Package)\
+            .filter_by(source=harvest_job.source, current=True)\
+            .join(Package, HarvestObject.package_id == Package.id):
+                # Get the equivalent "package" dictionary as if package_show
+                pkg = model_dictize.package_dictize(hobj[1], self.context())
+                
+                sid = self.find_extra(pkg, "identifier")
+                is_parent = self.find_extra(pkg, "collection_metadata")
+                if sid:
+                    existing_datasets[sid] = pkg
+                if is_parent and pkg.get("state") == "active":
+                    existing_parents[sid] = pkg
 
         # which parent has been demoted to child level?
         existing_parents_demoted = set(
