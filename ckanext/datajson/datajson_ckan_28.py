@@ -161,17 +161,18 @@ class DatasetHarvesterBase(HarvesterBase):
         existing_datasets = {}
         existing_parents = {}
         for hobj in model.Session.query(HarvestObject.package_id, Package)\
-            .filter_by(source=harvest_job.source, current=True)\
-            .join(Package, HarvestObject.package_id == Package.id):
-                # Get the equivalent "package" dictionary as if package_show
-                pkg = model_dictize.package_dictize(hobj[1], self.context())
-                
-                sid = self.find_extra(pkg, "identifier")
-                is_parent = self.find_extra(pkg, "collection_metadata")
-                if sid:
-                    existing_datasets[sid] = pkg
-                if is_parent and pkg.get("state") == "active":
-                    existing_parents[sid] = pkg
+                .filter_by(source=harvest_job.source, current=True)\
+                .join(Package, HarvestObject.package_id == Package.id):
+
+            # Get the equivalent "package" dictionary as if package_show
+            pkg = model_dictize.package_dictize(hobj[1], self.context())
+
+            sid = self.find_extra(pkg, "identifier")
+            is_parent = self.find_extra(pkg, "collection_metadata")
+            if sid:
+                existing_datasets[sid] = pkg
+            if is_parent and pkg.get("state") == "active":
+                existing_parents[sid] = pkg
 
         # which parent has been demoted to child level?
         existing_parents_demoted = set(
