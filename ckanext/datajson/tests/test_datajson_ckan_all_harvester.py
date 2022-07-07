@@ -204,17 +204,16 @@ class TestDataJSONHarvester(object):
     def test_datason_arm_reharvest(self):
         url = 'http://127.0.0.1:%s/arm' % self.mock_port
         datasets = self.run_source(url=url)
-        # Mark harvest job as complete
-        # utils.run_harvester()
+
         # fake job status before final RUN command.
         context = {'model': model, 'user': self.user['name'], 'session': model.Session}
         self.job.status = u'Running'
         self.job.gather_finished = datetime.utcnow()
         self.job.save()
-
+        # Mark harvest job as complete
         p.toolkit.get_action('harvest_jobs_run')(context, {'source_id': self.source.id})
 
-        # Re-run job to check update logic
+        # Re-run job to check harvester gather/comparison to previous data logic
         datasets = self.run_source(url=url)
         # Assert no datasets were changed
         assert datasets == []
