@@ -1,18 +1,26 @@
 from setuptools import setup, find_packages
+from codecs import open  # To use a consistent encoding
+from os import path
 
-version = '0.1'
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the relevant file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='ckanext-datajson',
-    version=version,
+    version='0.1.0',
     description="CKAN extension to generate /data.json",
-    long_description="""\
-    """,
-    classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    classifiers=[
+        'Programming Language :: Python :: 3'
+    ],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords='',
-    author='U.S. Department of Health & Human Services',
-    author_email='',
-    url='http://www.healthdata.gov',
+    author='Data.gov',
+    author_email='datagovhelp@gsa.gov',
+    url='https://github.com/GSA/ckanext-datajson',
     license='Public Domain',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     namespace_packages=['ckanext', 'ckanext.datajson'],
@@ -20,7 +28,12 @@ setup(
     zip_safe=False,
     install_requires=[
         # -*- Extra requirements: -*-
+        'pyyaml'
+        'jsonschema~=2.4.0'
+        'rfc3987'
+        'future'
     ],
+    setup_requires=['wheel'],
     entry_points="""
         [ckan.plugins]
     datajson=ckanext.datajson.plugin:DataJsonPlugin
