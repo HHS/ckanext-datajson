@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include ckanext/datajson/pod_schema/ *.json
+recursive-include ckanext/datajson/export_map/ *.json
+recursive-include ckanext/datajson/templates *.html
+recursive-include ckanext/datajson/resources/ *.json *.csv
