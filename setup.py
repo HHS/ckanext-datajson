@@ -28,9 +28,9 @@ setup(
     zip_safe=False,
     install_requires=[
         # -*- Extra requirements: -*-
-        'pyyaml'
-        'jsonschema~=2.4.0'
-        'rfc3987'
+        'pyyaml',
+        'jsonschema~=2.4.0',
+        'rfc3987',
         'future'
     ],
     setup_requires=['wheel'],
