@@ -20,7 +20,7 @@ jobs:
   test:
     strategy:
       matrix:
-        ckan-version: [2.9, 2.8]
+        ckan-version: [2.9]
       fail-fast: false
 
     name: CKAN ${{ matrix.ckan-version }}
