@@ -1,7 +1,7 @@
 # ckanext-datajson
 
 [![Github Actions](https://github.com/GSA/ckanext-datajson/actions/workflows/test.yml/badge.svg)](https://github.com/GSA/ckanext-datajson/actions)
-[![CircleCI](https://circleci.com/gh/GSA/ckanext-datajson.svg?style=svg)](https://circleci.com/gh/GSA/ckanext-datajson)
+[![PyPI version](https://badge.fury.io/py/ckanext-datajson.svg)](https://badge.fury.io/py/ckanext-datajson)
 
 A CKAN extension containing plugins `datajson`.
 First is used by http://catalog.data.gov/ to harvest data sources
