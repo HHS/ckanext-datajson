@@ -169,8 +169,14 @@ class DatasetHarvesterBase(HarvesterBase):
 
             # TODO: Figure out why extras_rollup has everything, but extras doesn't
             extras = json.loads(self.find_extra(pkg, "extras_rollup"))
-            sid = extras.get("identifier")
-            is_parent = extras.get("collection_metadata")
+            sid = self.find_extra(pkg, "identifier")
+            if (sid is None):
+                sid = extras.get("identifier")
+
+            is_parent = self.find_extra(pkg, "collection_metadata")
+            if (is_parent is None):
+                is_parent = extras.get("collection_metadata")
+
             if sid:
                 existing_datasets[sid] = pkg
             if is_parent and pkg.get("state") == "active":
