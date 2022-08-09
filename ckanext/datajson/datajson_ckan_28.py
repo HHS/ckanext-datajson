@@ -166,7 +166,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
             # Get the equivalent "package" dictionary as if package_show
             pkg = model_dictize.package_dictize(hobj[1], self.context())
-            
+
             # TODO: Figure out why extras_rollup has everything, but extras doesn't
             extras = json.loads(self.find_extra(pkg, "extras_rollup"))
             sid = extras.get("identifier")
@@ -239,13 +239,14 @@ class DatasetHarvesterBase(HarvesterBase):
                 # We store a hash of the dict associated with this dataset
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
+                source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
                 if pkg.get("state") == "active" \
                         and dataset['identifier'] not in existing_parents_demoted \
                         and dataset['identifier'] not in existing_datasets_promoted \
-                        and json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash") == self.make_upstream_content_hash(dataset,
-                                                                                                   source,
-                                                                                                   catalog_extras,
-                                                                                                   schema_version):
+                        and source_hash == self.make_upstream_content_hash(dataset,
+                                                                           source,
+                                                                           catalog_extras,
+                                                                           schema_version):
                     log.info('SKIP: {}'.format(dataset['identifier']))
                     continue
             else:
