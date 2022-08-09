@@ -172,14 +172,14 @@ class DatasetHarvesterBase(HarvesterBase):
             if (sid is None):
                 try:
                     sid = json.loads(self.find_extra(pkg, "extras_rollup")).get("identifier")
-                except ValueError:
+                except TypeError:
                     sid = None
 
             is_parent = self.find_extra(pkg, "collection_metadata")
             if (is_parent is None):
                 try:
                     is_parent = json.loads(self.find_extra(pkg, "extras_rollup")).get("collection_metadata")
-                except ValueError:
+                except TypeError:
                     is_parent = None
 
             if sid:
@@ -254,7 +254,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 if (source_hash is None):
                     try:
                         source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
-                    except ValueError:
+                    except TypeError:
                         source_hash = None
                 if pkg.get("state") == "active" \
                         and dataset['identifier'] not in existing_parents_demoted \
