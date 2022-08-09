@@ -168,14 +168,19 @@ class DatasetHarvesterBase(HarvesterBase):
             pkg = model_dictize.package_dictize(hobj[1], self.context())
 
             # TODO: Figure out why extras_rollup has everything, but extras doesn't
-            extras = json.loads(self.find_extra(pkg, "extras_rollup"))
             sid = self.find_extra(pkg, "identifier")
             if (sid is None):
-                sid = extras.get("identifier")
+                try:
+                    sid = json.loads(self.find_extra(pkg, "extras_rollup")).get("identifier")
+                except:
+                    sid = None
 
             is_parent = self.find_extra(pkg, "collection_metadata")
             if (is_parent is None):
-                is_parent = extras.get("collection_metadata")
+                try:
+                    is_parent = json.loads(self.find_extra(pkg, "extras_rollup")).get("collection_metadata")
+                except:
+                    is_parent = None
 
             if sid:
                 existing_datasets[sid] = pkg
@@ -245,7 +250,12 @@ class DatasetHarvesterBase(HarvesterBase):
                 # We store a hash of the dict associated with this dataset
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
-                source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
+                source_hash = self.find_extra(pkg, "source_hash")
+                if (source_hash is None):
+                    try:
+                        source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
+                    except:
+                        source_hash = None
                 if pkg.get("state") == "active" \
                         and dataset['identifier'] not in existing_parents_demoted \
                         and dataset['identifier'] not in existing_datasets_promoted \
