@@ -167,8 +167,21 @@ class DatasetHarvesterBase(HarvesterBase):
             # Get the equivalent "package" dictionary as if package_show
             pkg = model_dictize.package_dictize(hobj[1], self.context())
 
+            # TODO: Figure out why extras_rollup has everything, but extras doesn't
             sid = self.find_extra(pkg, "identifier")
+            if sid is None:
+                try:
+                    sid = json.loads(self.find_extra(pkg, "extras_rollup")).get("identifier")
+                except TypeError:
+                    sid = None
+
             is_parent = self.find_extra(pkg, "collection_metadata")
+            if is_parent is None:
+                try:
+                    is_parent = json.loads(self.find_extra(pkg, "extras_rollup")).get("collection_metadata")
+                except TypeError:
+                    is_parent = None
+
             if sid:
                 existing_datasets[sid] = pkg
             if is_parent and pkg.get("state") == "active":
@@ -237,13 +250,19 @@ class DatasetHarvesterBase(HarvesterBase):
                 # We store a hash of the dict associated with this dataset
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
+                source_hash = self.find_extra(pkg, "source_hash")
+                if source_hash is None:
+                    try:
+                        source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
+                    except TypeError:
+                        source_hash = None
                 if pkg.get("state") == "active" \
                         and dataset['identifier'] not in existing_parents_demoted \
                         and dataset['identifier'] not in existing_datasets_promoted \
-                        and self.find_extra(pkg, "source_hash") == self.make_upstream_content_hash(dataset,
-                                                                                                   source,
-                                                                                                   catalog_extras,
-                                                                                                   schema_version):
+                        and source_hash == self.make_upstream_content_hash(dataset,
+                                                                           source,
+                                                                           catalog_extras,
+                                                                           schema_version):
                     log.info('SKIP: {}'.format(dataset['identifier']))
                     continue
             else:
@@ -420,7 +439,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
         log.debug('In %s import_stage' % repr(self))
 
-        if(harvest_object.content is None):
+        if harvest_object.content is None:
             return True
 
         dataset = json.loads(harvest_object.content)
