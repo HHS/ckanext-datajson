@@ -423,7 +423,7 @@ class DatasetHarvesterBase(HarvesterBase):
 
         log.debug('In %s import_stage' % repr(self))
 
-        if(harvest_object.content is None):
+        if (harvest_object.content is None):
             return True
 
         dataset = json.loads(harvest_object.content)
