@@ -169,14 +169,14 @@ class DatasetHarvesterBase(HarvesterBase):
 
             # TODO: Figure out why extras_rollup has everything, but extras doesn't
             sid = self.find_extra(pkg, "identifier")
-            if (sid is None):
+            if sid is None:
                 try:
                     sid = json.loads(self.find_extra(pkg, "extras_rollup")).get("identifier")
                 except TypeError:
                     sid = None
 
             is_parent = self.find_extra(pkg, "collection_metadata")
-            if (is_parent is None):
+            if is_parent is None:
                 try:
                     is_parent = json.loads(self.find_extra(pkg, "extras_rollup")).get("collection_metadata")
                 except TypeError:
@@ -251,7 +251,7 @@ class DatasetHarvesterBase(HarvesterBase):
                 # in the package so we can avoid updating datasets that
                 # don't look like they've changed.
                 source_hash = self.find_extra(pkg, "source_hash")
-                if (source_hash is None):
+                if source_hash is None:
                     try:
                         source_hash = json.loads(self.find_extra(pkg, "extras_rollup")).get("source_hash")
                     except TypeError:
