@@ -3,7 +3,6 @@ from builtins import str
 import io
 import json
 import logging
-import six
 import sys
 
 from ckan.common import c
@@ -240,24 +239,14 @@ def get_packages(owner_org, with_private=True):
     # get packages for sub-agencies.
     sub_agency = model.Group.get(owner_org)
 
-    if six.PY2:
-        if 'sub-agencies' in sub_agency.extras.col.target \
-                and sub_agency.extras.col.target['sub-agencies'].state == 'active':
-            sub_agencies = sub_agency.extras.col.target['sub-agencies'].value
-            sub_agencies_list = sub_agencies.split(",")
-            for sub in sub_agencies_list:
-                sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
-                for sub_package in sub_packages:
-                    packages.append(sub_package)
-    else:
-        if 'sub-agencies' in sub_agency.extras.col.keys() \
-                and sub_agency.extras.col['sub-agencies'].state == 'active':
-            sub_agencies = sub_agency.extras.col['sub-agencies'].value
-            sub_agencies_list = sub_agencies.split(",")
-            for sub in sub_agencies_list:
-                sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
-                for sub_package in sub_packages:
-                    packages.append(sub_package)
+    if 'sub-agencies' in sub_agency.extras.col.keys() \
+            and sub_agency.extras.col['sub-agencies'].state == 'active':
+        sub_agencies = sub_agency.extras.col['sub-agencies'].value
+        sub_agencies_list = sub_agencies.split(",")
+        for sub in sub_agencies_list:
+            sub_packages = get_all_group_packages(group_id=sub, with_private=with_private)
+            for sub_package in sub_packages:
+                packages.append(sub_package)
 
     return packages
 
@@ -306,10 +295,7 @@ def write_zip(data, error=None, errors_json=None, zip_name='data'):
 
     # Write the data file
     if data:
-        if sys.version_info >= (3, 0):
-            zf.writestr(_data_file_name, json.dumps(data))
-        else:
-            zf.writestr(_data_file_name, json.dumps(data))
+        zf.writestr(_data_file_name, json.dumps(data))
 
     # Write empty.json if nothing to return
     else:

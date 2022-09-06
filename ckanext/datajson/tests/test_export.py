@@ -2,7 +2,6 @@ from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 import json
-import six
 import zipfile
 
 import ckanext.harvest.model as harvest_model
@@ -11,29 +10,18 @@ from ckan.tests import factories
 
 from ckan.tests.helpers import reset_db
 
+from flask import Response
+import ckan.config.middleware
+from ckan.common import config
+from ckan.tests.helpers import CKANTestApp, CKANTestClient
 
-if six.PY2:
-    from ckan.tests.helpers import FunctionalTestBase
-    inherit = FunctionalTestBase
-else:
-    inherit = object
-    from flask import Response
-    import ckan.config.middleware
-    from ckan.common import config
-    from ckan.tests.helpers import CKANTestApp, CKANTestClient
-
-    class CKANZipTestApp(CKANTestApp):
-        ''' Special Test App to allow Zip Files '''
-        def test_client(self, use_cookies=True):
-            return CKANTestClient(self.app, Response, use_cookies=use_cookies)
+class CKANZipTestApp(CKANTestApp):
+    ''' Special Test App to allow Zip Files '''
+    def test_client(self, use_cookies=True):
+        return CKANTestClient(self.app, Response, use_cookies=use_cookies)
 
 
-class TestExport(inherit):
-
-    if six.PY2:
-        @classmethod
-        def setup_class(cls):
-            super(TestExport, cls).setup_class()
+class TestExport(object):
 
     @classmethod
     def setup(cls):
@@ -93,13 +81,10 @@ class TestExport(inherit):
         # create datasets
         self.create_datasets()
 
-        if six.PY2:
-            self.app = self._get_test_app()
-        else:
-            config["ckan.legacy_templates"] = False
-            config["testing"] = True
-            app = ckan.config.middleware.make_app(config)
-            self.app = CKANZipTestApp(app)
+        config["ckan.legacy_templates"] = False
+        config["testing"] = True
+        app = ckan.config.middleware.make_app(config)
+        self.app = CKANZipTestApp(app)
         url = '/organization/{}/draft.json'.format(self.organization['id'])
         extra_environ = {'REMOTE_USER': self.user_name}
         res = self.app.get(url, extra_environ=extra_environ)
@@ -107,10 +92,7 @@ class TestExport(inherit):
         # zip file
         zip_path = '/tmp/test.zip'
         zf = open(zip_path, 'wb')
-        if six.PY2:
-            zf.write(res.body)
-        else:
-            zf.write(res.data)
+        zf.write(res.data)
         zf.close()
         zfile = zipfile.ZipFile(zip_path, 'r')
         for name in zfile.namelist():
@@ -168,21 +150,15 @@ class TestExport(inherit):
         # create datasets
         self.create_datasets()
 
-        if six.PY2:
-            self.app = self._get_test_app()
-        else:
-            config["ckan.legacy_templates"] = False
-            config["testing"] = True
-            app = ckan.config.middleware.make_app(config)
-            self.app = CKANZipTestApp(app)
+        config["ckan.legacy_templates"] = False
+        config["testing"] = True
+        app = ckan.config.middleware.make_app(config)
+        self.app = CKANZipTestApp(app)
         url = '/organization/{}/data.json'.format(self.organization['id'])
         extra_environ = {'REMOTE_USER': self.user_name}
         res = self.app.get(url, extra_environ=extra_environ)
 
-        if six.PY2:
-            data_json = json.loads(res.body)
-        else:
-            data_json = json.loads(res.data)
+        data_json = json.loads(res.data)
         datasets = [data_json['dataset'][i]['title'] for i in range(0, 5)]
 
         assert self.dataset1['title'] in datasets

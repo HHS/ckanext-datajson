@@ -2,10 +2,7 @@ from builtins import str
 from builtins import map
 from builtins import range
 from builtins import object
-try:
-    from collections import OrderedDict  # 2.7
-except ImportError:
-    from sqlalchemy.util import OrderedDict
+from sqlalchemy.util import OrderedDict
 
 import logging
 

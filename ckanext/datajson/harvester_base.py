@@ -1,4 +1,4 @@
-from ckanext.datajson.datajson_ckan_28 import DatasetHarvesterBase
+from ckanext.datajson.datajson import DatasetHarvesterBase
 
 VALIDATION_SCHEMA = [('', 'Project Open Data (Federal)'),
                      ('non-federal', 'Project Open Data (Non-Federal)'), ]
